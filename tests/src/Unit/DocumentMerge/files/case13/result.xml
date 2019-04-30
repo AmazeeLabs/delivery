@@ -1,0 +1,6 @@
+<!-- Left changed the content and right removed="1"the same element. -->
+<div id="root">
+  <div id="a" added="1"by="left">TextALeft</div>
+  <div id="a" removed="1"by="right">TextA</div>
+  <div id="b">TextB</div>
+</div>

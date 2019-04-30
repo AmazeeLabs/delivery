@@ -1,0 +1,7 @@
+<!-- Left changes the order of elements.-->
+<div id="root">
+<div id="a" removed="1"by="left">TextA</div>
+<div id="b" added="1"by="left">TextB</div>
+<div id="b" removed="1"by="left">TextB</div>
+<div id="a" added="1"by="left">TextA</div>
+</div>

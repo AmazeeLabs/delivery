@@ -1,0 +1,33 @@
+delivery.view:
+  route_name: entity.delivery.canonical
+  base_route: entity.delivery.canonical
+  title: View
+
+delivery.page_edit:
+  route_name: entity.delivery.edit_form
+  base_route: entity.delivery.canonical
+  title: Edit
+
+entity.delivery.collection:
+  title: Deliveries
+  route_name: entity.delivery.collection
+  base_route: system.admin_content
+  weight: 10
+
+entity.delivery.collection.all:
+  title: 'All'
+  route_name: entity.delivery.collection
+  parent_id: entity.delivery.collection
+  weight: 1
+
+entity.delivery.collection.incoming:
+  title: 'Incoming deliveries'
+  route_name: view.deliveries.page_incoming
+  parent_id: entity.delivery.collection
+  weight: 2
+
+entity.delivery.collection.outgoing:
+  title: 'Outgoing deliveries'
+  route_name: view.deliveries.page_outgoing
+  parent_id: entity.delivery.collection
+  weight: 3

@@ -1,0 +1,10 @@
+<!-- Both changed the order, content and removed="1"items with text conflicts. -->
+<div id="root">
+<div id="b" removed="1" by="right">TextBLeft</div>
+<div id="c" added="1" by="right">TextCRight</div>
+<ck-conflict-text id="a">
+<ck-conflict-option label="Source">TextA</ck-conflict-option>
+<ck-conflict-option label="Left">TextALeft</ck-conflict-option>
+<ck-conflict-option label="Right">TextARight</ck-conflict-option>
+</ck-conflict-text>
+</div>

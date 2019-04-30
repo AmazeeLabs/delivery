@@ -1,0 +1,7 @@
+name: Workspaces allowed languages
+type: module
+description: 'Provides a language field on workspaces to restrict the languages which can be used when accessing that workspace.'
+core: 8.x
+dependencies:
+  - workspaces
+  - language

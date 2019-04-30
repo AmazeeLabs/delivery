@@ -1,0 +1,19 @@
+delivery.delivery_add:
+  route_name: delivery.delivery_add
+  title: 'Add Delivery'
+  appears_on:
+    - entity.delivery.collection
+    - view.deliveries.page_incoming
+    - view.deliveries.page_outcoming
+
+delivery.delivery_forward:
+  route_name: delivery.delivery_forward
+  title: 'Forward delivery'
+  appears_on:
+    - entity.delivery.canonical
+
+delivery.delivery_pull:
+  route_name: delivery.delivery_pull
+  title: 'Pull all changes'
+  appears_on:
+    - entity.delivery.canonical

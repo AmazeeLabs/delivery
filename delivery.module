@@ -1,0 +1,282 @@
+<?php
+
+/**
+ * @file
+ * Drupal hooks and helper functions.
+ */
+
+use Drupal\Core\Entity\ContentEntityTypeInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityFormInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Url;
+use Drupal\delivery\WorkspaceListBuilder;
+use Drupal\workspaces\Entity\Workspace;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function delivery_entity_type_build(array &$entity_types) {
+  // Override the list builder so we can inject our own deploy button.
+  $entity_types['workspace']->setHandlerClass('list_builder', WorkspaceListBuilder::class);
+
+  // Introduce a new "merge" form for each revisionable entity type.
+  // Content moderation will take over 'edit' and 'default' forms. That is the
+  // cleanest way to create merge revisions without getting in its way.
+  foreach ($entity_types as $entityType) {
+    if (
+      $entityType instanceof ContentEntityTypeInterface &&
+      $entityType->isRevisionable() &&
+      !$entityType->isInternal()
+    ) {
+      $entityType->setFormClass('merge', $entityType->getFormClass('edit'));
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_operation_alter().
+ */
+function delivery_entity_operation_alter(array &$operations, EntityInterface $entity) {
+  if (!$entity instanceof Workspace) {
+    return;
+  }
+  if (empty($operations['deploy'])) {
+    return;
+  }
+  // Add a deliver content link.
+  $operations['deliver'] = [
+    'title' => t('Deliver content'),
+    'weight' => 0,
+    'url' => \Drupal\Core\Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
+  ];
+  unset($operations['deploy']);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view_alter() for deliveries.
+ */
+function delivery_delivery_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  $build['nodes']['#access'] = FALSE;
+  $build['media']['#access'] = FALSE;
+
+  $nodes = ["0"];
+  foreach ($entity->nodes as $item) {
+    $nodes[] = $item->target_revision_id;
+  }
+
+  $media = ["0"];
+  foreach ($entity->media as $item) {
+    $media[] = $item->target_revision_id;
+  }
+
+  $source = $entity->source->entity;
+  $delivery_has_changes = FALSE;
+  /* @var \Drupal\delivery\DeliveryService $delivery_service */
+  $delivery_service = \Drupal::service('delivery.service');
+
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  $currentWorkspace = $workspaceManager->getActiveWorkspace();
+  $workspaces = [];
+
+  foreach ($entity->workspaces as $index => $item) {
+    if ($currentWorkspace->id() === $source->id() || $item->entity->id() === $currentWorkspace->id()) {
+      $workspaces[] = $item->entity;
+    }
+  }
+
+  foreach ($workspaces as $index => $target) {
+    $section = [
+      '#type' => 'details',
+      '#open' => $index === 0,
+      '#title' => t(
+        'Status of delivery to %workspace',
+        ['%workspace' => $target->label()]
+      ),
+      '#group' => 'targets',
+    ];
+
+    $section['pages'] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#title' => t('Pages to be delivered'),
+      'table' => views_embed_view(
+        'workspace_status_pages',
+        'delivery_status',
+        implode('+', $nodes),
+        $source->id(),
+        $target->id()
+      ),
+      '#group' => 'targets',
+    ];
+
+    $section['media'] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#title' => t('Media to be delivered'),
+      'table' => views_embed_view(
+        'workspace_status_media',
+        'delivery_status',
+        implode('+', $media),
+        $source->id(),
+        $target->id()
+      ),
+      '#group' => 'targets',
+    ];
+    $build[$target->id()] = $section;
+    $delivery_has_changes = $delivery_has_changes || $delivery_service->deliveryHasChanges($entity, $target);
+  }
+
+  $push_changes_permission = \Drupal::currentUser()->hasPermission('push changes to workspaces');
+  $build['push_changes'] = [
+    '#type' => 'link',
+    '#title' => t('Push all changes'),
+    '#attributes' => ['class' => ['button', 'button--primary']],
+    '#access' => $push_changes_permission && $delivery_has_changes,
+    '#url' => Url::fromRoute('delivery.push', ['delivery' => $entity->id()]),
+  ];
+}
+
+/**
+ * Implements template_preprocess_menu_local_action().
+ */
+function delivery_preprocess_menu_local_action(&$variables) {
+  _delivery_preprocess_forward_action_link($variables);
+  _delivery_preprocess_pull_action_link($variables);
+}
+
+/**
+ * Set the visibility of the delivery forward action link.
+ *
+ * @param $variables
+ */
+function _delivery_preprocess_forward_action_link(&$variables) {
+  // Disable the forward delivery button if necessary.
+  $route_match = \Drupal::routeMatch();
+  if ($route_match->getRouteName() != 'entity.delivery.canonical') {
+    return;
+  }
+  if (empty($variables['link']['#url'])) {
+    return;
+  }
+  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
+    return;
+  }
+  if (!$delivery = $route_match->getParameter('delivery')) {
+    return;
+  }
+  if ($variables['link']['#url']->getRouteName() != 'delivery.delivery_forward') {
+    return;
+  }
+
+  /**
+   * This has to be set to 0 so we can dynamically check the forwarding status.
+   *
+   * @todo find a better way of doing this - could be solved by DAI-364.
+   */
+  $variables['#cache'] = ['max-age' => 0];
+  $delivery_service = \Drupal::service('delivery.service');
+  if ($delivery_service->canForwardDelivery($delivery)) {
+    return;
+  }
+  $variables['link']['#options']['attributes']['class'][] = 'ui-state-disabled';
+}
+
+/**
+ * Set the visibility of the delivery pull action link.
+ *
+ * @param $variables
+ */
+function _delivery_preprocess_pull_action_link(&$variables) {
+  // Disable the forward delivery button if necessary.
+  $route_match = \Drupal::routeMatch();
+  if ($route_match->getRouteName() != 'entity.delivery.canonical') {
+    return;
+  }
+  if (empty($variables['link']['#url'])) {
+    return;
+  }
+  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
+    return;
+  }
+  if (!$delivery = $route_match->getParameter('delivery')) {
+    return;
+  }
+  if ($variables['link']['#url']->getRouteName() != 'delivery.delivery_pull') {
+    return;
+  }
+
+  /**
+   * This has to be set to 0 so we can dynamically check the forwarding status.
+   *
+   * @todo find a better way of doing this - could be solved by DAI-364.
+   */
+  $variables['#cache'] = ['max-age' => 0];
+  $delivery_service = \Drupal::service('delivery.service');
+  if ($delivery_service->canPullDelivery($delivery)) {
+    return;
+  }
+  $variables['link']['#options']['attributes']['class'][] = 'ui-state-disabled';
+}
+
+/**
+ * Implements hook_preprocess_views_view().
+ */
+function delivery_preprocess_views_view(&$variables) {
+  if ($variables['id'] == 'deliveries') {
+    $variables['#attached']['library'][] = 'delivery/entity-status';
+    $variables['#attached']['library'][] = 'delivery/entity-status-callback';
+  }
+}
+
+/**
+ * Implements hook_entity_insert().
+ *
+ * If a workspace enabled entity is created, immediately create a local revision
+ * in the current workspace. Required for the conflict resolution mechanism to
+ * work properly.
+ */
+function delivery_entity_insert(EntityInterface $entity) {
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  $currentWorkspace = $workspaceManager->getActiveWorkspace();
+  if ($currentWorkspace->id() !== 'live' && $workspaceManager->isEntityTypeSupported($entity->getEntityType())) {
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    $storage = \Drupal::service('entity_type.manager')->getStorage($entity->getEntityTypeId());
+    $revision = $storage->createRevision($entity);
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+    $revision->revision_parent->target_id = $entity->getRevisionId();
+    $revision->save();
+  }
+}
+
+function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
+  // Ensure the revision revert confirmation form works in all workspaces.
+  $formState->set('workspace_safe', TRUE);
+  $formObject = $formState->getFormObject();
+  if ($formObject instanceof EntityFormInterface && $formObject->getOperation() === 'merge') {
+    // Run 'merge' forms through the inline conflict resolution form builder.
+    \Drupal::service('conflict.resolution_inline_form.builder')->processForm($form, $formState, $formObject->getEntity());
+    // Kill the message popup added by the inline conflict ui.
+    // TODO: Properly separate this in the conflict module.
+    unset($form['#attached']['drupalSettings']['conflict']);
+    if (isset($form['body']['conflict_resolution'])) {
+      // Hide the conflict resolution info for body fields.
+      // TODO: Handle this with per field conflict widgets instead.
+      unset($form['body']['conflict_resolution']);
+    }
+  }
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function delivery_module_implements_alter(&$implementations, $hook) {
+  // Remove conflict module's form and entity alteration. We never want conflicts
+  // in a standard entity form but only in our dedicated "merge" form mode.
+  if (in_array($hook, ['form_alter', 'entity_load'])) {
+    unset($implementations['conflict']);
+  }
+}

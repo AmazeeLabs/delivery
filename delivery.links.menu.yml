@@ -1,0 +1,7 @@
+entity.delivery.collection:
+  title: 'Deliveries'
+  route_name: entity.delivery.collection
+  description: 'List deliveries'
+
+  parent: system.admin_content
+  weight: 10

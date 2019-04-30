@@ -1,0 +1,8 @@
+<!-- Both added="1"an item with different content. -->
+<div id="root">
+  <ck-conflict-text id="a">
+    <ck-conflict-option label="Source"></ck-conflict-option>
+    <ck-conflict-option label="Left">TextALeft</ck-conflict-option>
+    <ck-conflict-option label="Right">TextARight</ck-conflict-option>
+  </ck-conflict-text>
+</div>

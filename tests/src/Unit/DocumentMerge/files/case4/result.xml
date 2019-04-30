@@ -1,0 +1,4 @@
+<!-- Left removes an item. -->
+<div id="root">
+  <div id="a" added="1"by="right">TextA</div>
+</div>

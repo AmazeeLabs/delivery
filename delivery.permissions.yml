@@ -1,0 +1,12 @@
+view delivery entities:
+  title: 'View delivery entities'
+add delivery entities:
+  title: 'Add delivery entities'
+edit delivery entities:
+  title: 'Edit delivery entities'
+administer delivery entities:
+  title: 'Administer delivery entities'
+  restrict access: TRUE
+push changes to workspaces:
+  title: 'Push changes to workspaces'
+  restrict access: TRUE

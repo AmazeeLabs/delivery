@@ -1,0 +1,5 @@
+<!-- Right changed the order and left removed="1"an element. -->
+<div id="root">
+  <div id="b" removed="1"by="left">TextB</div>
+  <div id="a">TextA</div>
+</div>

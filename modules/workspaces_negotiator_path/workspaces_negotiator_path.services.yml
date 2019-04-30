@@ -1,0 +1,18 @@
+services:
+  workspaces_negotiator_path.prefix:
+    class: Drupal\workspaces_negotiator_path\PathPrefixWorkspaceNegotiator
+    arguments: ['@entity_type.manager']
+    tags:
+      # We set a high priority, to make sure this is the first negotiator which
+      # is called.
+      - { name: workspace_negotiator, priority: 1000 }
+  workspaces_negotiator_path.path_processor_domain:
+    class: Drupal\workspaces_negotiator_path\PathProcessor
+    tags:
+      # We want this processor to run at an early stage, the workspace path
+      # prefix is the first part of the URL.
+      - { name: path_processor_inbound, priority: 1000 }
+      # For the outbound processor we want to run at a later stage, so that we
+      # can properly prepend the path prefix before other outbound processors.
+      - { name: path_processor_outbound, priority: 0 }
+    arguments: ['@workspaces.manager']

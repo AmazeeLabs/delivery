@@ -1,0 +1,6 @@
+name: Workspaces negotiator path
+type: module
+description: 'A workspaces negotiator which uses the path information (the path prefix) to determine the current workspace.'
+core: 8.x
+dependencies:
+  - workspaces

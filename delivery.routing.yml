@@ -1,0 +1,89 @@
+entity.delivery.canonical:
+  path: '/delivery/{delivery}'
+  defaults:
+    _entity_view: 'delivery'
+    _title: 'Delivery status'
+  requirements:
+    _entity_access: 'delivery.view'
+
+entity.delivery.collection:
+  path: '/admin/content/deliveries'
+  defaults:
+    _entity_list: 'delivery'
+    _title: 'Deliveries'
+  requirements:
+    # Checks for permission directly.
+    _permission: 'administer delivery entities'
+
+delivery.delivery_add:
+  path: '/delivery/add'
+  defaults:
+    _entity_form: delivery.add
+    _title: 'Add Delivery'
+  requirements:
+    _entity_create_access: 'delivery'
+
+entity.delivery.edit_form:
+  path: '/delivery/{delivery}/edit'
+  defaults:
+    _entity_form: delivery.edit
+    _title: 'Edit Delivery'
+  requirements:
+    _entity_access: 'delivery.edit'
+
+delivery.delivery_forward:
+  path: '/delivery/{delivery}/forward'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryForwardForm'
+    _title: 'Forward delivery'
+  options:
+    parameters:
+      delivery:
+        type: entity:delivery
+  requirements:
+    _entity_access: 'delivery.edit'
+
+
+delivery.workspace_delivery_controller:
+  path: '/admin/delivery/workspace/{workspace}'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm'
+    _title_callback: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm::title'
+  requirements:
+    _permission: 'access content'
+
+delivery.delivery_pull:
+  path: '/delivery/{delivery}/pull'
+  defaults:
+    _form: '\Drupal\delivery\Form\ConfirmDeliveryPullForm'
+    _title: 'Pull delivery'
+  options:
+    parameters:
+      delivery:
+        type: entity:delivery
+  requirements:
+    _entity_access: 'delivery.edit'
+
+delivery.push:
+  path: '/delivery/{delivery}/push'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryPushConfirmFom'
+  options:
+    parameters:
+      delivery:
+        type: entity:delivery
+  requirements:
+    _permission: 'push changes to workspaces'
+
+delivery.delivery_status_controller:
+  path: '/delivery/status/{workspace}/{delivery}'
+  defaults:
+    _controller: '\Drupal\delivery\Controller\DeliveryStatusController::getAction'
+  options:
+    parameters:
+      workspace:
+        type: entity:workspace
+      delivery:
+        type: entity:delivery
+  requirements:
+    _entity_access: 'delivery.view'

@@ -1,0 +1,7 @@
+<!-- Both changed the order, content and removed="1"items with no text conflicts. -->
+<div id="root">
+  <div id="b" removed="1"by="right">TextBLeft</div>
+  <div id="c" added="1"by="right">TextCRight</div>
+  <div id="a" removed="1"by="right">TextALeft</div>
+  <div id="b" added="1"by="right">TextBRight</div>
+</div>

@@ -1,0 +1,7 @@
+<!-- Right changes the order and the content of an element. -->
+<div id="root">
+<div id="b" added="1"by="right">TextBRight</div>
+<div id="a" removed="1"by="right">TextA</div>
+<div id="a" added="1"by="right">TextA</div>
+<div id="b" removed="1"by="right">TextB</div>
+</div>

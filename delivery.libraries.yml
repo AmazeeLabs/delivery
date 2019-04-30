@@ -1,0 +1,14 @@
+entity-status:
+  version: VERSION
+  css:
+    component:
+      assets/entity-status.css: {preprocess: false}
+
+entity-status-callback:
+  version: VERSION
+  js:
+    assets/entity-status-callback.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+    - core/drupalSettings

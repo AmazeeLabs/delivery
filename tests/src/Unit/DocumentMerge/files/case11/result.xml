@@ -1,0 +1,12 @@
+<!-- Both change partially the order and content of the elements and have conflicts on other elements. -->
+<div id="root">
+  <ck-conflict-text id="a">
+    <ck-conflict-option label="Source">TextA</ck-conflict-option>
+    <ck-conflict-option label="Left">TextALeft</ck-conflict-option>
+    <ck-conflict-option label="Right">TextARight</ck-conflict-option>
+  </ck-conflict-text>
+  <div id="c" removed="1"by="right">TextCLeft</div>
+  <div id="b" added="1"by="right">TextBRight</div>
+  <div id="b" removed="1"by="right">TextBLeft</div>
+  <div id="c" added="1"by="right">TextCLeft</div>
+</div>

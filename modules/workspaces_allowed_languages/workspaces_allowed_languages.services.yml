@@ -1,0 +1,6 @@
+services:
+  workspaces_allowed_languages.event_listener:
+    class: Drupal\workspaces_allowed_languages\RedirectListener
+    arguments: ['@workspaces.manager', '@language_manager',  '@module_handler', '@current_user']
+    tags:
+      - { name: event_subscriber }

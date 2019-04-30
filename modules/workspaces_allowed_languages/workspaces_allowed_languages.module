@@ -1,0 +1,86 @@
+<?php
+
+/**
+ * @file
+ * Provides a language field on workspaces to restrict the languages which can
+ * be used when accessing that workspace.
+ */
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function workspaces_allowed_languages_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() === 'workspace') {
+    // Define a path prefix field on the workspaces.
+    $fields['allowed_languages'] = BaseFieldDefinition::create('string')
+      // @todo: change maybe the form element to be a select field.
+      ->setLabel(t('Allowed languages'))
+      ->setDescription(t('A set of languages which are allowed to be used on this workspace. Please input the language code for each language you want to be allowed on this workspace.'))
+      ->setRevisionable(TRUE)
+      ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
+      ->setDisplayOptions('form', array(
+        'type' => 'string',
+        'weight' => 10,
+      ))
+      ->setDisplayConfigurable('form', TRUE);
+    return $fields;
+  }
+}
+
+/**
+ * Implements hook_country_switcher_links_alter().
+ */
+function workspaces_allowed_languages_country_switcher_links_alter(&$links) {
+  $language_manager = \Drupal::languageManager();
+  $native_languages = $language_manager->getNativeLanguages();
+  foreach ($links as &$links_group) {
+    if (empty($links_group['countries'])) {
+      continue;
+    }
+    $new_links = [];
+    foreach ($links_group['countries'] as $id => $country_info) {
+      $allowed_languages = $country_info['country']->get('allowed_languages')->getValue();
+      if (!empty($allowed_languages)) {
+        foreach ($allowed_languages as $allowed_language) {
+          if (empty($native_languages[$allowed_language['value']])) {
+            continue;
+          }
+          $language = $native_languages[$allowed_language['value']];
+          $new_link = $country_info;
+          // Clone the url because we need to also change some options for it.
+          $new_link['url'] = clone $country_info['url'];
+          $new_link['url']->setOption('language', $language);
+          // The displayed language name should be translated in that specific
+          // language.
+          $new_link['label'] .= ' (' . t($language->label(), [], ['langcode' => $language->getId(), 'context' => 'language_name']) . ')';
+          $new_links[$id . '-' . $language->getId()] = $new_link;
+        }
+      }
+      else {
+        // If no language information available, just list the country as it is.
+        $new_links[$id] = $country_info;
+      }
+    }
+    $links_group['countries'] = $new_links;
+  }
+}
+
+/**
+ * Implements hook_language_switch_links_alter().
+ */
+function workspaces_allowed_languages_language_switch_links_alter(array &$links, $type, Url $url) {
+  /* @var \Drupal\workspaces\WorkspaceManagerInterface $workspace_manager */
+  $workspace_manager = \Drupal::getContainer()->get('workspaces.manager');
+  $current_workspace = $workspace_manager->getActiveWorkspace();
+  $allowed_languages = $current_workspace->get('allowed_languages')->getValue();
+  if (!empty($allowed_languages)) {
+    $languages = [];
+    foreach ($allowed_languages as $allowed_language) {
+      $languages[$allowed_language['value']] = $allowed_language['value'];
+    }
+    $links = array_intersect_key($links, $languages);
+  }
+}

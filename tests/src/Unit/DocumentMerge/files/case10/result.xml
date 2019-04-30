@@ -1,0 +1,4 @@
+<!-- Both added="1"an item wit the same text. -->
+<div id="root">
+  <div id="a">TextALeft</div>
+</div>
