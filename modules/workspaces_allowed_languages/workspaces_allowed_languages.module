@@ -22,7 +22,7 @@ function workspaces_allowed_languages_entity_base_field_info(EntityTypeInterface
       ->setRevisionable(TRUE)
       ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('form', array(
-        'type' => 'string',
+        'type' => 'string_textfield',
         'weight' => 10,
       ))
       ->setDisplayConfigurable('form', TRUE);
