@@ -14,33 +14,34 @@ class DeliveryItemViewsData extends EntityViewsData {
    */
   public function getViewsData() {
     $data = parent::getViewsData();
-    $data['delivery_item']['delivery_item_status'] = array(
+    $data['delivery_item']['delivery_item_status'] = [
       'title' => t('Delivery item status'),
-      'field' => array(
+      'field' => [
         'title' => t('Delivery item status'),
         'help' => t('The status of the delivery item.'),
         'field' => 'result_revision',
         'id' => 'delivery_item_status',
-      ),
-    );
-    $data['delivery_item']['delivery_item_label'] = array(
+      ],
+    ];
+    $data['delivery_item']['delivery_item_label'] = [
       'title' => t('Delivery item label'),
-      'field' => array(
+      'field' => [
         'title' => t('Delivery item label'),
         'help' => t('The label of the delivery item.'),
         'field' => 'source_revision',
         'id' => 'delivery_item_label',
-      ),
-    );
-    $data['delivery_item']['relevant_delivery_items'] = array(
+      ],
+    ];
+    $data['delivery_item']['relevant_delivery_items'] = [
       'title' => t('Relevant delivery items'),
-      'filter' => array(
+      'filter' => [
         'title' => t('Relevant delivery items'),
         'help' => t('Show only delivery items relevant for the active workspace.'),
         'field' => 'source_workspace',
         'id' => 'relevant_delivery_items',
-      ),
-    );
+      ],
+    ];
     return $data;
   }
+
 }

@@ -14,7 +14,7 @@ use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\workspaces\WorkspaceManagerInterface;
 
 /**
- * Class DeliveryService
+ * Class DeliveryService.
  *
  * @package Drupal\delivery
  */
@@ -70,6 +70,7 @@ class DeliveryService {
    * @param int $source_id
    *
    * @return \Drupal\delivery\DeliveryInterface
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -92,7 +93,7 @@ class DeliveryService {
     $forwarded->items = [];
 
     foreach ($delivery->items as $item) {
-      /** @var DeliveryItem $deliveryItem */
+      /** @var \Drupal\delivery\Entity\DeliveryItem $deliveryItem */
       $deliveryItem = $item->entity;
       // Skip delivery items that don't target the current workspace.
       if ($deliveryItem->getTargetWorkspace() !== $currentWorkspace->id()) {
@@ -117,6 +118,7 @@ class DeliveryService {
    * Returns an array of possible target workspaces, keyed by workspace IDs.
    *
    * @return array
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -195,9 +197,10 @@ class DeliveryService {
    * outdated content).
    *
    * @param \Drupal\delivery\DeliveryInterface $delivery
-   * @param \Drupal\workspaces\WorkspaceInterface $targetWorkspace | NULL
+   * @param \Drupal\workspaces\WorkspaceInterface $targetWorkspace
+   *   | NULL.
    *
-   * @return bool.
+   * @return bool
    *
    * @todo Properly implement this once the workspace index work is complete.
    */
@@ -329,13 +332,14 @@ class DeliveryService {
    * @param \Drupal\workspaces\WorkspaceInterface $workspace
    *
    * @return array
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function pullChangesFromDeliveryToWorkspace(DeliveryInterface $delivery, WorkspaceInterface $workspace) {
     $skipped = 0;
     foreach ($delivery->items as $item) {
-      /** @var DeliveryItem $deliveryItem */
+      /** @var \Drupal\delivery\Entity\DeliveryItem $deliveryItem */
       $deliveryItem = $item->entity;
       if (isset($deliveryItem->resolution->value)) {
         continue;
@@ -373,7 +377,6 @@ class DeliveryService {
     $sourceEntity = $storage->loadRevision($deliveryItem->getSourceRevision());
     /** @var \Drupal\Core\Entity\ContentEntityInterface $targetEntity */
     $targetEntity = $this->getActiveRevision($deliveryItem);
-
 
     /** @var \Drupal\revision_tree\RevisionTreeHandlerInterface $revisionTreeHandler */
     $revisionTreeHandler = $this->entityTypeManager->getHandler($sourceEntity->getEntityTypeId(), 'revision_tree');
@@ -424,9 +427,8 @@ class DeliveryService {
     $source = $storage->loadRevision($deliveryItem->getSourceRevision());
 
     $target = $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
-      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace())
+      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace()),
     ]);
-
 
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
     $revisionField = $entityType->getKey('revision');
@@ -490,7 +492,7 @@ class DeliveryService {
 
   public function getActiveRevision(DeliveryItem $deliveryItem) {
     return $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
-      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace())
+      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace()),
     ]);
 
   }

@@ -20,19 +20,19 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 class RedirectListener implements EventSubscriberInterface {
 
   /**
-   * @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManger
+   * @var \Drupal\workspaces\WorkspaceManagerInterface
    *  The workspace manager service.
    */
   protected $workspaceManger;
 
   /**
-   * @var \Drupal\Core\Language\LanguageManagerInterface $languageManager
+   * @var \Drupal\Core\Language\LanguageManagerInterface
    * The language manager service.
    */
   protected $languageManager;
 
   /**
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
    * The module handler service.
    */
   protected $moduleHandler;
@@ -109,4 +109,5 @@ class RedirectListener implements EventSubscriberInterface {
       }
     }
   }
+
 }

@@ -8,7 +8,6 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\delivery\DocumentMerge;
-use Drupal\migrate_drupal\Plugin\migrate\source\d7\FieldableEntity;
 
 /**
  * Automatically resolve conflicts in invisible fields.
@@ -52,15 +51,15 @@ class MergeInvisibleProperties extends MergeStrategyBase {
     // TODO: Move this to a separate resolution strategy in the ckeditor5_sections module.
     foreach (array_keys($formDisplay->getComponents()) as $component) {
       if ($component === 'body') {
-          $merge = new DocumentMerge();
-          $source = ($base_entity ? $base_entity->body->value : null) ?: '<div id="dummy"></div>';
-          $left =  $remote_entity->get('body')->get(0)->value;
-          $right = $local_entity->get('body')->get(0)->value;
-          $result = $left && $right && $source ? $merge->merge($source, $left, $right) : '';
-          $result_entity->get('body')->setValue([
-            'value' => $result,
-            'format' => $result_entity->get('body')->format
-          ]);
+        $merge = new DocumentMerge();
+        $source = ($base_entity ? $base_entity->body->value : NULL) ?: '<div id="dummy"></div>';
+        $left = $remote_entity->get('body')->get(0)->value;
+        $right = $local_entity->get('body')->get(0)->value;
+        $result = $left && $right && $source ? $merge->merge($source, $left, $right) : '';
+        $result_entity->get('body')->setValue([
+          'value' => $result,
+          'format' => $result_entity->get('body')->format,
+        ]);
       }
     }
 

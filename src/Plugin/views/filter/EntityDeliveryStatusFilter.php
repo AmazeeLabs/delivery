@@ -69,25 +69,30 @@ class EntityDeliveryStatusFilter extends InOperator implements ContainerFactoryP
             "{$this->sourceAlias} IS NULL AND {$this->targetAlias} IS NULL"
           );
           break;
+
         case static::$MODIFIED:
           $condition->where(
             "{$this->sourceAlias} IS NOT NULL AND {$this->targetAlias} IS NULL"
           );
           break;
+
         case static::$OUTDATED:
           $condition->where(
             "{$this->sourceAlias} IS NULL AND {$this->targetAlias} IS NOT NULL"
           );
           break;
+
         case static::$CONFLICT:
           $condition->where(
             "{$this->sourceAlias} IS NOT NULL AND {$this->targetAlias} IS NOT NULL"
           );
           break;
+
         default:
           break;
       }
     }
-//    $this->query->addWhere(0, $condition);
+    // $this->query->addWhere(0, $condition);.
   }
+
 }

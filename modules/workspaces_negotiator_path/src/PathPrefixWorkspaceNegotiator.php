@@ -8,6 +8,9 @@ use Drupal\workspaces\WorkspaceInterface;
 use Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ *
+ */
 class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
   /**
    * The workspace storage handler.
@@ -21,6 +24,7 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -39,7 +43,7 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
    * {@inheritdoc}
    */
   public function getActiveWorkspace(Request $request) {
-    $valid_workspaces = array_map(function($workspace) {
+    $valid_workspaces = array_map(function ($workspace) {
       return [
         'id' => $workspace->id(),
         'path_prefix' => $workspace->get('path_prefix')->getValue()[0]['value'],
@@ -69,10 +73,11 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
     // sometimes in cli (when using drush scr for example and try to get a
     // workspace entity storage instance).
     $workspaces = $this->workspaceStorage->loadMultiple($this->workspaceStorage->getQuery()->execute());
-    return array_filter($workspaces, function($workspace) {
+    return array_filter($workspaces, function ($workspace) {
       // Remove the workspaces which have an empty path_prefix field.
       $path_prefix = $workspace->get('path_prefix')->getValue();
       return (!empty($path_prefix[0]['value']));
     });
   }
+
 }

@@ -9,6 +9,9 @@ use Drupal\workspaces\WorkspaceManagerInterface;
 use Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ *
+ */
 class PathProcessor implements InboundPathProcessorInterface, OutboundPathProcessorInterface {
 
   /**
@@ -75,4 +78,5 @@ class PathProcessor implements InboundPathProcessorInterface, OutboundPathProces
     }
     return $path;
   }
+
 }

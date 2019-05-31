@@ -23,15 +23,15 @@ class PathPrefixHelperTest extends UnitTestCase {
         [
           [
             'id' => 1,
-            'path_prefix' => '/stage'
+            'path_prefix' => '/stage',
           ],
           [
             'id' => 2,
-            'path_prefix' => '/dev'
+            'path_prefix' => '/dev',
           ],
           [
             'id' => 3,
-            'path_prefix' => '/prod'
+            'path_prefix' => '/prod',
           ],
         ],
         NULL,
@@ -41,20 +41,20 @@ class PathPrefixHelperTest extends UnitTestCase {
         [
           [
             'id' => 1,
-            'path_prefix' => '/stage'
+            'path_prefix' => '/stage',
           ],
           [
             'id' => 2,
-            'path_prefix' => '/dev'
+            'path_prefix' => '/dev',
           ],
           [
             'id' => 3,
-            'path_prefix' => '/prod'
+            'path_prefix' => '/prod',
           ],
         ],
         [
           'id' => 2,
-          'path_prefix' => '/dev'
+          'path_prefix' => '/dev',
         ],
       ],
       [
@@ -62,20 +62,20 @@ class PathPrefixHelperTest extends UnitTestCase {
         [
           [
             'id' => 1,
-            'path_prefix' => '/stage'
+            'path_prefix' => '/stage',
           ],
           [
             'id' => 2,
-            'path_prefix' => '/dev'
+            'path_prefix' => '/dev',
           ],
           [
             'id' => 3,
-            'path_prefix' => '/prod'
+            'path_prefix' => '/prod',
           ],
         ],
         [
           'id' => 3,
-          'path_prefix' => '/prod'
+          'path_prefix' => '/prod',
         ],
       ],
       [
@@ -83,20 +83,20 @@ class PathPrefixHelperTest extends UnitTestCase {
         [
           [
             'id' => 1,
-            'path_prefix' => '/stage'
+            'path_prefix' => '/stage',
           ],
           [
             'id' => 2,
-            'path_prefix' => '/prod/node'
+            'path_prefix' => '/prod/node',
           ],
           [
             'id' => 3,
-            'path_prefix' => '/prod'
+            'path_prefix' => '/prod',
           ],
         ],
         [
           'id' => 2,
-          'path_prefix' => '/prod/node'
+          'path_prefix' => '/prod/node',
         ],
       ],
       [
@@ -104,20 +104,20 @@ class PathPrefixHelperTest extends UnitTestCase {
         [
           [
             'id' => 1,
-            'path_prefix' => '/stage'
+            'path_prefix' => '/stage',
           ],
           [
             'id' => 2,
-            'path_prefix' => '/prod'
+            'path_prefix' => '/prod',
           ],
           [
             'id' => 3,
-            'path_prefix' => '/prod/node'
+            'path_prefix' => '/prod/node',
           ],
         ],
         [
           'id' => 3,
-          'path_prefix' => '/prod/node'
+          'path_prefix' => '/prod/node',
         ],
       ],
       [
@@ -125,22 +125,22 @@ class PathPrefixHelperTest extends UnitTestCase {
         [
           [
             'id' => 1,
-            'path_prefix' => '/stage'
+            'path_prefix' => '/stage',
           ],
           [
             'id' => 2,
-            'path_prefix' => '/prod'
+            'path_prefix' => '/prod',
           ],
           [
             'id' => 3,
-            'path_prefix' => '/prod/node'
+            'path_prefix' => '/prod/node',
           ],
         ],
         [
           'id' => 2,
-          'path_prefix' => '/prod'
+          'path_prefix' => '/prod',
         ],
-      ]
+      ],
     ];
   }
 

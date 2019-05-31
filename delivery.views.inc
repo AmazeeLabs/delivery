@@ -47,7 +47,7 @@ function delivery_views_data_alter(array &$data) {
   // handler is broken.
   $data['node_field_revision']['vid']['argument']['id'] = 'numeric';
 
-  $workspace_manager =  \Drupal::service('workspaces.manager');
+  $workspace_manager = \Drupal::service('workspaces.manager');
   $entity_type_manager = \Drupal::entityTypeManager();
   $entity_types = $entity_type_manager->getDefinitions();
 

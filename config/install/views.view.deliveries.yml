@@ -82,7 +82,7 @@ display:
             view_delivery: view_delivery
             edit_delivery: edit_delivery
             dropbutton: dropbutton
-            desciption: desciption
+            description: description
           info:
             label:
               sortable: false
@@ -152,7 +152,7 @@ display:
               separator: ''
               empty_column: false
               responsive: ''
-            desciption:
+            description:
               sortable: false
               default_sort_order: asc
               align: ''
@@ -846,10 +846,10 @@ display:
             workspaces_target_id: '0'
           destination: true
           plugin_id: dropbutton
-        desciption:
-          id: desciption
+        description:
+          id: description
           table: delivery
-          field: desciption
+          field: description
           relationship: none
           group_type: group
           admin_label: ''
@@ -908,7 +908,7 @@ display:
           separator: ', '
           field_api_classes: false
           entity_type: delivery
-          entity_field: desciption
+          entity_field: description
           plugin_id: field
       filters:
         status:
@@ -999,7 +999,7 @@ display:
             group_items: {  }
           fields:
             label: label
-            desciption: desciption
+            description: description
           plugin_id: combine
         workspace_source_list:
           id: workspace_source_list
@@ -1295,7 +1295,7 @@ display:
             group_items: {  }
           fields:
             label: label
-            desciption: desciption
+            description: description
           plugin_id: combine
         workspace_source_list:
           id: workspace_source_list
@@ -1509,7 +1509,7 @@ display:
             group_items: {  }
           fields:
             label: label
-            desciption: desciption
+            description: description
           plugin_id: combine
         workspace_filter_list:
           id: workspace_filter_list

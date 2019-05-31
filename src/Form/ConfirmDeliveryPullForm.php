@@ -11,7 +11,7 @@ use Drupal\delivery\DeliveryService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class DeliveryForwardForm
+ * Class DeliveryForwardForm.
  *
  * @package Drupal\delivery\Form
  */
@@ -95,7 +95,7 @@ class ConfirmDeliveryPullForm extends ConfirmFormBase {
       $this->deliveryService->pullChangesFromDeliveryToWorkspace($this->delivery, $this->workspace);
       $this->messenger->addStatus($this->t('Delivery updates pulled successfully.'));
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $this->messenger->addError($this->t('Something went wrong when pulling the updates.'));
     }
     // Redirect to the original delivery.

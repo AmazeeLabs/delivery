@@ -1,9 +1,9 @@
 <?php
+
 namespace Drupal\delivery\Language;
 
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\language\ConfigurableLanguageManager;
-use Drupal\workspaces\WorkspaceManagerInterface;
 
 class DeliveryLanguageManager extends ConfigurableLanguageManager {
 
@@ -12,7 +12,7 @@ class DeliveryLanguageManager extends ConfigurableLanguageManager {
   protected $workspaceLanguages = [];
 
   /**
-   * @return WorkspaceManagerInterface
+   * @return \Drupal\workspaces\WorkspaceManagerInterface
    */
   protected function getWorkspacesManager() {
     return \Drupal::service('workspaces.manager');
@@ -91,6 +91,5 @@ class DeliveryLanguageManager extends ConfigurableLanguageManager {
 
     return $this->workspaceLanguages[$static_cache_id][$flags];
   }
-
 
 }

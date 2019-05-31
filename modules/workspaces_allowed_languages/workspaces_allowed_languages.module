@@ -5,6 +5,7 @@
  * Provides a language field on workspaces to restrict the languages which can
  * be used when accessing that workspace.
  */
+
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Url;
@@ -21,10 +22,10 @@ function workspaces_allowed_languages_entity_base_field_info(EntityTypeInterface
       ->setDescription(t('A set of languages which are allowed to be used on this workspace. Please input the language code for each language you want to be allowed on this workspace.'))
       ->setRevisionable(TRUE)
       ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'string',
         'weight' => 10,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE);
     return $fields;
   }

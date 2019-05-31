@@ -12,10 +12,10 @@ class PathPrefixHelper {
    * prefixes.
    *
    * @param string $path
-   *  The source string to be checked
+   *   The source string to be checked.
    * @param array $prefixes
-   *  An array of prefixes. Each item in the array must have a 'path_prefix'
-   *  attribute.
+   *   An array of prefixes. Each item in the array must have a 'path_prefix'
+   *   attribute.
    */
   public static function findBestPathPrefixFit($path, array $prefixes) {
     $best_fit = NULL;
@@ -32,6 +32,7 @@ class PathPrefixHelper {
 
   /**
    * Helper function to determine if a prefix matches a path.
+   *
    * @param $path
    * @param $prefix
    */
@@ -47,4 +48,5 @@ class PathPrefixHelper {
     }
     return FALSE;
   }
+
 }

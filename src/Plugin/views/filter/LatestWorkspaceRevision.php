@@ -84,7 +84,7 @@ class LatestWorkspaceRevision extends LatestRevision {
         [
           'field' => 'entity_type',
           'value' => $entity_type->id(),
-        ]
+        ],
       ],
     ];
 

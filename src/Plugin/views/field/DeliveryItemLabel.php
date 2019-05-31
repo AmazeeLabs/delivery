@@ -31,7 +31,6 @@ class DeliveryItemLabel extends FieldPluginBase implements ContainerFactoryPlugi
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('entity_type.manager'));
   }
 
-
   public function __construct(
     array $configuration,
     string $plugin_id,
@@ -41,7 +40,6 @@ class DeliveryItemLabel extends FieldPluginBase implements ContainerFactoryPlugi
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityTypeManager = $entityTypeManager;
   }
-
 
   /**
    * {@inheritdoc}
@@ -61,4 +59,5 @@ class DeliveryItemLabel extends FieldPluginBase implements ContainerFactoryPlugi
     }
     return $entity->label();
   }
+
 }

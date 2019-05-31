@@ -23,4 +23,3 @@ class DeliveryWorkspaceManager extends WorkspaceManager {
   }
 
 }
-

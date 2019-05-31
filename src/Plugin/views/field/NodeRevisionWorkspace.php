@@ -19,7 +19,7 @@ class NodeRevisionWorkspace extends FieldPluginBase {
   /**
    * @param \Drupal\views\ViewExecutable $view
    * @param \Drupal\views\Plugin\views\display\DisplayPluginBase $display
-   * @param array|NULL $options
+   * @param array|null $options
    */
   public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
     parent::init($view, $display, $options);
@@ -37,4 +37,5 @@ class NodeRevisionWorkspace extends FieldPluginBase {
   public function render(ResultRow $values) {
     return $this->getValue($values, 'workspace');
   }
+
 }

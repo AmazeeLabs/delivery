@@ -5,6 +5,8 @@
  * Drupal hooks and helper functions.
  */
 
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Url;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
@@ -66,7 +68,7 @@ function delivery_entity_operation_alter(array &$operations, EntityInterface $en
     $operations['deliver'] = [
       'title' => t('Deliver content'),
       'weight' => 0,
-      'url' => \Drupal\Core\Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
+      'url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
     ];
   }
   unset($operations['deploy']);
@@ -105,7 +107,7 @@ function _delivery_preprocess_forward_action_link(&$variables) {
   if (empty($variables['link']['#url'])) {
     return;
   }
-  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
+  if (!$variables['link']['#url'] instanceof Url) {
     return;
   }
   if (!$delivery = $route_match->getParameter('delivery')) {
@@ -143,7 +145,7 @@ function _delivery_preprocess_pull_action_link(&$variables) {
   if (empty($variables['link']['#url'])) {
     return;
   }
-  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
+  if (!$variables['link']['#url'] instanceof Url) {
     return;
   }
   if (!$delivery = $route_match->getParameter('delivery')) {
@@ -301,7 +303,7 @@ function delivery_entity_bundle_info_alter(&$bundles) {
 /**
  * Implements hook_entity_base_field_info_alter().
  */
-function delivery_entity_base_field_info_alter(&$fields, \Drupal\Core\Entity\EntityTypeInterface $entity_type) {
+function delivery_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
   if (isset($fields['moderation_state'])) {
     $fields['moderation_state']->setTranslatable(FALSE);
   }

@@ -77,14 +77,14 @@ class ConflictResolverUISections implements ConflictResolverUIInterface {
     // TODO: Handle this with per field auto-merge plugins instead.
     if ($revision_a->hasField('body')) {
       $merge = new DocumentMerge();
-      $source = $common_ancestor ? $common_ancestor->get('body')->get(0)->value  : '<div id="dummy"></div>';
-      $left =  $revision_a->get('body')->get(0)->value;
+      $source = $common_ancestor ? $common_ancestor->get('body')->get(0)->value : '<div id="dummy"></div>';
+      $left = $revision_a->get('body')->get(0)->value;
       $right = $revision_b->get('body')->get(0)->value;
       $result = $left && $right && $source ? $merge->merge($source, $left, $right) : '';
 
       $new_revision->get('body')->setValue([
         'value' => $result,
-        'format' => $revision_a->get('body')->format
+        'format' => $revision_a->get('body')->format,
       ]);
 
     }
@@ -96,7 +96,6 @@ class ConflictResolverUISections implements ConflictResolverUIInterface {
     $form = $this->entityFormBuilder->getForm($new_revision, 'merge');
     return $form;
   }
-
 
   /**
    * Temporary use copypasted method from revision_tree module.

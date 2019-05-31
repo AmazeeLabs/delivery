@@ -107,7 +107,8 @@ class NodeRevisionWorkspaceFilter extends InOperator {
         $field = $this->getField();
         $this->query->addWhere($this->options['group'], "$this->tableAlias.$this->realField", '-1', '=');
         return $this->query;
-      } elseif (!empty($this->value[$workspace->id()])) {
+      }
+      elseif (!empty($this->value[$workspace->id()])) {
         return;
       }
 
@@ -132,6 +133,7 @@ class NodeRevisionWorkspaceFilter extends InOperator {
    * Helper function that generates the options.
    *
    * @return array
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */

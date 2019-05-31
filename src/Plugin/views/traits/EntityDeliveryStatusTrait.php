@@ -11,7 +11,7 @@ use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Common functionality for the
+ * Common functionality for the.
  */
 trait EntityDeliveryStatusTrait {
   public static $NOT_APPLICABLE = -1;
@@ -100,7 +100,7 @@ trait EntityDeliveryStatusTrait {
   /**
    * Indicator that the field currently is not applicable.
    *
-   * @var boolean
+   * @var bool
    */
   protected $notApplicable = FALSE;
 
@@ -125,7 +125,8 @@ trait EntityDeliveryStatusTrait {
    *   The default workspace id.
    */
   public function __construct(
-    array $configuration, $plugin_id,
+    array $configuration,
+  $plugin_id,
     $plugin_definition,
     EntityTypeManagerInterface $entity_type_manager,
     ViewsHandlerManager $join_handler,
@@ -183,12 +184,11 @@ trait EntityDeliveryStatusTrait {
   public function buildDeliveryStatusOptionsForm(&$form, FormStateInterface $form_state) {
     $workspaceOptions = array_map(function (Workspace $workspace) {
         return $workspace->label();
-      }, $this->entityTypeManager->getStorage('workspace')->loadMultiple()) + [
-        '__current' => $this->t('Current workspace'),
-        '__parent' => $this->t('Parent of current workspace'),
-        '__argument' => $this->t('From views argument'),
-      ];
-
+    }, $this->entityTypeManager->getStorage('workspace')->loadMultiple()) + [
+      '__current' => $this->t('Current workspace'),
+      '__parent' => $this->t('Parent of current workspace'),
+      '__argument' => $this->t('From views argument'),
+    ];
 
     $form['source_workspace'] = [
       '#type' => 'select',
@@ -250,22 +250,25 @@ trait EntityDeliveryStatusTrait {
     switch ($this->options[$key . '_workspace']) {
       case '__current':
         return $this->workspaceManager->getActiveWorkspace()->id();
-        break;
+
+      break;
       case '__parent':
         $parent = $this->workspaceManager->getActiveWorkspace()->parent_workspace->entity;
         if ($parent) {
           return $parent->id();
         }
         break;
+
       case '__argument':
         $arg = intval($this->options[$key . '_workspace_arg']);
         if (isset($this->view->args[$arg])) {
           return $this->view->args[$arg];
         }
         break;
+
       default:
         return $this->options[$key . '_workspace'];
-        break;
+      break;
     }
   }
 
@@ -338,7 +341,8 @@ trait EntityDeliveryStatusTrait {
           'left_field' => $keys['revision'],
         ]
       );
-    } else {
+    }
+    else {
       $revisionsTable = $this->joinHandler->createInstance(
         'standard',
         [
@@ -348,7 +352,7 @@ trait EntityDeliveryStatusTrait {
           'left_table' => $base_table,
           'left_field' => $keys['id'],
         ]
-      );
+          );
     }
 
     $revisionsAlias = $this->query->addTable($entity_type->getRevisionTable() . '_source', $this->relationship, $revisionsTable);

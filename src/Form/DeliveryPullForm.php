@@ -13,7 +13,7 @@ use Drupal\delivery\DeliveryService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class DeliveryForwardForm
+ * Class DeliveryForwardForm.
  *
  * @package Drupal\delivery\Form
  */
@@ -63,7 +63,7 @@ class DeliveryPullForm extends ConfirmFormBase {
   public function access(AccountInterface $account, DeliveryInterface $delivery) {
     $workspace = $this->deliveryService->getActiveWorkspace();
     $canForward = FALSE;
-    foreach($delivery->workspaces as $item) {
+    foreach ($delivery->workspaces as $item) {
       $canForward = $canForward || $item->target_id === $workspace->id();
     }
     $result = AccessResult::allowedIf($canForward);
@@ -113,7 +113,7 @@ class DeliveryPullForm extends ConfirmFormBase {
         ]));
       }
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $this->messenger->addError($this->t('Something went wrong when pulling the updates.'));
     }
     // Redirect to the original delivery.

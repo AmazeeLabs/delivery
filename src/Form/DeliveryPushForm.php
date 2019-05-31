@@ -29,7 +29,7 @@ class DeliveryPushForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
-   * @var \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
    *  The entity repository service.
    */
   protected $entityRepository;
@@ -127,7 +127,7 @@ class DeliveryPushForm extends ConfirmFormBase {
 
     foreach ($this->delivery->items as $item) {
       $batch['operations'][] = [
-        [$this, 'pushDeliveryItem'], [$item->target_id]
+        [$this, 'pushDeliveryItem'], [$item->target_id],
       ];
     }
 
@@ -135,9 +135,6 @@ class DeliveryPushForm extends ConfirmFormBase {
     batch_set($batch);
   }
 
-  /**
-   *
-   */
   public function pushDeliveryItem($item_id, &$context) {
     $deliveryItem = DeliveryItem::load($item_id);
     if (isset($deliveryItem->resolution->value)) {
@@ -146,9 +143,6 @@ class DeliveryPushForm extends ConfirmFormBase {
     $this->deliveryService->acceptDeliveryItem($deliveryItem, 'published');
   }
 
-  /**
-   *
-   */
   public function finishPushChanges($success, $results) {
     if ($success) {
       $this->messenger->addStatus($this->t('The changes have been pushed.'));
@@ -157,4 +151,5 @@ class DeliveryPushForm extends ConfirmFormBase {
       $this->messenger->addError($this->t('An error occurred trying to push the changes.'), 'error');
     }
   }
+
 }

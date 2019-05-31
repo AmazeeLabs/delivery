@@ -112,7 +112,6 @@ class DeliveryFromWorkspaceForm extends FormBase {
     $form_state->set('source', $source);
     $form_state->set('target', $target);
 
-
     $form['label'] = [
       '#type' => 'textfield',
       '#required' => TRUE,

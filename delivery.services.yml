@@ -29,4 +29,3 @@ services:
 #    decorates: language_manager
 #    decoration_priority: 3
 #    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
-

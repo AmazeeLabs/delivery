@@ -122,4 +122,5 @@ class DeliveryItem extends ContentEntityBase implements DeliveryItemInterface {
   public function getResolution() {
     return $this->resolution->value;
   }
+
 }

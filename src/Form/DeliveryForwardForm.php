@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Class DeliveryForwardForm
+ * Class DeliveryForwardForm.
  *
  * @package Drupal\delivery\Form
  */
@@ -53,7 +53,7 @@ class DeliveryForwardForm extends FormBase {
   public function access(AccountInterface $account, DeliveryInterface $delivery) {
     $workspace = $this->deliveryService->getActiveWorkspace();
     $canForward = FALSE;
-    foreach($delivery->workspaces as $item) {
+    foreach ($delivery->workspaces as $item) {
       $canForward = $canForward || $item->target_id === $workspace->id();
     }
     $result = AccessResult::allowedIf($canForward);

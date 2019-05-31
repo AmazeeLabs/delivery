@@ -29,5 +29,4 @@ class DeliveryForm extends ContentEntityForm {
     return $id;
   }
 
-
 }

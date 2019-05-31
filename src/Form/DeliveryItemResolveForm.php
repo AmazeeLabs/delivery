@@ -8,7 +8,6 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -31,7 +30,7 @@ class DeliveryItemResolveForm extends FormBase {
   protected $entityTypeManager;
 
   /**
-   * @var \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
    *  The entity repository service.
    */
   protected $entityRepository;
@@ -97,12 +96,12 @@ class DeliveryItemResolveForm extends FormBase {
     if (isset($delivery->resolution->value)) {
       return AccessResult::forbidden();
     }
-    // TODO: Restrict access to conflict resolution based on target permnissions.
+    // TODO: Restrict access to conflict resolution based on target permissions.
     return AccessResult::allowed();
-//    $this->sourceEntity = $this->entityTypeManager
-//      ->getStorage($delivery_item->getTargetType())
-//      ->loadRevision($delivery_item->getSourceRevision());
-//    return $this->sourceEntity->access('edit', $account, TRUE);
+    // $this->sourceEntity = $this->entityTypeManager
+    //      ->getStorage($delivery_item->getTargetType())
+    //      ->loadRevision($delivery_item->getSourceRevision());
+    //    return $this->sourceEntity->access('edit', $account, TRUE);.
   }
 
   public function title($delivery, $delivery_item) {
@@ -166,7 +165,7 @@ class DeliveryItemResolveForm extends FormBase {
     $revisionTreeHandler = $this->entityTypeManager->getHandler($this->sourceEntity->getEntityTypeId(), 'revision_tree');
     $parentEntityRevision = $revisionTreeHandler->getLowestCommonAncestor($this->sourceEntity, $this->sourceEntity->getRevisionId(), $this->targetEntity->getRevisionId());
 
-    /** @var \Drupal\Core\Entity\ContentEntityInterface $parentEntity */
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $this->parentEntity */
     $parentEntity = $storage->loadRevision($parentEntityRevision);
     $this->parentEntity = $parentEntity;
 
@@ -178,9 +177,9 @@ class DeliveryItemResolveForm extends FormBase {
     $viewDisplay = EntityViewDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
     $formDisplay = EntityFormDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
 
-    $form['languages'] = array(
+    $form['languages'] = [
       '#type' => 'vertical_tabs',
-    );
+    ];
 
     $hadConflicts = FALSE;
 
@@ -193,7 +192,6 @@ class DeliveryItemResolveForm extends FormBase {
         $parentTranslation = $this->getTranslation($this->parentEntity, $languageId);
         $targetTranslation = $this->getTranslation($this->targetEntity, $languageId);
 
-
         $conflicts = $this->conflictResolverManager->resolveConflicts(
           $targetTranslation,
           $sourceTranslation,
@@ -202,7 +200,6 @@ class DeliveryItemResolveForm extends FormBase {
         );
 
         $hadConflicts = $hadConflicts || count($conflicts) > 0;
-
 
         if ($conflicts) {
           $sourceBuild = $viewDisplay->build($sourceTranslation);
@@ -249,12 +246,12 @@ class DeliveryItemResolveForm extends FormBase {
                 'source' => [
                   '#prefix' => '<div class="delivery-merge-source">',
                   '#suffix' => '</div>',
-                  'build' => $sourceBuild[$property]
+                  'build' => $sourceBuild[$property],
                 ],
                 'target' => [
                   '#prefix' => '<div class="delivery-merge-target">',
                   '#suffix' => '</div>',
-                  'build' => $targetBuild[$property]
+                  'build' => $targetBuild[$property],
                 ],
               ];
               if ($formDisplay->getComponent($property)) {
@@ -268,7 +265,7 @@ class DeliveryItemResolveForm extends FormBase {
                 ];
               }
             }
-            else if ($formDisplay->getComponent($property)) {
+            elseif ($formDisplay->getComponent($property)) {
               $formElement = $customForm[$property];
               $formElement['widget']['#parents'] = ['custom', $languageId, $property];
               $form[$languageId][$property]['selection']['#type'] = 'value';
@@ -278,7 +275,7 @@ class DeliveryItemResolveForm extends FormBase {
                   '#prefix' => '<div class="delivery-merge-custom">',
                   '#suffix' => '</div>',
                   'build' => $formElement,
-                ]
+                ],
               ];
             }
           }
@@ -331,4 +328,5 @@ class DeliveryItemResolveForm extends FormBase {
     $this->deliveryItem->save();
     $this->messenger->addStatus($this->t('The changes have been imported.'));
   }
+
 }

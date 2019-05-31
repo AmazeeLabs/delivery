@@ -5,7 +5,7 @@ namespace Drupal\delivery\Controller;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Render\RendererInterface;
-use \Drupal\node\Controller\NodeController as OriginalNodeController;
+use Drupal\node\Controller\NodeController as OriginalNodeController;
 use Drupal\node\NodeInterface;
 use Drupal\node\NodeStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -48,7 +48,6 @@ class NodeController extends OriginalNodeController {
     // We change the logic of the parent method so that we only return the
     // ancestors of the revision, not all the revisions. This is used on the
     // revision overview page.
-
     // A direct recursive query to get the ancestors is not something that can
     // be done right now unless we introduce a dependency on the actual dbms.
     // For example for mysql: https://stackoverflow.com/questions/12948009/finding-all-parents-in-mysql-table-with-single-query-recursive-query/12948271#12948271
@@ -80,9 +79,10 @@ class NodeController extends OriginalNodeController {
    * target_id of the revision parent field, not the merge_target_id.
    *
    * @param \Drupal\node\NodeInterface $node
-   *  The node revision.
+   *   The node revision.
+   *
    * @return array
-   *  An array with all the ancestors of the node.
+   *   An array with all the ancestors of the node.
    */
   protected function getAncestorsForRevision(NodeInterface $node) {
     $revision_field = $node->getEntityType()->getKey('revision');
@@ -107,4 +107,5 @@ class NodeController extends OriginalNodeController {
     }
     return $ancestors;
   }
+
 }
