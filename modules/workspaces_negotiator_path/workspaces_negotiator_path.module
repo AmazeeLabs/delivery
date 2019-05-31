@@ -19,7 +19,7 @@ function workspaces_negotiator_path_entity_base_field_info(EntityTypeInterface $
       ->setLabel(t('Path prefix'))
       ->setDescription(t('An optional path prefix for this workspace. The prefix has to start with "/", e.g. <em>/stage</em>. If there should be no prefix, but you still want this workspace to be selected, then use "/". That is usually used for a <em>Main</em> or <em>Global</em> workspace. If this field is empty, this workspace will just be ignored by the Path Prefix workspace negotiator.'))
       ->setDisplayOptions('form', [
-        'type' => 'string',
+        'type' => 'string_textfield',
         'weight' => 10,
       ])
       ->setRevisionable(TRUE)
