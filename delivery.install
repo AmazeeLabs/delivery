@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function delivery_schema() {
+  $schema['revision_tree_index'] = [
+    'fields' => [
+      'entity_type' => [
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'description' => "Entity type.",
+      ],
+      'entity_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Entity id.',
+      ],
+      'revision_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => "Entity revision id.",
+      ],
+      'workspace' => [
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => FALSE,
+        'description' => "Workspace.",
+      ],
+    ],
+    'indexes' => [],
+    'foreign keys' => [],
+  ];
+
+  $schema['revision_tree_index_default'] = [
+    'fields' => [
+      'entity_type' => [
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'description' => "Entity type.",
+      ],
+      'entity_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Entity id.',
+      ],
+      'revision_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => "Entity revision id.",
+      ],
+      'workspace' => [
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => FALSE,
+        'description' => "Workspace.",
+      ],
+    ],
+    'indexes' => [],
+    'foreign keys' => [],
+  ];
+  return $schema;
+}

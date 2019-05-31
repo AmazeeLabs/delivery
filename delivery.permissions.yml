@@ -10,3 +10,7 @@ administer delivery entities:
 push changes to workspaces:
   title: 'Push changes to workspaces'
   restrict access: TRUE
+add delivery to assigned workspaces:
+  title: 'Add delivery to assigned workspaces'
+add delivery to any workspaces:
+  title: 'Add delivery to any workspace'

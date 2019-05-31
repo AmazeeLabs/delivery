@@ -31,6 +31,15 @@ entity.delivery.edit_form:
   requirements:
     _entity_access: 'delivery.edit'
 
+
+delivery.workspace_delivery_controller:
+  path: '/admin/delivery/workspace/{workspace}'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm'
+    _title_callback: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm::title'
+  requirements:
+    _permission: 'access content'
+
 delivery.delivery_forward:
   path: '/delivery/{delivery}/forward'
   defaults:
@@ -41,39 +50,57 @@ delivery.delivery_forward:
       delivery:
         type: entity:delivery
   requirements:
-    _entity_access: 'delivery.edit'
-
-
-delivery.workspace_delivery_controller:
-  path: '/admin/delivery/workspace/{workspace}'
-  defaults:
-    _form: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm'
-    _title_callback: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm::title'
-  requirements:
-    _permission: 'access content'
+    _custom_access: '\Drupal\delivery\Form\DeliveryForwardForm::access'
 
 delivery.delivery_pull:
   path: '/delivery/{delivery}/pull'
   defaults:
-    _form: '\Drupal\delivery\Form\ConfirmDeliveryPullForm'
+    _form: '\Drupal\delivery\Form\DeliveryPullForm'
     _title: 'Pull delivery'
   options:
     parameters:
       delivery:
         type: entity:delivery
   requirements:
-    _entity_access: 'delivery.edit'
+    _custom_access: '\Drupal\delivery\Form\DeliveryPullForm::access'
 
-delivery.push:
+delivery.delivery_push:
   path: '/delivery/{delivery}/push'
   defaults:
-    _form: '\Drupal\delivery\Form\DeliveryPushConfirmFom'
+    _form: '\Drupal\delivery\Form\DeliveryPushForm'
   options:
     parameters:
       delivery:
         type: entity:delivery
   requirements:
     _permission: 'push changes to workspaces'
+
+delivery_item.push:
+  path: '/delivery/{delivery}/push/{delivery_item}'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryItemPushForm'
+  options:
+    parameters:
+      delivery:
+        type: entity:delivery
+      delivery_item:
+        type: entity:delivery_item
+  requirements:
+    _custom_access: '\Drupal\delivery\Form\DeliveryItemPushForm::access'
+
+delivery_item.resolve:
+  path: '/delivery/{delivery}/resolve/{delivery_item}'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryItemResolveForm'
+    _title_callback: '\Drupal\delivery\Form\DeliveryItemResolveForm::title'
+  options:
+    parameters:
+      delivery:
+        type: entity:delivery
+      delivery_item:
+        type: entity:delivery_item
+  requirements:
+    _custom_access: '\Drupal\delivery\Form\DeliveryItemResolveForm::access'
 
 delivery.delivery_status_controller:
   path: '/delivery/status/{workspace}/{delivery}'
@@ -87,3 +114,11 @@ delivery.delivery_status_controller:
         type: entity:delivery
   requirements:
     _entity_access: 'delivery.view'
+
+delivery.update_revisions_index:
+  path: '/delivery/update-index'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryIndexForm'
+    _title: 'Update revision tree index'
+  requirements:
+    _permission: 'administer delivery entities'

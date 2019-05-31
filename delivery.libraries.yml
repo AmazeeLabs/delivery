@@ -2,7 +2,19 @@ entity-status:
   version: VERSION
   css:
     component:
-      assets/entity-status.css: {preprocess: false}
+      assets/entity-status.css: {}
+
+conflict-resolution:
+  version: VERSION
+  css:
+    component:
+      assets/conflict-resolution.css: {}
+  js:
+    assets/conflict-resolution.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+    - core/drupalSettings
 
 entity-status-callback:
   version: VERSION

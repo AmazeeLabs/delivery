@@ -3,6 +3,8 @@ type: module
 description: 'Deliver content changes between workspaces.'
 core: 8.x
 dependencies:
+  - language
   - conflict
   - revision_tree
+  - content_moderation
   - entity_reference_revisions

@@ -65,26 +65,31 @@ class LatestWorkspaceRevision extends LatestRevision {
 
     $entity_type = $this->entityTypeManager->getDefinition($this->getEntityType());
     $keys = $entity_type->getKeys();
-
-    $left_table = $entity_type->getRevisionTable();
-    $currentWorkspace = $this->workspaceManager->getActiveWorkspace();
-
     $definition = [
-      'table' => $left_table,
-      'type' => 'LEFT',
-      'field' => $keys['id'],
+      'table' => 'revision_tree_index',
+      'type' => 'INNER',
+      'field' => 'entity_id',
       'left_table' => $query_base_table,
       'left_field' => $keys['id'],
       'extra' => [
-        ['left_field' => $keys['revision'], 'field' => $keys['revision'], 'operator' => '>'],
-        ['field' => 'workspace', 'value' => $currentWorkspace->id()]
+        [
+          'field' => 'workspace',
+          'value' => $this->workspaceManager->getActiveWorkspace()->id(),
+          'operator' => '=',
+        ],
+        [
+          'field' => 'revision_id',
+          'left_field' => $keys['revision'],
+        ],
+        [
+          'field' => 'entity_type',
+          'value' => $entity_type->id(),
+        ]
       ],
     ];
 
     $join = $this->joinHandler->createInstance('standard', $definition);
-
-    $join_table_alias = $query->addTable($query_base_table, $this->relationship, $join);
-    $query->addWhere($this->options['group'], "$join_table_alias.{$keys['id']}", NULL, 'IS NULL');
+    $query->addTable($query_base_table, $this->relationship, $join);
   }
 
 }

@@ -2,10 +2,13 @@
 
 namespace Drupal\delivery\Form;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\delivery\Entity\Delivery;
+use Drupal\delivery\Entity\DeliveryItem;
+use Drupal\workspaces\WorkspaceInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -41,12 +44,22 @@ class DeliveryFromWorkspaceForm extends FormBase {
   protected $deliveryStorage;
 
   /**
+   * @var
+   */
+  protected $database;
+
+  /**
    * DeliveryFromWorkspaceForm constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\Core\Database\Connection $database
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(EntityTypeManager $entityTypeManager) {
+  public function __construct(EntityTypeManager $entityTypeManager, Connection $database) {
+    $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
     $this->workspaceStorage = $entityTypeManager->getStorage('workspace');
     $this->nodeStorage = $entityTypeManager->getStorage('node');
@@ -58,7 +71,7 @@ class DeliveryFromWorkspaceForm extends FormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('entity_type.manager'));
+    return new static($container->get('entity_type.manager'), $container->get('database'));
   }
 
   /**
@@ -114,19 +127,24 @@ class DeliveryFromWorkspaceForm extends FormBase {
       '#description' => $this->t('A more detailed description of this delivery.'),
     ];
 
-    $form['pages'] = [
-      '#type' => 'details',
-      '#open' => TRUE,
-      '#title' => $this->t('Pages to be delivered'),
-      'table' => views_embed_view('workspace_status_pages', 'embed', NULL, $source->id(), $target->id()),
+    $form['items'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Delivery items'),
+      '#description' => $this->t('Choose which content items should be delivered.'),
+      '#options' => [],
     ];
 
-    $form['media'] = [
-      '#type' => 'details',
-      '#open' => TRUE,
-      '#title' => $this->t('Media to be delivered'),
-      'table' => views_embed_view('workspace_status_media', 'embed', NULL, $source->id(), $target->id()),
-    ];
+    $modifications = $this->getModifiedEntities($source, $target);
+    foreach ($modifications as $item) {
+      $entity = $this->entityTypeManager->getStorage($item->entity_type)->loadRevision($item->source_revision);
+      $key = implode(':', [
+        $item->entity_type,
+        $item->entity_id,
+        $item->source_revision,
+      ]);
+      $form['items']['#default_value'][$key] = $key;
+      $form['items']['#options'][$key] = $entity ? $entity->label() : $this->t('Corresponding content not found');
+    }
 
     $form['submit'] = [
       '#type' => 'submit',
@@ -137,6 +155,23 @@ class DeliveryFromWorkspaceForm extends FormBase {
     return $form;
   }
 
+  protected function getModifiedEntities(WorkspaceInterface $source, WorkspaceInterface $target) {
+    $query = $this->database->select('revision_tree_index', 'source');
+
+    $query->fields('source', ['entity_type', 'entity_id']);
+
+    $query->addField('source', 'revision_id', 'source_revision');
+    $query->addField('target', 'revision_id', 'target_revision');
+
+    $query->leftJoin('revision_tree_index', 'target',
+      'source.entity_id = target.entity_id and source.entity_type = target.entity_type and target.workspace = :target',
+      [':target' => $target->id()]
+    );
+
+    $query->where('source.workspace = :source and (source.revision_id != target.revision_id or target.revision_id is null)', [':source' => $source->id()]);
+    return $query->execute()->fetchAll();
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -144,28 +179,27 @@ class DeliveryFromWorkspaceForm extends FormBase {
     $source = $form_state->get('source');
     $target = $form_state->get('target');
 
-    $nodes = array_map(function($row) {
-      return [
-        'target_id' => $row->_entity->id(),
-        'target_revision_id' => $row->source_revision,
-      ];
-    }, views_get_view_result('workspace_status_pages', 'embed', NULL,$source->id(), $target->id()));
-
-    $media = array_map(function($row) {
-      return [
-        'target_id' => $row->_entity->id(),
-        'target_revision_id' => $row->source_revision,
-      ];
-    }, views_get_view_result('workspace_status_media', 'embed', NULL, $source->id(), $target->id()));
-
     $values = [
       'label' => $form_state->getValue('label'),
       'description' => $form_state->getValue('description'),
       'source' => $source,
       'workspaces' => [$target],
-      'nodes' => $nodes,
-      'media' => $media,
+      'items' => [],
     ];
+    $items = array_filter($form_state->getValue('items'));
+
+    foreach ($items as $row) {
+      list($entity_type, $entity_id, $revision_id) = explode(':', $row);
+      $item = DeliveryItem::create([
+        'source_workspace' => $source->id(),
+        'target_workspace' => $target->id(),
+        'entity_type' => $entity_type,
+        'entity_id' => $entity_id,
+        'source_revision' => $revision_id,
+      ]);
+      $item->save();
+      $values['items'][] = $item;
+    }
 
     $delivery = Delivery::create($values);
     $delivery->save();

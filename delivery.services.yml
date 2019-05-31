@@ -1,7 +1,7 @@
 services:
   delivery.service:
     class: Drupal\delivery\DeliveryService
-    arguments: ['@entity_type.manager', '@workspaces.manager']
+    arguments: ['@entity_type.manager', '@workspaces.manager', '@entity.repository', '@conflict_resolver.manager']
 
   delivery.conflict_resolver_ui_sections:
     class: Drupal\delivery\ConflictResolverUI\ConflictResolverUISections
@@ -13,3 +13,20 @@ services:
     class: Drupal\delivery\Routing\RouteSubscriber
     tags:
     - { name: event_subscriber }
+
+  delivery.revision_index:
+    class: Drupal\delivery\RevisionIndex
+    arguments: ['@entity_type.manager', '@workspaces.manager']
+
+  conflict_resolution.merge_invisible_fields:
+    class: Drupal\delivery\ConflictResolution\MergeInvisibleProperties
+    tags:
+      - { name: event_subscriber }
+
+#  delivery.language_manager:
+#    class: Drupal\delivery\Language\DeliveryLanguageManager
+#    public: false
+#    decorates: language_manager
+#    decoration_priority: 3
+#    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
+

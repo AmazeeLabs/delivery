@@ -2,9 +2,11 @@
 
 namespace Drupal\delivery\Form;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\delivery\DeliveryInterface;
 use Drupal\delivery\DeliveryService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -46,6 +48,18 @@ class DeliveryForwardForm extends FormBase {
       $container->get('delivery.service'),
       $container->get('messenger')
     );
+  }
+
+  public function access(AccountInterface $account, DeliveryInterface $delivery) {
+    $workspace = $this->deliveryService->getActiveWorkspace();
+    $canForward = FALSE;
+    foreach($delivery->workspaces as $item) {
+      $canForward = $canForward || $item->target_id === $workspace->id();
+    }
+    $result = AccessResult::allowedIf($canForward);
+    $result->addCacheableDependency($delivery);
+    $result->addCacheContexts(['workspace']);
+    return $result;
   }
 
   /**

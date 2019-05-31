@@ -84,4 +84,19 @@ function delivery_views_data_alter(array &$data) {
     ];
   }
 
+  $data['media_field_revision']['mid']['relationship']['id'] = 'standard';
+  $data['media_field_revision']['mid']['relationship']['base'] = 'media_field_data';
+  $data['media_field_revision']['mid']['relationship']['base field'] = 'mid';
+  $data['media_field_revision']['mid']['relationship']['title'] = t('Media');
+  $data['media_field_revision']['mid']['relationship']['label'] = t('Get the actual media from a media revision.');
+  $data['media_field_revision']['mid']['relationship']['extra'][] = [
+    'field' => 'langcode',
+    'left_field' => 'langcode',
+  ];
+
+  // Make sure node data is also joined with the nid so all revisions can get
+  // unrevisioned data.
+  $data['node_field_revision']['vid']['relationship']['base field'] = 'nid';
+  $data['node_field_revision']['vid']['relationship']['left field'] = 'nid';
+  $data['node_field_revision']['vid']['relationship']['field'] = 'nid';
 }
