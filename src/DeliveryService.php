@@ -7,10 +7,11 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\delivery\Entity\DeliveryItem;
+use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\entity_reference_revisions\EntityReferenceRevisionsFieldItemList;
 use Drupal\workspaces\WorkspaceInterface;
-use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\workspaces\WorkspaceManagerInterface;
 
 /**
@@ -625,4 +626,25 @@ class DeliveryService {
     ];
   }
 
+  /**
+   * Return workspaces ids.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   User account.
+   *
+   * @return array
+   *   List of workspaces.
+   */
+  public function getUserWorkspaces(AccountInterface $account) {
+    $assignedWorkspaces = $this->entityTypeManager->getStorage('user')->load($account->id())->get('field_assigned_workspaces')->referencedEntities();
+    $workspaces = [];
+    foreach ($assignedWorkspaces as $workspace) {
+      $workspaces[] = $workspace->id();
+    }
+    $result = $workspaces;
+    foreach ($workspaces as $workspaceId) {
+      $result = array_merge($result, $this->getWorkspaceChildren($workspaceId));
+    }
+    return $result;
+  }
 }

@@ -58,8 +58,7 @@ function delivery_entity_operation_alter(array &$operations, EntityInterface $en
     return;
   }
 
-  $userWorkspaces = \Drupal::classResolver(WorkspaceListBuilder::class)
-    ->getUserWorkspaces(\Drupal::currentUser());
+  $userWorkspaces = \Drupal::service('delivery.service')->getUserWorkspaces(\Drupal::currentUser());
 
   if ((\Drupal::currentUser()->hasPermission('add delivery to assigned workspaces') &&
       in_array($entity->id(), $userWorkspaces)) ||
