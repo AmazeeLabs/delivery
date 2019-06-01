@@ -647,4 +647,15 @@ class DeliveryService {
     }
     return $result;
   }
+
+  /**
+   * Get workspace children.
+   */
+  protected function getWorkspaceChildren($workspaceId) {
+    $query = $this->entityTypeManager->getStorage('workspace')->getQuery();
+    $query->condition('parent_workspace', $workspaceId);
+    $result = $query->execute();
+    return $result;
+  }
+
 }
