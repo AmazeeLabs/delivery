@@ -69,12 +69,16 @@ class DeliveryLanguageManager extends ConfigurableLanguageManager {
       $this->loadingWorkspace = FALSE;
 
       $whiteList = [];
-      foreach ($workspaceLanguage = $workspace->primary_language as $item) {
-        $whiteList[] = $item->value;
+      if (isset($workspace->primary_language)) {
+        foreach ($workspaceLanguage = $workspace->primary_language as $item) {
+          $whiteList[] = $item->value;
+        }
       }
 
-      foreach ($workspaceLanguage = $workspace->secondary_languages as $item) {
-        $whiteList[] = $item->value;
+      if (isset($workspace->secondary_languages)) {
+        foreach ($workspaceLanguage = $workspace->secondary_languages as $item) {
+          $whiteList[] = $item->value;
+        }
       }
 
       $languages = parent::getLanguages($flags);

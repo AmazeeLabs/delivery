@@ -228,7 +228,7 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
       /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
       $workspaceManager = \Drupal::service('workspaces.manager');
       $workspace = $workspaceManager->getActiveWorkspace();
-      if ($defaultLanguage = $workspace->primary_language->value) {
+      if (isset($workspace->primary_language) && $defaultLanguage = $workspace->primary_language->value) {
         $form['langcode']['widget'][0]['value']['#default_value'] = $defaultLanguage;
       }
     }
