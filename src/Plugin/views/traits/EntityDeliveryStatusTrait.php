@@ -11,7 +11,7 @@ use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Common functionality for the.
+ * Common functionality for the Delivery Service.
  */
 trait EntityDeliveryStatusTrait {
   public static $NOT_APPLICABLE = -1;
@@ -21,6 +21,25 @@ trait EntityDeliveryStatusTrait {
   public static $CONFLICT = 3;
   public static $NEW = 4;
 
+  /**
+   * Retrieve the human readable label for an entity status.
+   *
+   * @param $status
+   *   The status code.
+   *
+   * @return string
+   *   The label.
+   */
+  public function getStatusLabel($status) {
+    return (string) [
+      static::$NOT_APPLICABLE => $this->t('Not applicable'),
+      static::$IDENTICAL => $this->t('Delivered'),
+      static::$MODIFIED => $this->t('Modified'),
+      static::$OUTDATED => $this->t('Outdated'),
+      static::$CONFLICT => $this->t('Conflict'),
+      static::$NEW => $this->t('New'),
+    ][$status];
+  }
 
   /**
    * Entity Type Manager service.
