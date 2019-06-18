@@ -110,19 +110,7 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
    * {@inheritdoc}
    */
   public function getActiveWorkspace(Request $request) {
-    $valid_workspaces = array_map(function (WorkspaceInterface $workspace) {
-      return [
-        'id' => $workspace->id(),
-        'path_prefix' => self::getPrefix($workspace),
-      ];
-    }, $this->getValidWorkspaces());
-    $best_fit = PathPrefixHelper::findBestPathPrefixFit(urldecode($request->getPathInfo()), $valid_workspaces);
-    if (!empty($best_fit)) {
-      if ($best_fit['id'] && ($workspace = $this->workspaceStorage->load($best_fit['id']))) {
-        return $workspace;
-      }
-    }
-    return NULL;
+    return $this->getActiveWorkspaceByPath(urldecode($request->getPathInfo()));
   }
 
   /**
@@ -138,6 +126,30 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
     } else {
       $this->setRedirectPrefix($prefix);
     }
+  }
+
+  /**
+   * Returns the workspace that is active on the given path.
+   *
+   * @param string $path
+   *   An internal path starting with a /.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|null
+   */
+  public function getActiveWorkspaceByPath($path) {
+    $valid_workspaces = array_map(function (WorkspaceInterface $workspace) {
+      return [
+        'id' => $workspace->id(),
+        'path_prefix' => self::getPrefix($workspace),
+      ];
+    }, $this->getValidWorkspaces());
+    $best_fit = PathPrefixHelper::findBestPathPrefixFit($path, $valid_workspaces);
+    if (!empty($best_fit)) {
+      if ($best_fit['id'] && ($workspace = $this->workspaceStorage->load($best_fit['id']))) {
+        return $workspace;
+      }
+    }
+    return NULL;
   }
 
   /**

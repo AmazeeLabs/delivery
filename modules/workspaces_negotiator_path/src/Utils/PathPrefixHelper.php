@@ -16,6 +16,8 @@ class PathPrefixHelper {
    * @param array $prefixes
    *   An array of prefixes. Each item in the array must have a 'path_prefix'
    *   attribute.
+   *
+   * @return mixed|null
    */
   public static function findBestPathPrefixFit($path, array $prefixes) {
     $best_fit = NULL;
@@ -35,6 +37,8 @@ class PathPrefixHelper {
    *
    * @param $path
    * @param $prefix
+   *
+   * @return bool
    */
   public static function pathPrefixMatch($path, $prefix) {
     // A prefix matches the path if any of the following is true:

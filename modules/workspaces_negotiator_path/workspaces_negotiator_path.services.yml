@@ -3,9 +3,8 @@ services:
     class: Drupal\workspaces_negotiator_path\PathPrefixWorkspaceNegotiator
     arguments: ['@entity_type.manager', '@tempstore.private', '@logger.channel.workspaces', '@messenger']
     tags:
-      # We set a high priority, to make sure this is the first negotiator which
-      # is called.
-      - { name: workspace_negotiator, priority: 1000 }
+      # The priority is just one level below the GraphQLWorkspaceNegotiator
+      - { name: workspace_negotiator, priority: 999 }
   workspaces_negotiator_path.path_processor_domain:
     class: Drupal\workspaces_negotiator_path\PathProcessor
     tags:
