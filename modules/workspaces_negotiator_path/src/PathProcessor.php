@@ -20,24 +20,27 @@ class PathProcessor implements InboundPathProcessorInterface, OutboundPathProces
   protected $workspaceManager;
 
   /**
+   * @var \Drupal\workspaces_negotiator_path\PathPrefixWorkspaceNegotiator
+   */
+  protected $pathPrefixWorkspaceNegotiator;
+
+  /**
    * PathProcessor constructor.
    */
-  public function __construct(WorkspaceManagerInterface $workspace_manager) {
+  public function __construct(WorkspaceManagerInterface $workspace_manager, PathPrefixWorkspaceNegotiator $path_prefix_workspace_negotiator) {
     $this->workspaceManager = $workspace_manager;
+    $this->pathPrefixWorkspaceNegotiator = $path_prefix_workspace_negotiator;
   }
 
   /**
    * {@inheritdoc}
    */
   public function processInbound($path, Request $request) {
-    $current_workspace = &drupal_static('WorkspacesPathProcessor_active_workspace');
-    if (!isset($current_workspace)) {
-      $current_workspace = $this->workspaceManager->getActiveWorkspace();
-    }
-    if (empty($current_workspace)) {
+    $workspace = $this->pathPrefixWorkspaceNegotiator->getActiveWorkspace($request);
+    if (empty($workspace)) {
       return $path;
     }
-    $path_prefix = $current_workspace->get('path_prefix')->getValue();
+    $path_prefix = $workspace->get('path_prefix')->getValue();
     if (!empty($path_prefix[0]['value']) && $path_prefix[0]['value'] != '/') {
       // Check first if the path prefix of the workspace is really a prefix for
       // the current workspace. Only in that case we will remove the path
