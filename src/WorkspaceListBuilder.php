@@ -3,6 +3,7 @@
 namespace Drupal\delivery;
 
 use Drupal\Core\Url;
+use Drupal\workspaces\WorkspaceInterface;
 use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
 
 /**
@@ -62,18 +63,18 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
       '#url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $active_workspace->id()]),
       '#attributes' => [
         'class' => ['button', 'active-workspace__button'],
-      ],
+      ]
     ];
   }
 
   /**
-   * Return workspaces ids.
+   * Return workpsaces ids.
    */
   protected function getUserWorkspaces() {
     $account = \Drupal::currentUser();
-    $assignedWorkspaces = \Drupal::entityManager()->getStorage('user')->load($account->id())->get('field_assigned_workspaces')->referencedEntities();
+    $assignedWorkpsaces = \Drupal::entityManager()->getStorage('user')->load($account->id())->get('field_assigned_workspaces')->referencedEntities();
     $workspaces = [];
-    foreach ($assignedWorkspaces as $workspace) {
+    foreach ($assignedWorkpsaces as $workspace) {
       $workspaces[] = $workspace->id();
     }
     $result = $workspaces;

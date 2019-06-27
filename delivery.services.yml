@@ -1,7 +1,7 @@
 services:
   delivery.service:
     class: Drupal\delivery\DeliveryService
-    arguments: ['@entity_type.manager', '@workspaces.manager', '@entity.repository', '@conflict_resolver.manager']
+    arguments: ['@entity_type.manager', '@workspaces.manager', '@entity.repository', '@conflict.resolver.manager']
 
   delivery.conflict_resolver_ui_sections:
     class: Drupal\delivery\ConflictResolverUI\ConflictResolverUISections
@@ -23,9 +23,21 @@ services:
     tags:
       - { name: event_subscriber }
 
+  conflict_resolution.merge_blacklisted_fields:
+    class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields
+    tags:
+      - { name: event_subscriber }
+
+  # Conflict discovery subscribers:
+  conflict_discovery.blacklisted:
+    class: \Drupal\delivery\ConflictDiscovery\BlacklistedFieldsDiscovery
+    tags:
+      - { name: event_subscriber }
+
 #  delivery.language_manager:
 #    class: Drupal\delivery\Language\DeliveryLanguageManager
 #    public: false
 #    decorates: language_manager
 #    decoration_priority: 3
 #    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
+

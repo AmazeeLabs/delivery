@@ -145,11 +145,7 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
    * path prefix negotiator.
    */
   protected function getValidWorkspaces() {
-    // This is a bit odd, but if we just call the loadMultiple() method with no
-    // arguments, it generates and error like this one: https://www.drupal.org/project/devel/issues/2999494
-    // sometimes in cli (when using drush scr for example and try to get a
-    // workspace entity storage instance).
-    $workspaces = $this->workspaceStorage->loadMultiple($this->workspaceStorage->getQuery()->execute());
+    $workspaces = $this->workspaceStorage->loadMultiple();
     return array_filter($workspaces, function ($workspace) {
       // Remove the workspaces which have an empty path_prefix field.
       $path_prefix = self::getPrefix($workspace);

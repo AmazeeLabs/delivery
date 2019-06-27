@@ -35,7 +35,7 @@ class DeliveryItemStatus extends FieldPluginBase implements ContainerFactoryPlug
       'extra' => [
         ['left_field' => 'entity_type', 'field' => 'entity_type'],
         ['left_field' => 'target_workspace', 'field' => 'workspace'],
-      ],
+      ]
     ]);
 
     $currentRevisionsAlias = $this->query->addTable('revision_tree_index', $base_table, $currentRevisions);
@@ -99,11 +99,10 @@ class DeliveryItemStatus extends FieldPluginBase implements ContainerFactoryPlug
         ], [
           'query' => [
             'destination' => $destination,
-          ],
+          ]
         ]),
         '#attached' => ['library' => ['delivery/entity-status']],
       ];
     }
   }
-
 }

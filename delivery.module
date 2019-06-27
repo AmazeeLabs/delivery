@@ -5,8 +5,6 @@
  * Drupal hooks and helper functions.
  */
 
-use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Url;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
@@ -58,7 +56,7 @@ function delivery_entity_operation_alter(array &$operations, EntityInterface $en
     return;
   }
 
-  $userWorkspaces = \Drupal::service('delivery.service')->getUserWorkspaces(\Drupal::currentUser());
+  $userWorkspaces = \Drupal::service('smart_user.smart_user')->getUserWorkspaces(\Drupal::currentUser());
 
   if ((\Drupal::currentUser()->hasPermission('add delivery to assigned workspaces') &&
       in_array($entity->id(), $userWorkspaces)) ||
@@ -67,7 +65,7 @@ function delivery_entity_operation_alter(array &$operations, EntityInterface $en
     $operations['deliver'] = [
       'title' => t('Deliver content'),
       'weight' => 0,
-      'url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
+      'url' => \Drupal\Core\Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
     ];
   }
   unset($operations['deploy']);
@@ -106,7 +104,7 @@ function _delivery_preprocess_forward_action_link(&$variables) {
   if (empty($variables['link']['#url'])) {
     return;
   }
-  if (!$variables['link']['#url'] instanceof Url) {
+  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
     return;
   }
   if (!$delivery = $route_match->getParameter('delivery')) {
@@ -144,7 +142,7 @@ function _delivery_preprocess_pull_action_link(&$variables) {
   if (empty($variables['link']['#url'])) {
     return;
   }
-  if (!$variables['link']['#url'] instanceof Url) {
+  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
     return;
   }
   if (!$delivery = $route_match->getParameter('delivery')) {
@@ -208,6 +206,22 @@ function delivery_entity_update(EntityInterface $entity) {
   _delivery_update_entity_index($entity);
 }
 
+function delivery_form_field_config_edit_form_alter(&$form, FormStateInterface $formState) {
+  /** @var \Drupal\field\FieldConfigInterface $entity */
+  $entity = $formState->getFormObject()->getEntity();
+  $form['third_party_settings']['conflict'] = [
+    '#type' => 'details',
+    '#title' => t('Conflict'),
+    '#open' => TRUE,
+    'blacklisted' => [
+      '#type' => 'checkbox',
+      '#title' => t('Blacklisted'),
+      '#description' => t('Exclude this field from conflict resolution.'),
+      '#default_value' => $entity->getThirdPartySetting('conflict', 'blacklisted', FALSE),
+    ],
+  ];
+}
+
 /**
  * Implements hook_form_alter().
  */
@@ -228,7 +242,7 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
       /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
       $workspaceManager = \Drupal::service('workspaces.manager');
       $workspace = $workspaceManager->getActiveWorkspace();
-      if (isset($workspace->primary_language) && $defaultLanguage = $workspace->primary_language->value) {
+      if ($defaultLanguage = $workspace->primary_language->value) {
         $form['langcode']['widget'][0]['value']['#default_value'] = $defaultLanguage;
       }
     }
@@ -302,7 +316,7 @@ function delivery_entity_bundle_info_alter(&$bundles) {
 /**
  * Implements hook_entity_base_field_info_alter().
  */
-function delivery_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+function delivery_entity_base_field_info_alter(&$fields, \Drupal\Core\Entity\EntityTypeInterface $entity_type) {
   if (isset($fields['moderation_state'])) {
     $fields['moderation_state']->setTranslatable(FALSE);
   }

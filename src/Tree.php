@@ -5,10 +5,20 @@ namespace Drupal\delivery;
 class Tree implements TreeInterface {
 
   /**
-   * @var \Drupal\delivery\TreeNode
    * The root of the tree.
+   *
+   * @var \Drupal\delivery\TreeNode
    */
   protected $root;
+
+  /**
+   * Blocks blacklist.
+   *
+   * @var array
+   */
+  static protected $blacklist = [
+    'figure',
+  ];
 
   /**
    * {@inheritdoc}
@@ -99,8 +109,8 @@ class Tree implements TreeInterface {
       foreach (iterator_to_array($node->childNodes) as $index => $child) {
         // Process everything that has a class.
         // TODO: Find a more solid approach. This won't hold for media elements
-        //       or formatted content that contains classes.
-        if ($child instanceof \DOMElement && $child->hasAttribute('class')) {
+        // or formatted content that contains classes.
+        if ($child instanceof \DOMElement && ($child->hasAttribute('class') && !in_array($child->tagName, self::$blacklist))) {
           $identifier = self::getIdentifierForNode($child);
           // Prepend the identifier of the parent. If we want to be able to
           // detect movements between different tree branches, then we should

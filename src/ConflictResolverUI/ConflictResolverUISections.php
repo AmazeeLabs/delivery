@@ -2,7 +2,7 @@
 
 namespace Drupal\delivery\ConflictResolverUI;
 
-use Drupal\conflict\Entity\ContentEntityConflictHandler;
+use Drupal\Core\Conflict\Entity\ContentEntityConflictHandler;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\RevisionableInterface;
@@ -62,7 +62,7 @@ class ConflictResolverUISections implements ConflictResolverUIInterface {
     $new_revision->revision_parent->target_id = $revision_b->getRevisionId();
     $new_revision->revision_parent->merge_target_id = $revision_a->getRevisionId();
 
-    /** @var \Drupal\conflict\Entity\ContentEntityConflictHandler $conflictHandler */
+    /** @var \Drupal\Core\Conflict\Entity\ContentEntityConflictHandler $conflictHandler */
     $conflictHandler = $this->entityTypeManager->getHandler($new_revision->getEntityTypeId(), 'conflict.resolution_handler');
 
     $displayMode = $this->entityTypeManager
@@ -78,13 +78,18 @@ class ConflictResolverUISections implements ConflictResolverUIInterface {
     if ($revision_a->hasField('body')) {
       $merge = new DocumentMerge();
       $source = $common_ancestor ? $common_ancestor->get('body')->get(0)->value : '<div id="dummy"></div>';
+
       $left = $revision_a->get('body')->get(0)->value;
+      $merge->setLabel('left', t('@workpsace version', ['@workspace' => $revision_a->workpsace->entity->label()])->__toString());
+
       $right = $revision_b->get('body')->get(0)->value;
+      $merge->setLabel('right', t('@workpsace version', ['@workspace' => $revision_a->workpsace->entity->label()])->__toString());
+
       $result = $left && $right && $source ? $merge->merge($source, $left, $right) : '';
 
       $new_revision->get('body')->setValue([
         'value' => $result,
-        'format' => $revision_a->get('body')->format,
+        'format' => $revision_a->get('body')->format
       ]);
 
     }
@@ -96,6 +101,7 @@ class ConflictResolverUISections implements ConflictResolverUIInterface {
     $form = $this->entityFormBuilder->getForm($new_revision, 'merge');
     return $form;
   }
+
 
   /**
    * Temporary use copypasted method from revision_tree module.

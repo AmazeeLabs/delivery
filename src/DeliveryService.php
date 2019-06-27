@@ -2,20 +2,19 @@
 
 namespace Drupal\delivery;
 
-use Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface;
+use Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\delivery\Entity\DeliveryItem;
-use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\entity_reference_revisions\EntityReferenceRevisionsFieldItemList;
 use Drupal\workspaces\WorkspaceInterface;
+use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\workspaces\WorkspaceManagerInterface;
 
 /**
- * Class DeliveryService.
+ * Class DeliveryService
  *
  * @package Drupal\delivery
  */
@@ -39,7 +38,7 @@ class DeliveryService {
   protected $entityRepository;
 
   /**
-   * @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface
+   * @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface
    */
   protected $conflictResolverManager;
 
@@ -49,7 +48,7 @@ class DeliveryService {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
-   * @param \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
+   * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -71,7 +70,6 @@ class DeliveryService {
    * @param int $source_id
    *
    * @return \Drupal\delivery\DeliveryInterface
-   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -94,7 +92,7 @@ class DeliveryService {
     $forwarded->items = [];
 
     foreach ($delivery->items as $item) {
-      /** @var \Drupal\delivery\Entity\DeliveryItem $deliveryItem */
+      /** @var DeliveryItem $deliveryItem */
       $deliveryItem = $item->entity;
       // Skip delivery items that don't target the current workspace.
       if ($deliveryItem->getTargetWorkspace() !== $currentWorkspace->id()) {
@@ -119,7 +117,6 @@ class DeliveryService {
    * Returns an array of possible target workspaces, keyed by workspace IDs.
    *
    * @return array
-   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -198,10 +195,9 @@ class DeliveryService {
    * outdated content).
    *
    * @param \Drupal\delivery\DeliveryInterface $delivery
-   * @param \Drupal\workspaces\WorkspaceInterface $targetWorkspace
-   *   | NULL.
+   * @param \Drupal\workspaces\WorkspaceInterface $targetWorkspace | NULL
    *
-   * @return bool
+   * @return bool.
    *
    * @todo Properly implement this once the workspace index work is complete.
    */
@@ -333,14 +329,13 @@ class DeliveryService {
    * @param \Drupal\workspaces\WorkspaceInterface $workspace
    *
    * @return array
-   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function pullChangesFromDeliveryToWorkspace(DeliveryInterface $delivery, WorkspaceInterface $workspace) {
     $skipped = 0;
     foreach ($delivery->items as $item) {
-      /** @var \Drupal\delivery\Entity\DeliveryItem $deliveryItem */
+      /** @var DeliveryItem $deliveryItem */
       $deliveryItem = $item->entity;
       if (isset($deliveryItem->resolution->value)) {
         continue;
@@ -378,6 +373,7 @@ class DeliveryService {
     $sourceEntity = $storage->loadRevision($deliveryItem->getSourceRevision());
     /** @var \Drupal\Core\Entity\ContentEntityInterface $targetEntity */
     $targetEntity = $this->getActiveRevision($deliveryItem);
+
 
     /** @var \Drupal\revision_tree\RevisionTreeHandlerInterface $revisionTreeHandler */
     $revisionTreeHandler = $this->entityTypeManager->getHandler($sourceEntity->getEntityTypeId(), 'revision_tree');
@@ -428,8 +424,9 @@ class DeliveryService {
     $source = $storage->loadRevision($deliveryItem->getSourceRevision());
 
     $target = $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
-      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace()),
+      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace())
     ]);
+
 
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
     $revisionField = $entityType->getKey('revision');
@@ -493,7 +490,7 @@ class DeliveryService {
 
   public function getActiveRevision(DeliveryItem $deliveryItem) {
     return $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
-      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace()),
+      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace())
     ]);
 
   }
@@ -624,38 +621,6 @@ class DeliveryService {
       'conflicts' => $conflicts,
       'updates' => $updates,
     ];
-  }
-
-  /**
-   * Return workspaces ids.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   User account.
-   *
-   * @return array
-   *   List of workspaces.
-   */
-  public function getUserWorkspaces(AccountInterface $account) {
-    $assignedWorkspaces = $this->entityTypeManager->getStorage('user')->load($account->id())->get('field_assigned_workspaces')->referencedEntities();
-    $workspaces = [];
-    foreach ($assignedWorkspaces as $workspace) {
-      $workspaces[] = $workspace->id();
-    }
-    $result = $workspaces;
-    foreach ($workspaces as $workspaceId) {
-      $result = array_merge($result, $this->getWorkspaceChildren($workspaceId));
-    }
-    return $result;
-  }
-
-  /**
-   * Get workspace children.
-   */
-  protected function getWorkspaceChildren($workspaceId) {
-    $query = $this->entityTypeManager->getStorage('workspace')->getQuery();
-    $query->condition('parent_workspace', $workspaceId);
-    $result = $query->execute();
-    return $result;
   }
 
 }

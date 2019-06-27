@@ -1,0 +1,7 @@
+field.field.*.*.*.third_party.conflict:
+  type: mapping
+  label: 'Conflict field settings'
+  mapping:
+    blacklisted:
+      type: boolean
+      label: 'Exclude field from being merged'
