@@ -15,7 +15,7 @@ services:
       # For the outbound processor we want to run at a later stage, so that we
       # can properly prepend the path prefix before other outbound processors.
       - { name: path_processor_outbound, priority: 0 }
-    arguments: ['@workspaces.manager']
+    arguments: ['@workspaces.manager', '@workspaces_negotiator_path.prefix']
   workspaces_negotiator_path.event_subscriber:
     class: Drupal\workspaces_negotiator_path\EventSubscriber\WorkspaceRedirectSubscriber
     arguments: ['@workspaces_negotiator_path.prefix']
