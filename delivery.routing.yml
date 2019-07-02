@@ -1,3 +1,11 @@
+delivery.settings:
+  path: '/admin/config/workflow/delivery'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliverySettingsForm'
+    _title: 'Delivery system configuration'
+  requirements:
+    _permission: 'administer workspaces'
+
 entity.delivery.canonical:
   path: '/delivery/{delivery}'
   defaults:

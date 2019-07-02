@@ -4,15 +4,23 @@ namespace Drupal\delivery;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
+use Drupal\delivery\Access\DeliveryContentTranslationOverviewAccess;
+use Drupal\delivery\ParamConverter\DeliveryEntityConverter;
+use Symfony\Component\DependencyInjection\Reference;
 
 class DeliveryServiceProvider extends ServiceProviderBase {
 
   public function alter(ContainerBuilder $container) {
-    // Replace the workspaces manager with the override that skips entity
-    // pre checks.
-    if ($container->hasDefinition('workspaces.manager')) {
-      $definition = $container->getDefinition('workspaces.manager');
-      $definition->setClass(DeliveryWorkspaceManager::class);
+    if ($container->hasDefinition('paramconverter.entity')) {
+      $container
+        ->getDefinition('paramconverter.entity')
+        ->setClass(DeliveryEntityConverter::class);
+    }
+
+    if ($container->hasDefinition('content_translation.overview_access')) {
+      $definition = $container->getDefinition('content_translation.overview_access');
+      $definition->setClass(DeliveryContentTranslationOverviewAccess::class)
+        ->addArgument(new Reference('workspaces.manager'));
     }
   }
 

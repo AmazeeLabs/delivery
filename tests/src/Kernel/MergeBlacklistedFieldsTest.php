@@ -40,7 +40,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     parent::setUp();
 
     $this->installSchema('system', ['key_value_expire', 'sequences']);
-    $this->installSchema('delivery', ['revision_tree_index', 'revision_tree_index_default']);
+    $this->installSchema('revision_tree', ['workspace_association']);
 
     $this->installEntitySchema('entity_test');
     $this->installEntitySchema('entity_test_rev');

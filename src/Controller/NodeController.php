@@ -91,7 +91,7 @@ class NodeController extends OriginalNodeController {
     // First, just get all the revisions of the node, then look only for the
     // ancestors of the passed in node revision.
     $query = $this->database->select($node->getEntityType()->getRevisionTable(), 'r');
-    $query->fields('r', [$revision_field, $parent_revision_id_field . '__target_id']);
+    $query->fields('r', [$revision_field, $parent_revision_id_field]);
     $query->condition('r.' . $node->getEntityType()->getKey('id'), $node->id());
     // All the ancestors will have the revision id smaller than the current
     // revision id, so add this condition to the query as well.

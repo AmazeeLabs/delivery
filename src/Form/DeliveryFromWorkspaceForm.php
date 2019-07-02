@@ -103,7 +103,7 @@ class DeliveryFromWorkspaceForm extends FormBase {
     }
 
     /** @var \Drupal\workspaces\WorkspaceInterface $target */
-    $target = $source->parent_workspace->entity;
+    $target = $source->parent->entity;
     if (!$target) {
       // TODO: Proper error handling.
       return;
@@ -137,8 +137,8 @@ class DeliveryFromWorkspaceForm extends FormBase {
     foreach ($modifications as $item) {
       $entity = $this->entityTypeManager->getStorage($item->entity_type)->loadRevision($item->source_revision);
       $key = implode(':', [
-        $item->entity_type,
-        $item->entity_id,
+        $item->target_entity_type,
+        $item->target_entity_id,
         $item->source_revision,
       ]);
       $form['items']['#default_value'][$key] = $key;
@@ -155,19 +155,19 @@ class DeliveryFromWorkspaceForm extends FormBase {
   }
 
   protected function getModifiedEntities(WorkspaceInterface $source, WorkspaceInterface $target) {
-    $query = $this->database->select('revision_tree_index', 'source');
+    $query = $this->database->select('workspace_association', 'source');
 
-    $query->fields('source', ['entity_type', 'entity_id']);
+    $query->addField('source', 'target_entity_id', 'target_entity_id');
+    $query->addField('source', 'target_entity_type_id', 'target_entity_type');
+    $query->addField('source', 'target_entity_revision_id', 'source_revision');
+    $query->addField('target', 'target_entity_revision_id', 'target_revision');
 
-    $query->addField('source', 'revision_id', 'source_revision');
-    $query->addField('target', 'revision_id', 'target_revision');
-
-    $query->leftJoin('revision_tree_index', 'target',
-      'source.entity_id = target.entity_id and source.entity_type = target.entity_type and target.workspace = :target',
+    $query->leftJoin('workspace_association', 'target',
+      'source.target_entity_id = target.target_entity_id and source.target_entity_type_id = target.target_entity_type_id and target.workspace = :target',
       [':target' => $target->id()]
     );
 
-    $query->where('source.workspace = :source and (source.revision_id != target.revision_id or target.revision_id is null)', [':source' => $source->id()]);
+    $query->where('source.workspace = :source and (source.target_entity_revision_id != target.target_entity_revision_id or target.target_entity_revision_id is null)', [':source' => $source->id()]);
     return $query->execute()->fetchAll();
   }
 

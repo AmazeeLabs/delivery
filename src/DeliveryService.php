@@ -498,7 +498,7 @@ class DeliveryService {
   protected function getWorkspaceHierarchy($workspaceId) {
     $workspace = $this->getContentEntityStorage('workspace')->load($workspaceId);
     $context = [$workspace->id()];
-    while ($workspace = $workspace->parent_workspace->entity) {
+    while ($workspace = $workspace->parent->entity) {
       $context[] = $workspace->id();
     }
     $context[] = NULL;
