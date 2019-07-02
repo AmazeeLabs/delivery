@@ -11,13 +11,15 @@ interface DocumentMergeInterface {
    * Performs a merge operation of the left document to the right document.
    *
    * @param string $source
-   *  The lowest common ancestor of the two documents.
+   *   The lowest common ancestor of the two documents.
    * @param string $left
-   *  The left document.
+   *   The left document.
    * @param string $right
-   *  The right document.
+   *   The right document.
+   *
    * @return string
-   *  The merged document.
+   *   The merged document.
    */
   public function merge($source, $left, $right);
+
 }

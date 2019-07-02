@@ -8,10 +8,10 @@ interface TreeInterface {
    * Adds a node in the tree.
    *
    * @param \Drupal\delivery\TreeNode $node
-   *  The node to be added.
+   *   The node to be added.
    * @param \Drupal\delivery\TreeNode $parent
-   *  Optional, the parent. If the parent is null, this node will be the root of
-   *  the tree.
+   *   Optional, the parent. If the parent is null, this node will be the root of
+   *   the tree.
    */
   public function addNode(TreeNode $node, TreeNode $parent = NULL);
 
@@ -26,9 +26,10 @@ interface TreeInterface {
    * Builds a tree for a document.
    *
    * @param \DOMDocument $document
-   *  The DOM document.
+   *   The DOM document.
+   *
    * @return \Drupal\delivery\Tree
-   *  The tree object.
+   *   The tree object.
    */
   public static function buildTree(\DOMDocument $document);
 
@@ -36,7 +37,8 @@ interface TreeInterface {
    * Clones an entire subtree starting from a specific root node.
    *
    * @param \Drupal\delivery\TreeNode $root
-   *  The root node to start with
+   *   The root node to start with.
+   *
    * @return Tree
    */
   public static function cloneSubtree(TreeNode $root);
@@ -45,9 +47,10 @@ interface TreeInterface {
    * Searches for a particular identifier in the tree.
    *
    * @param string $identifier
-   *  The node identifier to search for.
+   *   The node identifier to search for.
+   *
    * @return \Drupal\delivery\TreeNode | NULL
-   *  If the identifier has been found, it returns the node, NULL otherwise.
+   *   If the identifier has been found, it returns the node, NULL otherwise.
    */
   public function search($identifier);
 
@@ -57,7 +60,8 @@ interface TreeInterface {
    * siblings, from the root of the tree to the current node.
    *
    * @param \Drupal\delivery\TreeNode $node
-   *  The node to retrieve the path to.
+   *   The node to retrieve the path to.
+   *
    * @return array
    */
   public function getPathFromRoot(TreeNode $node);
@@ -65,9 +69,12 @@ interface TreeInterface {
   /**
    * Returns the node from a specific path. The path has the structure a defined
    * in the return value of ::getPathFromRoot().
+   *
    * @param array $path
-   *  The path.
+   *   The path.
+   *
    * @return \Drupal\delivery\TreeNode | NULL
    */
   public function getNodeFromPath(array $path);
+
 }

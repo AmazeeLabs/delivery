@@ -5,14 +5,23 @@
  * Drupal hooks and helper functions.
  */
 
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Url;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Url;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\workspaces\Entity\Workspace;
 use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_entity_view_mode_info_alter().
+ */
+function delivery_entity_view_mode_info_alter(&$view_modes) {
+
+}
 
 /**
  * Implements hook_entity_type_build().
@@ -30,6 +39,9 @@ function delivery_entity_type_build(array &$entity_types) {
       $entityType->isRevisionable() &&
       !$entityType->isInternal()
     ) {
+      $constraints = $entityType->getConstraints();
+      unset($constraints['EntityUntranslatableFields']);
+      $entityType->setConstraints($constraints);
       $entityType->setFormClass('merge', $entityType->getFormClass('edit'));
     }
   }
@@ -45,12 +57,19 @@ function delivery_entity_operation_alter(array &$operations, EntityInterface $en
   if (empty($operations['deploy'])) {
     return;
   }
-  // Add a deliver content link.
-  $operations['deliver'] = [
-    'title' => t('Deliver content'),
-    'weight' => 0,
-    'url' => \Drupal\Core\Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
-  ];
+
+  $userWorkspaces = \Drupal::service('delivery.service')->getUserWorkspaces(\Drupal::currentUser());
+
+  if ((\Drupal::currentUser()->hasPermission('add delivery to assigned workspaces') &&
+      in_array($entity->id(), $userWorkspaces)) ||
+      \Drupal::currentUser()->hasPermission('add delivery to any workspaces')) {
+    // Add a deliver content link.
+    $operations['deliver'] = [
+      'title' => t('Deliver content'),
+      'weight' => 0,
+      'url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $entity->id()]),
+    ];
+  }
   unset($operations['deploy']);
 }
 
@@ -58,85 +77,11 @@ function delivery_entity_operation_alter(array &$operations, EntityInterface $en
  * Implements hook_ENTITY_TYPE_view_alter() for deliveries.
  */
 function delivery_delivery_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
-  $build['nodes']['#access'] = FALSE;
-  $build['media']['#access'] = FALSE;
-
-  $nodes = ["0"];
-  foreach ($entity->nodes as $item) {
-    $nodes[] = $item->target_revision_id;
-  }
-
-  $media = ["0"];
-  foreach ($entity->media as $item) {
-    $media[] = $item->target_revision_id;
-  }
-
-  $source = $entity->source->entity;
-  $delivery_has_changes = FALSE;
-  /* @var \Drupal\delivery\DeliveryService $delivery_service */
-  $delivery_service = \Drupal::service('delivery.service');
-
-  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
-  $workspaceManager = \Drupal::service('workspaces.manager');
-  $currentWorkspace = $workspaceManager->getActiveWorkspace();
-  $workspaces = [];
-
-  foreach ($entity->workspaces as $index => $item) {
-    if ($currentWorkspace->id() === $source->id() || $item->entity->id() === $currentWorkspace->id()) {
-      $workspaces[] = $item->entity;
-    }
-  }
-
-  foreach ($workspaces as $index => $target) {
-    $section = [
-      '#type' => 'details',
-      '#open' => $index === 0,
-      '#title' => t(
-        'Status of delivery to %workspace',
-        ['%workspace' => $target->label()]
-      ),
-      '#group' => 'targets',
-    ];
-
-    $section['pages'] = [
-      '#type' => 'details',
-      '#open' => TRUE,
-      '#title' => t('Pages to be delivered'),
-      'table' => views_embed_view(
-        'workspace_status_pages',
-        'delivery_status',
-        implode('+', $nodes),
-        $source->id(),
-        $target->id()
-      ),
-      '#group' => 'targets',
-    ];
-
-    $section['media'] = [
-      '#type' => 'details',
-      '#open' => TRUE,
-      '#title' => t('Media to be delivered'),
-      'table' => views_embed_view(
-        'workspace_status_media',
-        'delivery_status',
-        implode('+', $media),
-        $source->id(),
-        $target->id()
-      ),
-      '#group' => 'targets',
-    ];
-    $build[$target->id()] = $section;
-    $delivery_has_changes = $delivery_has_changes || $delivery_service->deliveryHasChanges($entity, $target);
-  }
-
-  $push_changes_permission = \Drupal::currentUser()->hasPermission('push changes to workspaces');
-  $build['push_changes'] = [
-    '#type' => 'link',
-    '#title' => t('Push all changes'),
-    '#attributes' => ['class' => ['button', 'button--primary']],
-    '#access' => $push_changes_permission && $delivery_has_changes,
-    '#url' => Url::fromRoute('delivery.push', ['delivery' => $entity->id()]),
-  ];
+  $build['items'] = views_embed_view(
+    'delivery_status',
+    'embed',
+    $entity->id()
+  );
 }
 
 /**
@@ -161,7 +106,7 @@ function _delivery_preprocess_forward_action_link(&$variables) {
   if (empty($variables['link']['#url'])) {
     return;
   }
-  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
+  if (!$variables['link']['#url'] instanceof Url) {
     return;
   }
   if (!$delivery = $route_match->getParameter('delivery')) {
@@ -176,6 +121,7 @@ function _delivery_preprocess_forward_action_link(&$variables) {
    *
    * @todo find a better way of doing this - could be solved by DAI-364.
    */
+  return;
   $variables['#cache'] = ['max-age' => 0];
   $delivery_service = \Drupal::service('delivery.service');
   if ($delivery_service->canForwardDelivery($delivery)) {
@@ -198,7 +144,7 @@ function _delivery_preprocess_pull_action_link(&$variables) {
   if (empty($variables['link']['#url'])) {
     return;
   }
-  if (!$variables['link']['#url'] instanceof \Drupal\Core\Url) {
+  if (!$variables['link']['#url'] instanceof Url) {
     return;
   }
   if (!$delivery = $route_match->getParameter('delivery')) {
@@ -213,6 +159,7 @@ function _delivery_preprocess_pull_action_link(&$variables) {
    *
    * @todo find a better way of doing this - could be solved by DAI-364.
    */
+  return;
   $variables['#cache'] = ['max-age' => 0];
   $delivery_service = \Drupal::service('delivery.service');
   if ($delivery_service->canPullDelivery($delivery)) {
@@ -250,12 +197,43 @@ function delivery_entity_insert(EntityInterface $entity) {
     $revision->revision_parent->target_id = $entity->getRevisionId();
     $revision->save();
   }
+
+  _delivery_update_entity_index($entity);
 }
 
+/**
+ * Implements hook_entity_update().
+ */
+function delivery_entity_update(EntityInterface $entity) {
+  _delivery_update_entity_index($entity);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
 function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
   // Ensure the revision revert confirmation form works in all workspaces.
   $formState->set('workspace_safe', TRUE);
   $formObject = $formState->getFormObject();
+
+  // Don't allow to change the language on existing entities.
+  if (
+    $formObject instanceof EntityFormInterface &&
+    $formObject->getEntity() instanceof ContentEntityInterface &&
+    $formObject->getEntity()->isTranslatable() &&
+    array_key_exists('langcode', $form)
+  ) {
+    $form['langcode']['#access'] = $formObject->getEntity()->isNew();
+    if ($formObject->getEntity()->isNew()) {
+      /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+      $workspaceManager = \Drupal::service('workspaces.manager');
+      $workspace = $workspaceManager->getActiveWorkspace();
+      if (isset($workspace->primary_language) && $defaultLanguage = $workspace->primary_language->value) {
+        $form['langcode']['widget'][0]['value']['#default_value'] = $defaultLanguage;
+      }
+    }
+  }
+
   if ($formObject instanceof EntityFormInterface && $formObject->getOperation() === 'merge') {
     // Run 'merge' forms through the inline conflict resolution form builder.
     \Drupal::service('conflict.resolution_inline_form.builder')->processForm($form, $formState, $formObject->getEntity());
@@ -278,5 +256,58 @@ function delivery_module_implements_alter(&$implementations, $hook) {
   // in a standard entity form but only in our dedicated "merge" form mode.
   if (in_array($hook, ['form_alter', 'entity_load'])) {
     unset($implementations['conflict']);
+  }
+
+  if (in_array($hook, ['entity_bundle_info_alter', 'entity_base_field_info_alter'])) {
+    $group = $implementations['delivery'];
+    unset($implementations['delivery']);
+    $implementations['delivery'] = $group;
+  }
+}
+
+/**
+ * Update revision_tree index.
+ */
+function _delivery_update_entity_index($entity) {
+  $workspace_manager = \Drupal::service('workspaces.manager');
+  if ($workspace_manager->isEntityTypeSupported($entity->getEntityType()) && $entity->getLoadedRevisionId() != $entity->getRevisionId()) {
+    \Drupal::service('delivery.revision_index')->updateIndex([$entity->id()], $entity->getEntityType()->id());
+    \Drupal::service('delivery.revision_index')->updateIndex([$entity->id()], $entity->getEntityType()->id(), TRUE);
+  }
+
+  // We have to update index for workspace in case of parent change or creation.
+  if ($entity->getEntityType()->id() == 'workspace') {
+    if (empty($entity->original) ||
+      ($entity->parent_workspace->target_id !== $entity->original->parent_workspace->target_id)) {
+      $entityTypeManager = \Drupal::service('entity_type.manager');
+
+      foreach ($entityTypeManager->getDefinitions() as $entity_type_id => $entity_type) {
+        if ($workspace_manager->isEntityTypeSupported($entity_type)) {
+          \Drupal::service('delivery.revision_index')->updateIndex([], $entity_type_id, FALSE, $entity->id());
+          \Drupal::service('delivery.revision_index')->updateIndex([], $entity_type_id, TRUE, $entity->id());
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_bundle_info_alter().
+ */
+function delivery_entity_bundle_info_alter(&$bundles) {
+  // Make sure moderation states are never translatable.
+  $bundles['content_moderation_state']['content_moderation_state']['translatable'] = FALSE;
+}
+
+/**
+ * Implements hook_entity_base_field_info_alter().
+ */
+function delivery_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+  if (isset($fields['moderation_state'])) {
+    $fields['moderation_state']->setTranslatable(FALSE);
+  }
+
+  if (isset($fields['status'])) {
+    $fields['status']->setTranslatable(FALSE);
   }
 }

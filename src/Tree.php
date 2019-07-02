@@ -41,13 +41,15 @@ class Tree implements TreeInterface {
   /**
    * Performs the actual search for an identifier by recursively traversing the
    * tree.
+   *
    * @param string $identifier
-   *  The identifier to search for.
+   *   The identifier to search for.
    * @param \Drupal\delivery\TreeNode $node
-   *  The current tree node being processed.
+   *   The current tree node being processed.
+   *
    * @return \Drupal\delivery\TreeNode | NULL
-   *  If the identifier was found, returns the tree node. Otherwise returns
-   *  NULL.
+   *   If the identifier was found, returns the tree node. Otherwise returns
+   *   NULL.
    */
   protected function doSearch($identifier, TreeNode $node) {
     if ($node->getId() === $identifier) {
@@ -86,11 +88,11 @@ class Tree implements TreeInterface {
    * Recursively builds a tree.
    *
    * @param \DOMNode $node
-   *  The current DOM node to process.
+   *   The current DOM node to process.
    * @param \Drupal\delivery\TreeNode $parent
-   *  The tree node parent to which we want to add the new nodes.
+   *   The tree node parent to which we want to add the new nodes.
    * @param \Drupal\delivery\Tree $tree
-   *  The entire tree object.
+   *   The entire tree object.
    */
   protected static function _buildTree(\DOMNode $node, TreeNode $parent, Tree $tree) {
     if (!empty($node->childNodes)) {
@@ -128,11 +130,11 @@ class Tree implements TreeInterface {
    * Recursively clones a subtree.
    *
    * @param \Drupal\delivery\TreeNode $node
-   *  The current node to be processed.
+   *   The current node to be processed.
    * @param \Drupal\delivery\Tree $tree
-   *  The tree to add the node to.
+   *   The tree to add the node to.
    * @param \Drupal\delivery\TreeNode $parent
-   *  The parent to be set for the current node.
+   *   The parent to be set for the current node.
    */
   protected static function _cloneSubtree(TreeNode $node, Tree $tree, TreeNode $parent = NULL) {
     // The cloned node will actually reference to the exact same domNode, but
@@ -155,7 +157,8 @@ class Tree implements TreeInterface {
    * first sorted alphabetically).
    *
    * @param \DOMNode $node
-   *  The DOM node for which to get the identifier.
+   *   The DOM node for which to get the identifier.
+   *
    * @return string
    */
   protected static function getIdentifierForNode(\DOMNode $node) {
@@ -196,11 +199,12 @@ class Tree implements TreeInterface {
 
     // We ignore the first item in the $path,because this should actually be the
     // root.
-    return array_reduce(array_slice($path, 1), function($carry, $index) {
+    return array_reduce(array_slice($path, 1), function ($carry, $index) {
       if ($carry instanceof TreeNodeInterface) {
         return !empty($carry->getChildren()[$index]) ? $carry->getChildren()[$index] : NULL;
       }
       return NULL;
     }, $this->root);
   }
+
 }

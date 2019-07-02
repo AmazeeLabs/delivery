@@ -2,9 +2,10 @@
 
 /**
  * @file
- *  A workspaces negotiator which uses the path information (the path prefix) to
+ * A workspaces negotiator which uses the path information (the path prefix) to
  *  determine the current workspace.
  */
+
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 
@@ -17,10 +18,10 @@ function workspaces_negotiator_path_entity_base_field_info(EntityTypeInterface $
     $fields['path_prefix'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Path prefix'))
       ->setDescription(t('An optional path prefix for this workspace. The prefix has to start with "/", e.g. <em>/stage</em>. If there should be no prefix, but you still want this workspace to be selected, then use "/". That is usually used for a <em>Main</em> or <em>Global</em> workspace. If this field is empty, this workspace will just be ignored by the Path Prefix workspace negotiator.'))
-      ->setDisplayOptions('form', array(
-        'type' => 'string',
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
         'weight' => 10,
-      ))
+      ])
       ->setRevisionable(TRUE)
       ->setDisplayConfigurable('form', TRUE);
     return $fields;

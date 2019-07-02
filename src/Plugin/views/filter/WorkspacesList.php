@@ -19,12 +19,14 @@ class WorkspacesList extends InOperator {
 
   /**
    * The entity type manager service.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
    * WorkspacesList constructor.
+   *
    * @param array $configuration
    * @param string $plugin_id
    * @param \Drupal\delivery\Plugin\views\filter\mixed $plugin_definition
@@ -53,7 +55,7 @@ class WorkspacesList extends InOperator {
   public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
     parent::init($view, $display, $options);
     $this->valueTitle = t('Allowed workspaces');
-    $this->definition['options callback'] = array($this, 'generateOptions');
+    $this->definition['options callback'] = [$this, 'generateOptions'];
   }
 
   /**
@@ -78,6 +80,7 @@ class WorkspacesList extends InOperator {
 
   /**
    * Helper function that generates the options.
+   *
    * @return array
    */
   public function generateOptions() {
@@ -89,4 +92,5 @@ class WorkspacesList extends InOperator {
 
     return $options;
   }
+
 }

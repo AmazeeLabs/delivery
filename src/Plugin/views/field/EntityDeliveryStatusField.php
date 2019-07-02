@@ -69,13 +69,13 @@ class EntityDeliveryStatusField extends FieldPluginBase implements ContainerFact
 
     // Conflict.
     if ($source !== $target && $target !== $lca && $source !== $lca) {
-     $values->{$alias} = static::$CONFLICT;
+      $values->{$alias} = static::$CONFLICT;
     }
     // Outdated.
-    else if ($source === $lca && $target !== $lca) {
+    elseif ($source === $lca && $target !== $lca) {
       $values->{$alias} = static::$OUTDATED;
     }
-    else if ($source !== $lca && $target === $lca) {
+    elseif ($source !== $lca && $target === $lca) {
       // New.
       if (!$rev_target) {
         $values->{$alias} = static::$NEW;
@@ -93,6 +93,9 @@ class EntityDeliveryStatusField extends FieldPluginBase implements ContainerFact
     return $values->{$alias};
   }
 
+  /**
+   *
+   */
   public function postExecute(&$values) {
     if (count($values) === 0) {
       return;
@@ -143,7 +146,7 @@ class EntityDeliveryStatusField extends FieldPluginBase implements ContainerFact
         ], [
           'query' => [
             'destination' => $destination,
-          ]
+          ],
         ]),
         '#attached' => ['library' => ['delivery/entity-status']],
       ];
@@ -160,4 +163,5 @@ class EntityDeliveryStatusField extends FieldPluginBase implements ContainerFact
       ];
     }
   }
+
 }

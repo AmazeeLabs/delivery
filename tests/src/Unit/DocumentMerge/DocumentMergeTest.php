@@ -403,7 +403,7 @@ XML;
   <div class="media" data-media-uuid="1"></div>
 XML;
 
-      $result = <<<XML
+    $result = <<<XML
   <ck-conflict-media>
     <ck-conflict-media-option from="left">
       <div class="media" data-media-uuid="2"/>
@@ -415,7 +415,6 @@ XML;
 XML;
     $this->assertMergeResult($source, $left, $right, $result);
   }
-
 
   public function testRightChangesMedia() {
     $source = <<<XML
@@ -430,7 +429,7 @@ XML;
   <div class="media" data-media-uuid="2"></div>
 XML;
 
-      $result = <<<XML
+    $result = <<<XML
   <ck-conflict-media>
     <ck-conflict-media-option from="left">
       <div class="media" data-media-uuid="1"/>
@@ -456,7 +455,7 @@ XML;
   <div class="media" data-media-uuid="2"></div>
 XML;
 
-      $result = <<<XML
+    $result = <<<XML
   <div class="media" data-media-uuid="2"></div>
 XML;
     $this->assertMergeResult($source, $left, $right, $result);

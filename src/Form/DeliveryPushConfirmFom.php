@@ -27,7 +27,7 @@ class DeliveryPushConfirmFom extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
-   * @var \Drupal\revision_tree\Entity\RevisionTreeEntityRepositoryInterface $entityRepository
+   * @var \Drupal\revision_tree\Entity\RevisionTreeEntityRepositoryInterface
    *  The entity repository service.
    */
   protected $entityRepository;
@@ -40,6 +40,7 @@ class DeliveryPushConfirmFom extends ConfirmFormBase {
 
   /**
    * DeliveryPushConfirmFom constructor.
+   *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, RevisionTreeEntityRepositoryInterface $entity_repository) {
@@ -111,9 +112,6 @@ class DeliveryPushConfirmFom extends ConfirmFormBase {
     batch_set($batch);
   }
 
-  /**
-   *
-   */
   public function pushChangesBatch($data, &$context) {
     if (empty($context['sandbox']['max'])) {
       $context['sandbox']['max'] = count($this->delivery->get($data['field_name'])->getValue());
@@ -158,9 +156,6 @@ class DeliveryPushConfirmFom extends ConfirmFormBase {
     }
   }
 
-  /**
-   *
-   */
   public function finishPushChanges($success, $results) {
     if ($success) {
       $this->messenger->addStatus($this->t('The changes have been pushed.'));
@@ -169,4 +164,5 @@ class DeliveryPushConfirmFom extends ConfirmFormBase {
       $this->messenger->addError($this->t('An error occurred trying to push the changes.'), 'error');
     }
   }
+
 }

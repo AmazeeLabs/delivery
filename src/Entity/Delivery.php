@@ -137,41 +137,41 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Label'))
       ->setDescription(t('The label of the delivery.'))
-      ->setSettings(array(
+      ->setSettings([
         'default_value' => '',
         'max_length' => 255,
         'text_processing' => 0,
-      ))
+      ])
       ->setRequired(TRUE)
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'string',
         'weight' => -6,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => -6,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['desciption'] = BaseFieldDefinition::create('string_long')
+    $fields['description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Description'))
       ->setDescription(t('The description of the delivery.'))
-      ->setSettings(array(
+      ->setSettings([
         'default_value' => '',
         'text_processing' => 0,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
         'weight' => -6,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'string_textarea',
         'rows' => '5',
         'weight' => -6,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -180,21 +180,21 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
       ->setDescription(t('The name of the creator of this delivery.'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'settings' => array(
+        'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => 60,
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ),
+        ],
         'weight' => -3,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -206,100 +206,60 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the entity was last edited.'));
 
-    $fields['workspaces'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Target workspaces'))
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDescription(t('The target workspaces for this delivery.'))
-      ->setSetting('target_type', 'workspace')
-      ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', array(
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
-        'type' => 'entity_reference_autocomplete',
-        'settings' => array(
-          'match_operator' => 'CONTAINS',
-          'size' => 60,
-          'autocomplete_type' => 'tags',
-          'placeholder' => '',
-        ),
-        'weight' => -3,
-      ))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
     $fields['source'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Source workspace'))
       ->setCardinality(1)
       ->setDescription(t('The source workspace for this delivery.'))
       ->setSetting('target_type', 'workspace')
       ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'settings' => array(
+        'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => 60,
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ),
+        ],
         'weight' => -3,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['nodes'] = BaseFieldDefinition::create('entity_reference_revisions')
-      ->setLabel(t('Nodes'))
+    $fields['workspaces'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Target workspaces'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDescription(t('The pages to be delivered.'))
-      ->setSetting('target_type', 'node')
+      ->setDescription(t('The target workspaces for this delivery.'))
+      ->setSetting('target_type', 'workspace')
       ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
-        'type' => 'entity_reference_revisions_autocomplete',
-        'settings' => array(
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => 60,
+          'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ),
+        ],
         'weight' => -3,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['media'] = BaseFieldDefinition::create('entity_reference_revisions')
-      ->setLabel(t('Media'))
+    $fields['items'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Delivery items'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDescription(t('The media items to be delivered.'))
-      ->setSetting('target_type', 'media')
-      ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', array(
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
-        'type' => 'entity_reference_revisions_autocomplete',
-        'settings' => array(
-          'match_operator' => 'CONTAINS',
-          'size' => 60,
-          'placeholder' => '',
-        ),
-        'weight' => -3,
-      ))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
+      ->setDescription(t('The delivery items.'))
+      ->setSetting('target_type', 'delivery_item')
+      ->setSetting('handler', 'default');
 
     return $fields;
   }

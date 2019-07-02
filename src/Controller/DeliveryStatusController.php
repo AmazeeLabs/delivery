@@ -11,7 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
- * Class DeliveryStatusController
+ * Class DeliveryStatusController.
  *
  * @package Drupal\delivery\Controller
  */

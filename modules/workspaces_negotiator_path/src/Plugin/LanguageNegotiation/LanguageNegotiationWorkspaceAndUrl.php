@@ -2,7 +2,6 @@
 
 namespace Drupal\workspaces_negotiator_path\Plugin\LanguageNegotiation;
 
-use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\PathProcessor\OutboundPathProcessorInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\BubbleableMetadata;
@@ -11,7 +10,6 @@ use Drupal\workspaces\WorkspaceManagerInterface;
 use Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
-
 
 /**
  * Class for identifying language via URL prefix or domain.
@@ -56,6 +54,7 @@ class LanguageNegotiationWorkspaceAndUrl extends LanguageNegotiationUrl implemen
 
   /**
    * {@inheritdoc}
+   *
    * @todo: Find a way to not duplicate this pile of code.
    */
   public function getLangcode(Request $request = NULL) {
@@ -66,9 +65,10 @@ class LanguageNegotiationWorkspaceAndUrl extends LanguageNegotiationUrl implemen
       $config = $this->config->get('language.negotiation')->get('url');
 
       switch ($config['source']) {
-        case LanguageNegotiationUrl::CONFIG_DOMAIN :
+        case LanguageNegotiationUrl::CONFIG_DOMAIN:
           $langcode = parent::getLangcode($request);
           break;
+
         case LanguageNegotiationUrl::CONFIG_PATH_PREFIX:
           // In some cases (when the field storage needs to be updated for
           // example because of a new field), loading a workspace may generate
@@ -90,9 +90,9 @@ class LanguageNegotiationWorkspaceAndUrl extends LanguageNegotiationUrl implemen
           $path_prefix = $current_workspace->get('path_prefix')->getValue();
           $request_path = urldecode($request->getPathInfo());
           if (!empty($path_prefix[0]['value']) && $path_prefix[0]['value'] != '/') {
-            // Check first if the path prefix of the workspace is really a prefix for
-            // the current workspace. Only in that case we will remove the path
-            // prefix.
+            // Check first if the path prefix of the workspace is really a
+            // prefix for the current workspace. Only in that case we will
+            // remove the path prefix.
             if (PathPrefixHelper::pathPrefixMatch($request_path, $path_prefix[0]['value'])) {
               $request_path = substr($request_path, strlen($path_prefix[0]['value']));
             }
@@ -136,4 +136,5 @@ class LanguageNegotiationWorkspaceAndUrl extends LanguageNegotiationUrl implemen
     // called by the language manager.
     return $path;
   }
+
 }

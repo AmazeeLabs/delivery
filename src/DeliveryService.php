@@ -2,15 +2,20 @@
 
 namespace Drupal\delivery;
 
+use Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\delivery\Entity\DeliveryItem;
+use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\entity_reference_revisions\EntityReferenceRevisionsFieldItemList;
 use Drupal\workspaces\WorkspaceInterface;
-use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\workspaces\WorkspaceManagerInterface;
 
 /**
- * Class DeliveryService
+ * Class DeliveryService.
  *
  * @package Drupal\delivery
  */
@@ -29,13 +34,33 @@ class DeliveryService {
   protected $workspaceManager;
 
   /**
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   */
+  protected $entityRepository;
+
+  /**
+   * @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface
+   */
+  protected $conflictResolverManager;
+
+  /**
    * DeliveryService constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
+   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
+   * @param \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, WorkspaceManagerInterface $workspaceManager) {
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    WorkspaceManagerInterface $workspaceManager,
+    EntityRepositoryInterface $entityRepository,
+    ConflictResolverManagerInterface $conflictResolverManager
+  ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->workspaceManager = $workspaceManager;
+    $this->entityRepository = $entityRepository;
+    $this->conflictResolverManager = $conflictResolverManager;
   }
 
   /**
@@ -46,6 +71,7 @@ class DeliveryService {
    * @param int $source_id
    *
    * @return \Drupal\delivery\DeliveryInterface
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -65,54 +91,23 @@ class DeliveryService {
       return ['target_id' => $id];
     }, array_filter($target_ids)));
 
-    // Get the merge revisions of all node revisions.
-    $nodeRevisions = [];
-    foreach ($delivery->nodes as $item) {
-      $nodeRevisions[] = $item->target_revision_id;
-    }
+    $forwarded->items = [];
 
-    $forwarded->nodes = [];
-    if ($nodeRevisions) {
-      /** @var \Drupal\Core\Entity\ContentEntityTypeInterface $nodeType */
-      $nodeType = $this->entityTypeManager->getDefinition('node');
-      /** @var \Drupal\Core\Entity\Query\Sql\Query $nodes */
-      $nodeQuery = $this->entityTypeManager->getStorage('node')
-        ->getQuery()
-        ->allRevisions();
-      $nodeQuery->condition($nodeType->getRevisionMetadataKey('revision_parent') . '.merge_target_id', $nodeRevisions, 'IN');
-      $nodeResult = $nodeQuery->execute();
-
-
-      foreach ($nodeResult as $revisionId => $entityId) {
-        $forwarded->nodes[] = [
-          'target_id' => $entityId,
-          'target_revision_id' => $revisionId,
-        ];
+    foreach ($delivery->items as $item) {
+      /** @var \Drupal\delivery\Entity\DeliveryItem $deliveryItem */
+      $deliveryItem = $item->entity;
+      // Skip delivery items that don't target the current workspace.
+      if ($deliveryItem->getTargetWorkspace() !== $currentWorkspace->id()) {
+        continue;
       }
-    }
-
-    // Get the merge revisions of all media revisions.
-    $mediaRevisions = [];
-    foreach ($delivery->media as $item) {
-      $mediaRevisions[] = $item->target_revision_id;
-    }
-
-    $forwarded->media = [];
-    if ($mediaRevisions) {
-      /** @var \Drupal\Core\Entity\ContentEntityTypeInterface $mediaType */
-      $mediaType = $this->entityTypeManager->getDefinition('media');
-      /** @var \Drupal\Core\Entity\Query\Sql\Query $nodes */
-      $mediaQuery = $this->entityTypeManager->getStorage('media')
-        ->getQuery()
-        ->allRevisions();
-      $mediaQuery->condition($mediaType->getRevisionMetadataKey('revision_parent') . '.merge_target_id', $mediaRevisions, 'IN');
-      $mediaResult = $mediaQuery->execute();
-
-      foreach ($mediaResult as $revisionId => $entityId) {
-        $forwarded->media[] = [
-          'target_id' => $entityId,
-          'target_revision_id' => $revisionId,
-        ];
+      foreach (array_filter($target_ids) as $target) {
+        $forwarded->items[] = DeliveryItem::create([
+          'source_workspace' => $deliveryItem->getTargetWorkspace(),
+          'target_workspace' => $target,
+          'entity_type' => $deliveryItem->getTargetType(),
+          'entity_id' => $deliveryItem->getTargetId(),
+          'source_revision' => $deliveryItem->getResultRevision(),
+        ]);
       }
     }
 
@@ -124,6 +119,7 @@ class DeliveryService {
    * Returns an array of possible target workspaces, keyed by workspace IDs.
    *
    * @return array
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -187,29 +183,14 @@ class DeliveryService {
    */
   public function deliveryHasPendingChanges(DeliveryInterface $delivery) {
     $currentWorkspace = $this->workspaceManager->getActiveWorkspace();
+    $delivered = TRUE;
 
-    $pages = [0];
-    foreach ($delivery->nodes as $item) {
-      $pages[] = $item->target_revision_id;
+    foreach ($delivery->items as $item) {
+      if ($item->entity->target_workspace->value === $currentWorkspace->id()) {
+        $delivered = $delivered && $item->entity->resolution->value;
+      }
     }
-
-    $media = [0];
-    foreach ($delivery->media as $item) {
-      $media[] = $item->target_revision_id;
-    }
-
-    $pages = views_get_view_result('workspace_status_pages', 'delivery_status', implode('+', $pages), $delivery->source->target_id, $currentWorkspace->id());
-    $media = views_get_view_result('workspace_status_media', 'delivery_status', implode('+', $media), $delivery->source->target_id, $currentWorkspace->id());
-
-    $pages = array_filter($pages, function ($row) {
-      return $row->entity_delivery_status === EntityDeliveryStatusTrait::$MODIFIED;
-    });
-
-    $media = array_filter($media, function ($row) {
-      return $row->entity_delivery_status === EntityDeliveryStatusTrait::$MODIFIED;
-    });
-
-    return $pages || $media;
+    return !$delivered;
   }
 
   /**
@@ -217,9 +198,10 @@ class DeliveryService {
    * outdated content).
    *
    * @param \Drupal\delivery\DeliveryInterface $delivery
-   * @param \Drupal\workspaces\WorkspaceInterface $targetWorkspace | NULL
+   * @param \Drupal\workspaces\WorkspaceInterface $targetWorkspace
+   *   | NULL.
    *
-   * @return bool.
+   * @return bool
    *
    * @todo Properly implement this once the workspace index work is complete.
    */
@@ -308,9 +290,6 @@ class DeliveryService {
       return FALSE;
     }
 
-    if ($this->deliveryHasConflicts($delivery)) {
-      return FALSE;
-    }
     if ($this->deliveryHasPendingChanges($delivery)) {
       return FALSE;
     }
@@ -354,55 +333,179 @@ class DeliveryService {
    * @param \Drupal\workspaces\WorkspaceInterface $workspace
    *
    * @return array
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function pullChangesFromDeliveryToWorkspace(DeliveryInterface $delivery, WorkspaceInterface $workspace) {
-    // Return an array of revisions.
-    $revisions = [];
-    // Get IDs.
-    $entities = [
-      'node' => $this->getNodeIDsFromDelivery($delivery),
-      'media' => $this->getMediaIDsFromDelivery($delivery),
-    ];
-    // Only pull the modified entities.
-    $modified = $this->getModifiedEntities($delivery);
-    $entities['node'] = array_filter($entities['node'], function ($entity) use ($modified) {
-      return in_array($entity['target_id'], $modified['node']);
-    });
-    $entities['media'] = array_filter($entities['media'], function ($entity) use ($modified) {
-      return in_array($entity['target_id'], $modified['media']);
-    });
-    // Iterate through the entity data and create revisions.
-    foreach ($entities as $entity_type => $entity_data) {
-      foreach ($entity_data as $entity_datum) {
-        $selected_revision_id = $entity_datum['target_revision_id'];
-        // Create a new revision based on the selected revision.
-        $storage = $this->entityTypeManager->getStorage($entity_type);
-        $selected_revision = $storage->loadRevision($selected_revision_id);
-        if (!$selected_revision) {
+    $skipped = 0;
+    foreach ($delivery->items as $item) {
+      /** @var \Drupal\delivery\Entity\DeliveryItem $deliveryItem */
+      $deliveryItem = $item->entity;
+      if (isset($deliveryItem->resolution->value)) {
+        continue;
+      }
+      if ($deliveryItem->getTargetWorkspace() !== $workspace->id()) {
+        continue;
+      }
+
+      if ($this->deliverItemHasConflicts($deliveryItem)) {
+        $skipped++;
+        continue;
+      }
+
+      $this->acceptDeliveryItem($deliveryItem);
+    }
+    return $skipped;
+  }
+
+  /**
+   * @param $entityType
+   *
+   * @return \Drupal\Core\Entity\ContentEntityStorageInterface
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  protected function getContentEntityStorage($entityType) {
+    return $this->entityTypeManager->getStorage($entityType);
+  }
+
+  public function deliverItemHasConflicts($deliveryItem) {
+
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    $storage = $this->entityTypeManager->getStorage($deliveryItem->getTargetType());
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $sourceEntity */
+    $sourceEntity = $storage->loadRevision($deliveryItem->getSourceRevision());
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $targetEntity */
+    $targetEntity = $this->getActiveRevision($deliveryItem);
+
+    /** @var \Drupal\revision_tree\RevisionTreeHandlerInterface $revisionTreeHandler */
+    $revisionTreeHandler = $this->entityTypeManager->getHandler($sourceEntity->getEntityTypeId(), 'revision_tree');
+    $parentEntityRevision = $revisionTreeHandler
+      ->getLowestCommonAncestor($sourceEntity, $sourceEntity->getRevisionId(), $targetEntity->getRevisionId());
+
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $parentEntity */
+    $parentEntity = $storage->loadRevision($parentEntityRevision);
+
+    $hasConflicts = FALSE;
+
+    if ($sourceEntity->isTranslatable()) {
+      foreach ($sourceEntity->getTranslationLanguages() as $language) {
+        $languageId = $language->getId();
+        if (!$targetEntity->hasTranslation($languageId)) {
           continue;
         }
-        $new_revision = $storage->createRevision($selected_revision);
-        // Get the old revision ID.
-        $entity = $storage->load($entity_datum['target_id']);
-        $old_revision = $entity->getRevisionId();
-        // Set the workspace to the one we are merging to.
-        $new_revision->workspace = $this->workspaceManager->getActiveWorkspace()
-          ->id();
-        // When merging revisions, we set the cloned revision as parent and
-        // the previous revision as merge parent.
-        $new_revision->revision_parent->target_id = $old_revision;
-        $new_revision->revision_parent->merge_target_id = $selected_revision_id;
-        $new_revision->setNewRevision(TRUE);
-        // Save the new revision and redirect to its page.
-        $new_revision->save();
-        $revisions[] = $new_revision;
+        if (!$parentEntity->hasTranslation($languageId)) {
+          continue;
+        }
+
+        $sourceTranslation = $sourceEntity->getTranslation($languageId);
+        $parentTranslation = $parentEntity->getTranslation($languageId);
+        $targetTranslation = $targetEntity->getTranslation($languageId);
+
+        $conflicts = $this->conflictResolverManager->getConflicts(
+          $targetTranslation,
+          $sourceTranslation,
+          $parentTranslation
+        );
+        $hasConflicts = $hasConflicts || count($conflicts) > 0;
       }
     }
-    // Make sure the array can be empty.
-    $new_revisions = array_filter($revisions);
-    return $new_revisions;
+    return $hasConflicts;
+  }
+
+  /**
+   * Force push a delivery item.
+   *
+   * Resolve a merge conflict preferring the source version of an entity.
+   *
+   * @param \Drupal\delivery\Entity\DeliveryItem $deliveryItem
+   *   The delivery item to force push.
+   */
+  public function acceptDeliveryItem(DeliveryItem $deliveryItem, $state = 'draft') {
+    $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
+    $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
+    $source = $storage->loadRevision($deliveryItem->getSourceRevision());
+
+    $target = $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
+      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace()),
+    ]);
+
+    $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionField = $entityType->getKey('revision');
+    $result = $storage->createRevision($source);
+
+    $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
+    $result->{$revisionParentField}->target_id = $target->{$revisionField}->value;
+    $result->workspace = $deliveryItem->getTargetWorkspace();
+    $result->set('moderation_state', $state);
+    $result->save();
+
+    $deliveryItem->resolution = DeliveryItem::RESOLUTION_SOURCE;
+    $deliveryItem->result_revision = $result->{$revisionField};
+    $deliveryItem->save();
+  }
+
+  /**
+   * Force decline the delivery item.
+   *
+   * Resolve a merge conflict preferring the target version of an entity.
+   *
+   * @param \Drupal\delivery\Entity\DeliveryItem $deliveryItem
+   */
+  public function declineDeliveryItem(DeliveryItem $deliveryItem) {
+    $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
+    $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
+
+    $target = $this->getActiveRevision($deliveryItem);
+
+    $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionField = $entityType->getKey('revision');
+    $result = $storage->createRevision($target);
+
+    $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
+    $result->{$revisionParentField}->target_id = $target->{$revisionField}->value;
+    $result->workspace = $deliveryItem->getTargetWorkspace();
+    $result->save();
+
+    $deliveryItem->resolution = DeliveryItem::RESOLUTION_TARGET;
+    $deliveryItem->result_revision = $result->{$revisionField};
+    $deliveryItem->save();
+  }
+
+  public function mergeDeliveryItem(DeliveryItem $deliveryItem, ContentEntityInterface $result) {
+    $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
+
+    $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionField = $entityType->getKey('revision');
+
+    $target = $this->getActiveRevision($deliveryItem);
+
+    $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
+    $result->{$revisionParentField}->target_id = $target->{$revisionField}->value;
+    $result->save();
+
+    // TODO: Properly detect left/right/merge/identical states.
+    $deliveryItem->resolution = DeliveryItem::RESOLUTION_MERGE;
+    $deliveryItem->result_revision = $result->{$revisionField};
+    $deliveryItem->save();
+  }
+
+  public function getActiveRevision(DeliveryItem $deliveryItem) {
+    return $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
+      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace()),
+    ]);
+
+  }
+
+  protected function getWorkspaceHierarchy($workspaceId) {
+    $workspace = $this->getContentEntityStorage('workspace')->load($workspaceId);
+    $context = [$workspace->id()];
+    while ($workspace = $workspace->parent_workspace->entity) {
+      $context[] = $workspace->id();
+    }
+    $context[] = NULL;
+    return $context;
   }
 
   /**
@@ -521,6 +624,38 @@ class DeliveryService {
       'conflicts' => $conflicts,
       'updates' => $updates,
     ];
+  }
+
+  /**
+   * Return workspaces ids.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   User account.
+   *
+   * @return array
+   *   List of workspaces.
+   */
+  public function getUserWorkspaces(AccountInterface $account) {
+    $assignedWorkspaces = $this->entityTypeManager->getStorage('user')->load($account->id())->get('field_assigned_workspaces')->referencedEntities();
+    $workspaces = [];
+    foreach ($assignedWorkspaces as $workspace) {
+      $workspaces[] = $workspace->id();
+    }
+    $result = $workspaces;
+    foreach ($workspaces as $workspaceId) {
+      $result = array_merge($result, $this->getWorkspaceChildren($workspaceId));
+    }
+    return $result;
+  }
+
+  /**
+   * Get workspace children.
+   */
+  protected function getWorkspaceChildren($workspaceId) {
+    $query = $this->entityTypeManager->getStorage('workspace')->getQuery();
+    $query->condition('parent_workspace', $workspaceId);
+    $result = $query->execute();
+    return $result;
   }
 
 }

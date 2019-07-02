@@ -5,6 +5,9 @@ namespace Drupal\delivery\Routing;
 use Drupal\Core\Routing\RouteSubscriberBase;
 use Symfony\Component\Routing\RouteCollection;
 
+/**
+ *
+ */
 class RouteSubscriber extends RouteSubscriberBase {
 
   /**
@@ -22,4 +25,5 @@ class RouteSubscriber extends RouteSubscriberBase {
       }
     }
   }
+
 }
