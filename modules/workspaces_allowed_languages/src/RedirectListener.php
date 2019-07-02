@@ -65,6 +65,10 @@ class RedirectListener implements EventSubscriberInterface {
    * not match.
    */
   public function onKernelRequest(GetResponseEvent $event) {
+    // Skip any checks for subrequests
+    if (!$event->isMasterRequest()) {
+      return;
+    }
     // Skip any checks if the current user can bypass the workspaces language
     // restrictions.
     if ($this->currentUser->hasPermission('bypass workspaces language restrictions')) {
