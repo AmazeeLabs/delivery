@@ -48,6 +48,7 @@ class DeliveryEntityOperations extends EntityOperations {
       // a published pending revision in the default workspace, however, it will
       // become the default revision only when it is replicated to the default
       // workspace.
+      // TODO: Modified
       // $entity->isDefaultRevision(FALSE);
 
       // Track the workspaces in which the new revision was saved.
@@ -59,14 +60,15 @@ class DeliveryEntityOperations extends EntityOperations {
     // actually want two revisions to be saved:
     // - An unpublished default revision in the default ('live') workspace.
     // - A published pending revision in the current workspace.
-    if ($entity->isNew() && $entity->isPublished()) {
-      // Keep track of the publishing status in a dynamic property for
-      // ::entityInsert(), then unpublish the default revision.
-      // @todo Remove this dynamic property once we have an API for associating
-      //   temporary data with an entity: https://www.drupal.org/node/2896474.
-      $entity->_initialPublished = TRUE;
-      $entity->setUnpublished();
-    }
+    // TODO: Modified
+//    if ($entity->isNew() && $entity->isPublished()) {
+//      // Keep track of the publishing status in a dynamic property for
+//      // ::entityInsert(), then unpublish the default revision.
+//      // @todo Remove this dynamic property once we have an API for associating
+//      //   temporary data with an entity: https://www.drupal.org/node/2896474.
+//      $entity->_initialPublished = TRUE;
+//      $entity->setUnpublished();
+//    }
   }
 
   public function entityPredelete(EntityInterface $entity) {
