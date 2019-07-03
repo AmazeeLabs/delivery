@@ -90,9 +90,9 @@ function delivery_delivery_view_alter(array &$build, EntityInterface $entity, En
 function delivery_form_field_config_edit_form_alter(&$form, FormStateInterface $formState) {
   /** @var \Drupal\field\FieldConfigInterface $entity */
   $entity = $formState->getFormObject()->getEntity();
-  $form['third_party_settings']['conflict'] = [
+  $form['third_party_settings']['delivery'] = [
     '#type' => 'details',
-    '#title' => t('Conflict'),
+    '#title' => t('Conflict resolution'),
     '#open' => TRUE,
     'blacklisted' => [
       '#type' => 'checkbox',

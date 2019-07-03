@@ -66,7 +66,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
       'bundle' => 'entity_test_rev',
       'settings' => [],
       'third_party_settings' => [
-        'conflict' => [
+        'delivery' => [
           'blacklisted' => FALSE,
         ],
       ],
@@ -88,7 +88,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
       'bundle' => 'entity_test_rev',
       'settings' => [],
       'third_party_settings' => [
-        'conflict' => [
+        'delivery' => [
           'blacklisted' => TRUE,
         ],
       ],

@@ -1,4 +1,4 @@
-field.field.*.*.*.third_party.conflict:
+field.field.*.*.*.third_party.delivery:
   type: mapping
   label: 'Conflict field settings'
   mapping:
