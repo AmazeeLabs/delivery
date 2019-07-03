@@ -3,6 +3,7 @@
 namespace Drupal\delivery;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\workspaces\EntityOperations;
 
 /**
@@ -47,7 +48,7 @@ class DeliveryEntityOperations extends EntityOperations {
       // a published pending revision in the default workspace, however, it will
       // become the default revision only when it is replicated to the default
       // workspace.
-      $entity->isDefaultRevision(FALSE);
+      // $entity->isDefaultRevision(FALSE);
 
       // Track the workspaces in which the new revision was saved.
       $field_name = $entity_type->getRevisionMetadataKey('workspace');
@@ -69,6 +70,9 @@ class DeliveryEntityOperations extends EntityOperations {
   }
 
   public function entityPredelete(EntityInterface $entity) {
+  }
+
+  public function entityFormAlter(array &$form, FormStateInterface $form_state, $form_id) {
   }
 
 }

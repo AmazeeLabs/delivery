@@ -31,16 +31,6 @@ class DeliveryFromWorkspaceForm extends FormBase {
   /**
    * @var \Drupal\Core\Entity\ContentEntityStorageInterface
    */
-  protected $nodeStorage;
-
-  /**
-   * @var \Drupal\Core\Entity\ContentEntityStorageInterface
-   */
-  protected $mediaStorage;
-
-  /**
-   * @var \Drupal\Core\Entity\ContentEntityStorageInterface
-   */
   protected $deliveryStorage;
 
   /**
@@ -62,8 +52,6 @@ class DeliveryFromWorkspaceForm extends FormBase {
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
     $this->workspaceStorage = $entityTypeManager->getStorage('workspace');
-    $this->nodeStorage = $entityTypeManager->getStorage('node');
-    $this->mediaStorage = $entityTypeManager->getStorage('media');
     $this->deliveryStorage = $entityTypeManager->getStorage('delivery');
   }
 
@@ -135,7 +123,7 @@ class DeliveryFromWorkspaceForm extends FormBase {
 
     $modifications = $this->getModifiedEntities($source, $target);
     foreach ($modifications as $item) {
-      $entity = $this->entityTypeManager->getStorage($item->entity_type)->loadRevision($item->source_revision);
+      $entity = $this->entityTypeManager->getStorage($item->target_entity_type)->loadRevision($item->source_revision);
       $key = implode(':', [
         $item->target_entity_type,
         $item->target_entity_id,

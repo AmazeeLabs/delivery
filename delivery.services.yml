@@ -1,7 +1,12 @@
 services:
   delivery.service:
     class: Drupal\delivery\DeliveryService
-    arguments: ['@entity_type.manager', '@workspaces.manager', '@entity.repository', '@conflict.resolver.manager']
+    arguments:
+    - '@entity_type.manager'
+    - '@workspaces.manager'
+    - '@entity.repository'
+    - '@conflict.resolver.manager'
+    - '@workspaces.association'
 
   delivery.conflict_resolver_ui_sections:
     class: Drupal\delivery\ConflictResolverUI\ConflictResolverUISections

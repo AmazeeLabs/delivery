@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
 use Drupal\delivery\Entity\DeliveryItem;
-use Drupal\entity_reference_revisions\EntityReferenceRevisionsFieldItemList;
+use Drupal\workspaces\WorkspaceAssociationInterface;
 use Drupal\workspaces\WorkspaceInterface;
 use Drupal\delivery\Plugin\views\traits\EntityDeliveryStatusTrait;
 use Drupal\workspaces\WorkspaceManagerInterface;
@@ -43,23 +43,31 @@ class DeliveryService {
   protected $conflictResolverManager;
 
   /**
+   * @var \Drupal\workspaces\WorkspaceAssociationInterface
+   */
+  protected $workspaceAssociation;
+
+  /**
    * DeliveryService constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
    * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
+   * @param \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssociation
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     WorkspaceManagerInterface $workspaceManager,
     EntityRepositoryInterface $entityRepository,
-    ConflictResolverManagerInterface $conflictResolverManager
+    ConflictResolverManagerInterface $conflictResolverManager,
+    WorkspaceAssociationInterface $workspaceAssociation
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->workspaceManager = $workspaceManager;
     $this->entityRepository = $entityRepository;
     $this->conflictResolverManager = $conflictResolverManager;
+    $this->workspaceAssociation = $workspaceAssociation;
   }
 
   /**
@@ -371,17 +379,28 @@ class DeliveryService {
     $storage = $this->entityTypeManager->getStorage($deliveryItem->getTargetType());
     /** @var \Drupal\Core\Entity\ContentEntityInterface $sourceEntity */
     $sourceEntity = $storage->loadRevision($deliveryItem->getSourceRevision());
+
     /** @var \Drupal\Core\Entity\ContentEntityInterface $targetEntity */
-    $targetEntity = $this->getActiveRevision($deliveryItem);
+    $targetEntity = $storage->loadRevision($this->getActiveRevision($deliveryItem));
 
-
-    /** @var \Drupal\revision_tree\RevisionTreeHandlerInterface $revisionTreeHandler */
+    /** @var \Drupal\revision_tree\EntityRevisionTreeHandlerInterface $revisionTreeHandler */
     $revisionTreeHandler = $this->entityTypeManager->getHandler($sourceEntity->getEntityTypeId(), 'revision_tree');
     $parentEntityRevision = $revisionTreeHandler
-      ->getLowestCommonAncestor($sourceEntity, $sourceEntity->getRevisionId(), $targetEntity->getRevisionId());
+      ->getLowestCommonAncestorId($sourceEntity->getRevisionId(), $targetEntity->getRevisionId(), $deliveryItem->getTargetId());
+
+    // If the target is a ascendant, there are no conflicts.
+    if ($parentEntityRevision === $targetEntity->getRevisionId()) {
+      return FALSE;
+    }
 
     /** @var \Drupal\Core\Entity\ContentEntityInterface $parentEntity */
     $parentEntity = $storage->loadRevision($parentEntityRevision);
+
+    // If there is no common ancestor it means that the entity has not been
+    // modified in any parent workspace, so no conflict possible.
+    if (!$parentEntity) {
+      return FALSE;
+    }
 
     $hasConflicts = FALSE;
 
@@ -423,20 +442,26 @@ class DeliveryService {
     $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
     $source = $storage->loadRevision($deliveryItem->getSourceRevision());
 
-    $target = $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
-      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace())
-    ]);
-
+    $activeRevisionId = $this->getActiveRevision($deliveryItem);
 
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
+    /** @var ContentEntityInterface $result */
     $result = $storage->createRevision($source);
 
-    $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
-    $result->{$revisionParentField}->target_id = $target->{$revisionField}->value;
+    $result->{$revisionMergeParentField}->target_revision_id = $deliveryItem->getSourceRevision();
+    $result->{$revisionParentField}->target_revision_id = $activeRevisionId;
     $result->workspace = $deliveryItem->getTargetWorkspace();
-    $result->set('moderation_state', $state);
-    $result->save();
+    $result->setSyncing(TRUE);
+
+    if ($result->hasField('moderation_state')) {
+      $result->set('moderation_state', $state);
+    }
+
+    $this->workspaceManager->executeInWorkspace($deliveryItem->getTargetWorkspace(), function () use ($result) {
+      $result->save();
+    });
 
     $deliveryItem->resolution = DeliveryItem::RESOLUTION_SOURCE;
     $deliveryItem->result_revision = $result->{$revisionField};
@@ -454,16 +479,23 @@ class DeliveryService {
     $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
     $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
 
-    $target = $this->getActiveRevision($deliveryItem);
+    $activeRevisionId = $this->getActiveRevision($deliveryItem);
+
+    $activeRevision = $storage->loadRevision($activeRevisionId);
 
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
-    $result = $storage->createRevision($target);
+    /** @var ContentEntityInterface $result */
+    $result = $storage->createRevision($activeRevision);
 
-    $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
-    $result->{$revisionParentField}->target_id = $target->{$revisionField}->value;
+    $result->{$revisionMergeParentField}->target_revision_id = $deliveryItem->getSourceRevision();
+    $result->{$revisionParentField}->target_revision_id = $activeRevisionId;
     $result->workspace = $deliveryItem->getTargetWorkspace();
-    $result->save();
+    $result->setSyncing(TRUE);
+    $this->workspaceManager->executeInWorkspace($deliveryItem->getTargetWorkspace(), function () use ($result) {
+      $result->save();
+    });
 
     $deliveryItem->resolution = DeliveryItem::RESOLUTION_TARGET;
     $deliveryItem->result_revision = $result->{$revisionField};
@@ -479,8 +511,12 @@ class DeliveryService {
     $target = $this->getActiveRevision($deliveryItem);
 
     $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
-    $result->{$revisionParentField}->target_id = $target->{$revisionField}->value;
-    $result->save();
+    $result->{$revisionParentField}->target_id = $target;
+    $result->workspace = $deliveryItem->getTargetWorkspace();
+    $result->setSyncing(TRUE);
+    $this->workspaceManager->executeInWorkspace($deliveryItem->getTargetWorkspace(), function () use ($result) {
+      $result->save();
+    });
 
     // TODO: Properly detect left/right/merge/identical states.
     $deliveryItem->resolution = DeliveryItem::RESOLUTION_MERGE;
@@ -489,10 +525,20 @@ class DeliveryService {
   }
 
   public function getActiveRevision(DeliveryItem $deliveryItem) {
-    return $this->entityRepository->getActive($deliveryItem->getTargetType(), $deliveryItem->getTargetId(), [
-      'workspace' => $this->getWorkspaceHierarchy($deliveryItem->getTargetWorkspace())
-    ]);
+    $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
+    $targets = $this->workspaceAssociation->getTrackedEntities($deliveryItem->getTargetWorkspace(), $deliveryItem->getTargetType(), [$deliveryItem->getTargetId()]);
 
+    // If the entity is not yet tracked at all, just use the initial revision.
+    if (empty($targets)) {
+      $target = $this->workspaceManager->executeInWorkspace(WorkspaceInterface::DEFAULT_WORKSPACE, function () use ($storage, $deliveryItem) {
+        return $storage->load($deliveryItem->getTargetId())->getRevisionId();
+      });
+    }
+    else {
+      $targets = array_keys($targets[$deliveryItem->getTargetType()]);
+      $target = array_pop($targets);
+    }
+    return $target;
   }
 
   protected function getWorkspaceHierarchy($workspaceId) {

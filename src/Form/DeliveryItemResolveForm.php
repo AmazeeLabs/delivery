@@ -19,6 +19,7 @@ use Drupal\delivery\DeliveryInterface;
 use Drupal\delivery\DeliveryService;
 use Drupal\delivery\Entity\Delivery;
 use Drupal\delivery\Entity\DeliveryItem;
+use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
@@ -58,6 +59,11 @@ class DeliveryItemResolveForm extends FormBase {
   protected $conflictResolverManager;
 
   /**
+   * @var \Drupal\workspaces\WorkspaceManagerInterface
+   */
+  protected $workspaceManager;
+
+  /**
    * @var \Drupal\delivery\Entity\DeliveryItem
    */
   protected $deliveryItem;
@@ -76,6 +82,7 @@ class DeliveryItemResolveForm extends FormBase {
    * @param \Drupal\delivery\DeliveryService $deliveryService
    * @param \Drupal\Core\Render\RendererInterface $renderer
    * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
+   * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -83,7 +90,8 @@ class DeliveryItemResolveForm extends FormBase {
     EntityRepositoryInterface $entity_repository,
     DeliveryService $deliveryService,
     RendererInterface $renderer,
-    ConflictResolverManagerInterface $conflictResolverManager
+    ConflictResolverManagerInterface $conflictResolverManager,
+    WorkspaceManagerInterface $workspaceManager
   ) {
     $this->deliveryService = $deliveryService;
     $this->entityTypeManager = $entity_type_manager;
@@ -91,6 +99,7 @@ class DeliveryItemResolveForm extends FormBase {
     $this->entityRepository = $entity_repository;
     $this->renderer = $renderer;
     $this->conflictResolverManager = $conflictResolverManager;
+    $this->workspaceManager = $workspaceManager;
   }
 
   public function access(AccountInterface $account, Delivery $delivery, DeliveryItem $delivery_item) {
@@ -120,7 +129,8 @@ class DeliveryItemResolveForm extends FormBase {
       $container->get('entity.repository'),
       $container->get('delivery.service'),
       $container->get('renderer'),
-      $container->get('conflict_resolver.manager')
+      $container->get('conflict.resolver.manager'),
+      $container->get('workspaces.manager')
     );
   }
 
@@ -149,22 +159,22 @@ class DeliveryItemResolveForm extends FormBase {
     $this->sourceEntity = $storage->loadRevision($delivery_item->getSourceRevision());
     $this->sourceEntity = $this->sourceEntity;
     /** @var \Drupal\Core\Entity\ContentEntityInterface $this->targetEntity */
-    $this->targetEntity = $this->deliveryService->getActiveRevision($delivery_item);
-    $this->targetEntity = $this->targetEntity;
+    $this->targetEntity = $storage->loadRevision($this->deliveryService->getActiveRevision($delivery_item));
 
     $this->resultEntity = $storage->createRevision($this->targetEntity);
 
     $entityType = $this->entityTypeManager->getDefinition($this->deliveryItem->getTargetType());
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
 
-    $this->resultEntity->{$revisionParentField}->merge_target_id = $this->deliveryItem->getSourceRevision();
-    $this->resultEntity->{$revisionParentField}->target_id = $this->targetEntity->{$revisionField}->value;
+    $this->resultEntity->{$revisionMergeParentField}->target_revision_id = $this->deliveryItem->getSourceRevision();
+    $this->resultEntity->{$revisionParentField}->target_revision_id = $this->targetEntity->{$revisionField}->value;
     $this->resultEntity->workspace = $this->deliveryItem->getTargetWorkspace();
 
-    /** @var \Drupal\revision_tree\RevisionTreeHandlerInterface $revisionTreeHandler */
+    /** @var \Drupal\revision_tree\EntityRevisionTreeHandlerInterface $revisionTreeHandler */
     $revisionTreeHandler = $this->entityTypeManager->getHandler($this->sourceEntity->getEntityTypeId(), 'revision_tree');
-    $parentEntityRevision = $revisionTreeHandler->getLowestCommonAncestor($this->sourceEntity, $this->sourceEntity->getRevisionId(), $this->targetEntity->getRevisionId());
+    $parentEntityRevision = $revisionTreeHandler->getLowestCommonAncestorId($this->sourceEntity->getRevisionId(), $this->targetEntity->getRevisionId(), $delivery_item->getTargetId());
 
     /** @var \Drupal\Core\Entity\ContentEntityInterface $parentEntity */
     $parentEntity = $storage->loadRevision($parentEntityRevision);
@@ -309,26 +319,29 @@ class DeliveryItemResolveForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-
-    $this->resultEntity->save();
-    foreach ($this->resultEntity->getTranslationLanguages() as $language) {
-      $context = new ParameterBag();
-      $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
-      $context->set('resolution_custom_values', $form_state->getValue('custom')[$language->getId()]);
-      $resultTranslation = $this->getTranslation($this->resultEntity, $language->getId());
-      $this->conflictResolverManager->resolveConflicts(
-        $this->getTranslation($this->targetEntity, $language->getId()),
-        $this->getTranslation($this->sourceEntity, $language->getId()),
-        $this->getTranslation($this->parentEntity, $language->getId()),
-        $resultTranslation,
-        $context
-      );
-      $resultTranslation->save();
-    }
-    $this->deliveryItem->result_revision = $this->resultEntity->getRevisionId();
+    $this->workspaceManager->executeInWorkspace($this->deliveryItem->getTargetWorkspace(), function () use ($form_state) {
+      $this->resultEntity->setSyncing(TRUE);
+      $this->resultEntity->save();
+      foreach ($this->resultEntity->getTranslationLanguages() as $language) {
+        $context = new ParameterBag();
+        $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
+        $context->set('resolution_custom_values', $form_state->getValue('custom')[$language->getId()]);
+        $resultTranslation = $this->getTranslation($this->resultEntity, $language->getId());
+        $this->conflictResolverManager->resolveConflicts(
+          $this->getTranslation($this->targetEntity, $language->getId()),
+          $this->getTranslation($this->sourceEntity, $language->getId()),
+          $this->getTranslation($this->parentEntity, $language->getId()),
+          $resultTranslation,
+          $context
+        );
+        $resultTranslation->save();
+      }
+      $this->deliveryItem->result_revision = $this->resultEntity->getRevisionId();
+    });
     // TODO: actually compare entities.
     $this->deliveryItem->resolution = DeliveryItem::RESOLUTION_MERGE;
     $this->deliveryItem->save();
+
     $this->messenger->addStatus($this->t('The changes have been imported.'));
   }
 }

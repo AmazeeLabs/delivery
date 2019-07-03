@@ -28,7 +28,7 @@ class DeliveryItemStatus extends FieldPluginBase implements ContainerFactoryPlug
 
     $currentRevisions = \Drupal::service('plugin.manager.views.join')->createInstance('standard', [
       'table' => 'workspace_association',
-      'field' => 'entity_id',
+      'field' => 'target_entity_id',
       'type' => 'LEFT',
       'left_table' => $base_table,
       'left_field' => 'entity_id',
@@ -39,7 +39,7 @@ class DeliveryItemStatus extends FieldPluginBase implements ContainerFactoryPlug
     ]);
 
     $currentRevisionsAlias = $this->query->addTable('workspace_association', $base_table, $currentRevisions);
-    $this->aliases['current_revision'] = $this->query->addField($currentRevisionsAlias, 'revision_id', 'current_revision');
+    $this->aliases['current_revision'] = $this->query->addField($currentRevisionsAlias, 'target_entity_revision_id', 'current_revision');
   }
 
   /**
