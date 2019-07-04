@@ -3,7 +3,7 @@
 namespace Drupal\delivery;
 
 use Drupal\Core\Url;
-use Drupal\revision_tree\RevisionTreeWorkspaceListBuilder as OriginalWorkspaceListBuilder;
+use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
 
 /**
  * Local override of workspaces entity list builder to replace the deploy button.

@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Database\Query\AlterableInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
@@ -25,6 +26,24 @@ function delivery_module_implements_alter(&$implementations, $hook) {
     $group = $implementations['delivery'];
     unset($implementations['delivery']);
     $implementations['delivery'] = $group;
+  }
+}
+
+/**
+ * Alter queries that are tagged as workspace sensitive.
+ *
+ * Implements hook_query_TAG_alter().
+ */
+function delivery_query_workspace_sensitive_alter(AlterableInterface $query) {
+  if (
+    $entity_type_id = $query->getMetaData('entity_type') &&
+    $active_workspace_id = $query->getMetaData('active_workspace_id') &&
+    !$query->getMetaData('all_revisions')
+  ) {
+    $tables = &$query->getTables();
+    if (array_key_exists('workspace_association', $tables)) {
+      $tables['workspace_association']['join type'] = 'INNER';
+    }
   }
 }
 
