@@ -7,3 +7,4 @@ dependencies:
   - language
   - workspaces
   - revision_tree
+  - content_moderation

@@ -17,6 +17,18 @@ class DeliveryServiceProvider extends ServiceProviderBase {
         ->setClass(DeliveryEntityConverter::class);
     }
 
+    if ($container->hasDefinition('paramconverter.latest_revision')) {
+      $container
+        ->getDefinition('paramconverter.latest_revision')
+        ->setClass(DeliveryEntityConverter::class);
+    }
+
+    if ($container->hasDefinition('paramconverter.entity_revision')) {
+      $container
+        ->getDefinition('paramconverter.entity_revision')
+        ->setClass(DeliveryEntityConverter::class);
+    }
+
     if ($container->hasDefinition('content_translation.overview_access')) {
       $definition = $container->getDefinition('content_translation.overview_access');
       $definition->setClass(DeliveryContentTranslationOverviewAccess::class)
