@@ -40,6 +40,7 @@ services:
       - '@entity_type.manager'
       - '@workspaces.manager'
       - '@workspaces.association'
+      - '@cache_tags.invalidator'
 
   delivery.filtered_language_manager:
     class: Drupal\delivery\FilteredLanguageManager
@@ -50,3 +51,27 @@ services:
     arguments: ['@content_translation.manager']
     tags:
       - { name: event_subscriber }
+
+  delivery.plugin.manager.menu.link:
+    decorates: plugin.manager.menu.link
+    class: Drupal\delivery\MenuLinkManager
+    arguments:
+    - '@delivery.plugin.manager.menu.link.inner'
+    - '@workspaces.manager'
+    public: false
+    decoration_priority: 50
+  delivery.menu.tree_storage:
+    decorates: menu.tree_storage
+    class: Drupal\delivery\MenuTreeStorage
+    arguments:
+    - '@workspaces.manager'
+    - '@entity_type.manager'
+    - '@database'
+    - '@cache.menu'
+    - '@cache_tags.invalidator'
+    - '@workspaces.association'
+    - 'menu_tree'
+    public: false
+    decoration_priority: 50
+    tags:
+      - { name: backend_overridable }

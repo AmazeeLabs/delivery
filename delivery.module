@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\Core\Form\FormStateInterface;
 
@@ -71,6 +72,7 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
  * @param \Drupal\Core\Entity\EntityTypeInterface[] $entity_types
  */
 function delivery_entity_type_build(array &$entity_types) {
+  $entity_types['menu_link_content']->setHandlerClass('storage', MenuLinkContentStorage::class);
   // Override the list builder so we can inject our own deploy button.
   $entity_types['workspace']->setHandlerClass('list_builder', WorkspaceListBuilder::class);
 

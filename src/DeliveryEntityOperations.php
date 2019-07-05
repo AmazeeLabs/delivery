@@ -2,9 +2,15 @@
 
 namespace Drupal\delivery;
 
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workspaces\EntityOperations;
+use Drupal\workspaces\WorkspaceAssociationInterface;
+use Drupal\workspaces\WorkspaceManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Modified entity operations to bypass workspaces integrity constraints.
@@ -16,6 +22,56 @@ use Drupal\workspaces\EntityOperations;
  */
 class DeliveryEntityOperations extends EntityOperations {
 
+  /**
+   * @var \Drupal\Core\Cache\CacheTagsInvalidatorInterface
+   */
+  protected $cacheTagsInvalidator;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    WorkspaceManagerInterface $workspace_manager,
+    WorkspaceAssociationInterface $workspace_association,
+    CacheTagsInvalidatorInterface $cacheTagsInvalidator
+  ) {
+    $this->cacheTagsInvalidator = $cacheTagsInvalidator;
+    parent::__construct(
+      $entity_type_manager,
+      $workspace_manager,
+      $workspace_association
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('workspaces.manager'),
+      $container->get('workspaces.association'),
+      $container->get('cache_tags.invalidator')
+    );
+  }
+
+  public function entityInsert(EntityInterface $entity) {
+    // We are not updating the menu tree definitions when a custom menu link
+    // entity is saved as a pending revision, so we need to clear the system
+    // menu cache manually.
+    if ($entity->getEntityTypeId() === 'menu_link_content') {
+      $cache_tags = Cache::buildTags('config:system.menu', [$entity->getMenuName()], '.');
+      $this->cacheTagsInvalidator->invalidateTags($cache_tags);
+    }
+
+    return parent::entityInsert($entity);
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
   public function entityPresave(EntityInterface $entity) {
     $entity_type = $entity->getEntityType();
 
@@ -28,6 +84,14 @@ class DeliveryEntityOperations extends EntityOperations {
     // workspace.
     if ($this->shouldSkipPreOperations($entity_type)) {
       return;
+    }
+
+    // We are not updating the menu tree definitions when a custom menu link
+    // entity is saved as a pending revision, so we need to clear the system
+    // menu cache manually.
+    if ($entity->getEntityTypeId() === 'menu_link_content') {
+      $cache_tags = Cache::buildTags('config:system.menu', [$entity->getMenuName()], '.');
+      $this->cacheTagsInvalidator->invalidateTags($cache_tags);
     }
 
     // Disallow any change to an unsupported entity when we are not in the
@@ -72,10 +136,14 @@ class DeliveryEntityOperations extends EntityOperations {
     }
   }
 
-  public function entityPredelete(EntityInterface $entity) {
-  }
+  /**
+   * {@inheritdoc}
+   */
+  public function entityPredelete(EntityInterface $entity) {}
 
-  public function entityFormAlter(array &$form, FormStateInterface $form_state, $form_id) {
-  }
+  /**
+   * {@inheritdoc}
+   */
+  public function entityFormAlter(array &$form, FormStateInterface $form_state, $form_id) {}
 
 }
