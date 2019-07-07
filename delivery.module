@@ -120,7 +120,7 @@ function delivery_form_field_config_edit_form_alter(&$form, FormStateInterface $
       '#type' => 'checkbox',
       '#title' => t('Blacklisted'),
       '#description' => t('Exclude this field from conflict resolution.'),
-      '#default_value' => $entity->getThirdPartySetting('conflict', 'blacklisted', FALSE),
+      '#default_value' => $entity->getThirdPartySetting('delivery', 'blacklisted', FALSE),
     ],
   ];
 }

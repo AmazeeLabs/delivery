@@ -22,7 +22,7 @@ class BlacklistedFieldsDiscovery extends ConflictDiscoveryBase {
     if ($conflicts) {
       foreach ($conflicts as $property) {
         $fieldConflictConfig = $fieldConfig->load($baseEntity->getEntityTypeId() . '.' . $baseEntity->bundle() . '.' . $property);
-        if ($fieldConflictConfig && $fieldConflictConfig->getThirdPartySetting('conflict', 'blacklisted')) {
+        if ($fieldConflictConfig && $fieldConflictConfig->getThirdPartySetting('delivery', 'blacklisted')) {
           $event->removeConflict($property);
         }
       }

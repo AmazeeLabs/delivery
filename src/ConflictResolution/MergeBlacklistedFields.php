@@ -44,8 +44,8 @@ class MergeBlacklistedFields extends MergeStrategyBase {
     if ($conflicts) {
       foreach ($conflicts as $property) {
         $fieldConflictConfig = $fieldConfig->load($base_entity->getEntityTypeId() . '.' . $base_entity->bundle() . '.' . $property);
-        if ($fieldConflictConfig && $fieldConflictConfig->getThirdPartySetting('conflict', 'blacklisted')) {
-          if ($direction = $fieldConflictConfig->getThirdPartySetting('conflict', 'merge_direction')) {
+        if ($fieldConflictConfig && $fieldConflictConfig->getThirdPartySetting('delivery', 'blacklisted')) {
+          if ($direction = $fieldConflictConfig->getThirdPartySetting('delivery', 'merge_direction')) {
             switch ($direction) {
               case static::$MERGE_DIRECTION_SOURCE:
                 $result_entity->set($property, $remote_entity->get($property)->getValue());
