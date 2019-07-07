@@ -1,0 +1,27 @@
+<?php
+
+function deliver_update_post_update_migrate() {
+  \Drupal::database()->query('UPDATE {workspace} set parent = parent_workspace')->execute();
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspacesManager */
+  $workspacesManager = \Drupal::service('workspaces.manager');
+
+  foreach (\Drupal::entityTypeManager()->getDefinitions() as $entityType) {
+    if ($workspacesManager->isEntityTypeSupported($entityType)) {
+      $table = $entityType->getRevisionDataTable();
+      \Drupal::database()->query('UPDATE {' . $table . '} SET revision_parent = revision_parent__target_id, revision_merge_parent = revision_parent__merge_target_id')->execute();
+    }
+  }
+}
+
+/**
+ * Implements hook_module_preinstall().
+ */
+function delivery_update_module_preinstall($module) {
+  if ($module !== 'revision_tree') {
+    return;
+  }
+
+  // Clear plugin manager caches so the new 'revision_tree' field type is
+  // available below.
+  \Drupal::getContainer()->get('plugin.cache_clearer')->clearCachedDefinitions();
+}
