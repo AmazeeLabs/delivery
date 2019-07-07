@@ -16,8 +16,7 @@ use Drupal\Core\TypedData\DataReferenceTargetDefinition;
  *   label = @Translation("Revision tree"),
  *   description = @Translation("An entity field containing a revision tree item."),
  *   no_ui = TRUE,
- *   cardinality = 1,
- *   constraints = {"ValidRevisionTreeReference" = {}}
+ *   cardinality = 1
  * )
  */
 class RevisionTreeItem extends FieldItemBase {
