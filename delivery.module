@@ -210,3 +210,24 @@ function delivery_entity_base_field_info(EntityTypeInterface $entity_type) {
   }
   return $fields;
 }
+
+/**
+ * Implements hook_entity_load().
+ */
+function delivery_entity_load(array $entities, $entity_type_id) {
+  $entityType = \Drupal::entityTypeManager()->getDefinition($entity_type_id);
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  if ($workspaceManager->isEntityTypeSupported($entityType)) {
+    /** @var \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssociation */
+    $workspaceAssociation = \Drupal::service('workspaces.association');
+    $tracking = $workspaceAssociation->getTrackedEntities($workspaceManager->getActiveWorkspace()->id(), $entity_type_id, array_keys($entities));
+    if (empty($tracking)) {
+      return;
+    }
+    foreach ($entities as $entity) {
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+      $entity->isDefaultRevision(array_key_exists($entity->getRevisionId(), $tracking['node']));
+    }
+  }
+}
