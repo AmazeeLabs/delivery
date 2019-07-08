@@ -13,6 +13,8 @@ use Drupal\field\Entity\FieldConfig;
 
 /**
  * Blacklisted fields merging test.
+ *
+ * @requires module conflict
  */
 class MergeBlacklistedFieldsTest extends KernelTestBase {
   use WorkspaceTestTrait;
