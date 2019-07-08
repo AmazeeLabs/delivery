@@ -14,11 +14,11 @@ use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\entity_test\FieldStorageDefinition;
 
 /**
  * Implements hook_module_implements_alter().
@@ -192,7 +192,7 @@ function delivery_entity_base_field_info(EntityTypeInterface $entity_type) {
       ->setDescription(t('The list of workspaces that are assigned to this user.'))
       ->setSetting('target_type', 'workspace')
       ->setSetting('handler', 'default')
-      ->setCardinality(FieldStorageDefinition::CARDINALITY_UNLIMITED)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('view', array(
         'label' => 'above',
         'type' => 'entity_reference_label',

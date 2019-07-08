@@ -506,12 +506,13 @@ class DeliveryService {
     $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
 
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
 
     $target = $this->getActiveRevision($deliveryItem);
 
-    $result->{$revisionParentField}->merge_target_id = $deliveryItem->getSourceRevision();
-    $result->{$revisionParentField}->target_id = $target;
+    $result->{$revisionMergeParentField}->target_revision_id = $deliveryItem->getSourceRevision();
+    $result->{$revisionParentField}->target_revision_id = $target;
     $result->workspace = $deliveryItem->getTargetWorkspace();
     $result->setSyncing(TRUE);
     $this->workspaceManager->executeInWorkspace($deliveryItem->getTargetWorkspace(), function () use ($result) {
