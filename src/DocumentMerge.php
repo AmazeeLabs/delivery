@@ -200,14 +200,16 @@ class DocumentMerge implements DocumentMergeInterface {
               }
               else {
                 $id = 'conflict-' . $leftNode->getId() . '-' . $currentNode->getId();
-                $conflictNode = $this->createConflictNode($id, $sourceNode->getDomNode()->ownerDocument, $leftNode, $currentNode);
+                $conflictNode = $this->createConflictNode($id, $sourceNode->getDomNode()->ownerDocument, $sourceNode, $leftNode, $currentNode);
                 $this->resultTree->addNode($conflictNode, $resultParent);
+                $nextResultParent = $conflictNode;
               }
             }
             else {
               $id = 'conflict-' . $leftNode->getId() . '-' . $currentNode->getId();
               $conflictNode = $this->createConflictNode($id, $this->sourceTree->getRoot()->getDomNode()->ownerDocument, $leftNode, $currentNode);
               $this->resultTree->addNode($conflictNode, $resultParent);
+              $nextResultParent = $conflictNode;
             }
             // In any of these case, we also stop traversing (because we just
             // cloned entire branches) and flag the left node and its branch as
@@ -332,7 +334,7 @@ class DocumentMerge implements DocumentMergeInterface {
       }
       $stopTraversing = TRUE;
     }
-    if (empty($stopTraversing)) {
+    if (empty($stopTraversing) || $currentNode->getDomNode()->tagName == 'ck-button') {
       foreach ($currentNode->getChildren() as $child) {
         $this->traverseRight($child, $nextResultParent);
       }
@@ -585,13 +587,19 @@ class DocumentMerge implements DocumentMergeInterface {
 
     if ($link_conflict = $node->getFlag('link-conflict')) {
       if ($leftNodeElement = $node->getFlag('left')) {
-        $domNode->setAttribute('left', json_encode($this->getDomNodeAttributes($leftNodeElement->getDomNode())));
+        $attributes = $this->getDomNodeAttributes($leftNodeElement->getDomNode());
+        $attributes['label'] = $this->labels['left'] ?? 'left';
+        $domNode->setAttribute('left', json_encode($attributes));
       }
       if ($rightNodeElement = $node->getFlag('right')) {
-        $domNode->setAttribute('right', json_encode($this->getDomNodeAttributes($rightNodeElement->getDomNode())));
+        $attributes = $this->getDomNodeAttributes($rightNodeElement->getDomNode());
+        $attributes['label'] = $this->labels['right'] ?? 'right';
+        $domNode->setAttribute('right', json_encode($attributes));
       }
       if ($sourceNodeElement = $node->getFlag('source')) {
-        $domNode->setAttribute('source', json_encode($this->getDomNodeAttributes($sourceNodeElement->getDomNode())));
+        $attributes = $this->getDomNodeAttributes($sourceNodeElement->getDomNode());
+        $attributes['label'] = $this->labels['source'] ?? 'source';
+        $domNode->setAttribute('source', json_encode($attributes));
       }
       return $domNode;
     }
