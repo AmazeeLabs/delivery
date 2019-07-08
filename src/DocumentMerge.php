@@ -164,6 +164,12 @@ class DocumentMerge implements DocumentMergeInterface {
         // Case 1.2: the left and right positions match, but the node is not a
         // leaf.
         else {
+          if ($sourceNode = $this->sourceTree->search($currentNode->getId())) {
+            // First try to merge attributes from left to right.
+            // TODO: Implement actual attribute conflict resolution.
+            $currentNode->mergeAttributes($leftNode, $sourceNode);
+          }
+
           // Check first if the nodes have the same attributes. In that case,
           // the node can be added to the result tree, and we will continue
           // checking the branches for potential conflicts. The is actually the
