@@ -440,6 +440,7 @@ class DeliveryService {
   public function acceptDeliveryItem(DeliveryItem $deliveryItem, $state = 'draft') {
     $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
     $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $source */
     $source = $storage->loadRevision($deliveryItem->getSourceRevision());
 
     $activeRevisionId = $this->getActiveRevision($deliveryItem);
@@ -447,8 +448,14 @@ class DeliveryService {
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
     $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
+
+    // Pretend that the source revision is a default revision, so languages
+    // are not merged
+    $is_default = $source->isDefaultRevision();
+    $source->isDefaultRevision(TRUE);
     /** @var ContentEntityInterface $result */
     $result = $storage->createRevision($source);
+    $source->isDefaultRevision($is_default);
 
     $result->{$revisionMergeParentField}->target_revision_id = $deliveryItem->getSourceRevision();
     $result->{$revisionParentField}->target_revision_id = $activeRevisionId;
@@ -481,13 +488,19 @@ class DeliveryService {
 
     $activeRevisionId = $this->getActiveRevision($deliveryItem);
 
-    $activeRevision = $storage->loadRevision($activeRevisionId);
-
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
     $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
+
+    $source = $storage->loadRevision($deliveryItem->getSourceRevision());
+
+    // Pretend that the source revision is a default revision, so languages
+    // are not merged
+    $is_default = $source->isDefaultRevision();
+    $source->isDefaultRevision(TRUE);
     /** @var ContentEntityInterface $result */
-    $result = $storage->createRevision($activeRevision);
+    $result = $storage->createRevision($source);
+    $source->isDefaultRevision($is_default);
 
     $result->{$revisionMergeParentField}->target_revision_id = $deliveryItem->getSourceRevision();
     $result->{$revisionParentField}->target_revision_id = $activeRevisionId;
@@ -504,12 +517,23 @@ class DeliveryService {
 
   public function mergeDeliveryItem(DeliveryItem $deliveryItem, ContentEntityInterface $result) {
     $entityType = $this->entityTypeManager->getDefinition($deliveryItem->getTargetType());
+    $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
 
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
     $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
     $revisionField = $entityType->getKey('revision');
 
     $target = $this->getActiveRevision($deliveryItem);
+
+    $source = $storage->loadRevision($deliveryItem->getSourceRevision());
+
+    // Pretend that the source revision is a default revision, so languages
+    // are not merged
+    $is_default = $source->isDefaultRevision();
+    $source->isDefaultRevision(TRUE);
+    /** @var ContentEntityInterface $result */
+    $result = $storage->createRevision($source);
+    $source->isDefaultRevision($is_default);
 
     $result->{$revisionMergeParentField}->target_revision_id = $deliveryItem->getSourceRevision();
     $result->{$revisionParentField}->target_revision_id = $target;
@@ -529,11 +553,12 @@ class DeliveryService {
     $storage = $this->getContentEntityStorage($deliveryItem->getTargetType());
     $targets = $this->workspaceAssociation->getTrackedEntities($deliveryItem->getTargetWorkspace(), $deliveryItem->getTargetType(), [$deliveryItem->getTargetId()]);
 
-    // If the entity is not yet tracked at all, just use the initial revision.
+    // If the entity is not yet tracked at all, just use the highest live revision.
     if (empty($targets)) {
-      $target = $this->workspaceManager->executeInWorkspace(WorkspaceInterface::DEFAULT_WORKSPACE, function () use ($storage, $deliveryItem) {
-        return $storage->load($deliveryItem->getTargetId())->getRevisionId();
-      });
+      $live_revisions = array_keys($storage->getQuery()->allRevisions()
+        ->notExists('workspace')
+        ->condition($storage->getEntityType()->getKey('id'), $deliveryItem->getTargetId())->execute());
+      return array_pop($live_revisions);
     }
     else {
       $targets = array_keys($targets[$deliveryItem->getTargetType()]);
