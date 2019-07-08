@@ -196,12 +196,14 @@ class DocumentMerge implements DocumentMergeInterface {
                 $id = 'conflict-' . $leftNode->getId() . '-' . $currentNode->getId();
                 $conflictNode = $this->createConflictNode($id, $sourceNode->getDomNode()->ownerDocument, $sourceNode, $leftNode, $currentNode);
                 $this->resultTree->addNode($conflictNode, $resultParent);
+                $nextResultParent = $conflictNode;
               }
             }
             else {
               $id = 'conflict-' . $leftNode->getId() . '-' . $currentNode->getId();
               $conflictNode = $this->createConflictNode($id, $this->sourceTree->getRoot()->getDomNode()->ownerDocument, $leftNode, $currentNode);
               $this->resultTree->addNode($conflictNode, $resultParent);
+              $nextResultParent = $conflictNode;
             }
             // In any of these case, we also stop traversing (because we just
             // cloned entire branches) and flag the left node and its branch as
@@ -326,7 +328,7 @@ class DocumentMerge implements DocumentMergeInterface {
       }
       $stopTraversing = TRUE;
     }
-    if (empty($stopTraversing)) {
+    if (empty($stopTraversing) || $currentNode->getDomNode()->tagName == 'ck-button') {
       foreach ($currentNode->getChildren() as $child) {
         $this->traverseRight($child, $nextResultParent);
       }
