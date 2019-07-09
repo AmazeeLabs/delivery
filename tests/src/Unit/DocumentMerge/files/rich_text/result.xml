@@ -1,0 +1,76 @@
+<ck-section class="rich-text" itemtype="RichText" id="d2bwps">
+    <ck-conflict-text class="text__content">
+    <ck-conflict-option from="source">
+      <div class="text__content" itemprop="content">
+        <p>left version</p>
+        <p>left version second p</p>
+        <figure class="table">
+          <table>
+            <tbody>
+              <tr>
+                <td>td 1 left</td>
+                <td>td 2</td>
+              </tr>
+              <tr>
+                <td>td 3</td>
+                <td>td 4</td>
+              </tr>
+              <tr>
+                <td>td 5</td>
+                <td>td 6</td>
+              </tr>
+            </tbody>
+          </table>
+        </figure>
+      </div>
+    </ck-conflict-option>
+    <ck-conflict-option from="left">
+      <div class="text__content" itemprop="content">
+        <p>left version</p>
+        <p>left version second p</p>
+        <figure class="table">
+          <table>
+            <tbody>
+              <tr>
+                <td>td 1 left</td>
+                <td>td 2</td>
+              </tr>
+              <tr>
+                <td>td 3</td>
+                <td>td 4</td>
+              </tr>
+              <tr>
+                <td>td 5</td>
+                <td>td 6</td>
+              </tr>
+            </tbody>
+          </table>
+        </figure>
+      </div>
+    </ck-conflict-option>
+    <ck-conflict-option from="right">
+      <div class="text__content" itemprop="content">
+        <p>right version</p>
+        <p>right version second p</p>
+        <figure class="table">
+          <table>
+            <tbody>
+              <tr>
+                <td>td 1 right</td>
+                <td>td 2</td>
+              </tr>
+              <tr>
+                <td>td 3</td>
+                <td>td 4</td>
+              </tr>
+              <tr>
+                <td>td 5</td>
+                <td>td 6</td>
+              </tr>
+            </tbody>
+          </table>
+        </figure>
+      </div>
+    </ck-conflict-option>
+  </ck-conflict-text>
+</ck-section>

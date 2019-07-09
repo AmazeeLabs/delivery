@@ -15,11 +15,21 @@ use Drupal\Core\Url;
  */
 function workspaces_allowed_languages_entity_base_field_info(EntityTypeInterface $entity_type) {
   if ($entity_type->id() === 'workspace') {
-    // Define a path prefix field on the workspaces.
-    $fields['allowed_languages'] = BaseFieldDefinition::create('string')
+    $fields['primary_language'] = BaseFieldDefinition::create('string')
       // @todo: change maybe the form element to be a select field.
-      ->setLabel(t('Allowed languages'))
-      ->setDescription(t('A set of languages which are allowed to be used on this workspace. Please input the language code for each language you want to be allowed on this workspace.'))
+      ->setLabel(t('Primary language'))
+      ->setDescription(t('The primary language for this workspace. In case of doubt, the language will always be set to this one.'))
+      ->setRevisionable(TRUE)
+      ->setCardinality(1)
+      ->setDisplayOptions('form', array(
+        'type' => 'string',
+        'weight' => 10,
+      ))
+      ->setDisplayConfigurable('form', TRUE);
+    $fields['secondary_languages'] = BaseFieldDefinition::create('string')
+      // @todo: change maybe the form element to be a select field.
+      ->setLabel(t('Secondary languages'))
+      ->setDescription(t('A set of languages which are also allowed to be used on this workspace.'))
       ->setRevisionable(TRUE)
       ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('form', [
@@ -84,4 +94,49 @@ function workspaces_allowed_languages_language_switch_links_alter(array &$links,
     }
     $links = array_intersect_key($links, $languages);
   }
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+/**
+ * Implements hook_element_info_alter().
+ */
+function workspaces_allowed_languages_element_info_alter(array &$info) {
+  if (isset($info['language_select'])) {
+    $info['language_select']['#process'][] = 'workspaces_allowed_languages_process_language_select';
+  }
+}
+
+/**
+ * Preprocess the language selection widget to only allow languages assigned to
+ * the current workspace.
+ */
+function workspaces_allowed_languages_process_language_select($element) {
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  $workspace = $workspaceManager->getActiveWorkspace();
+
+  // Don't restrict languages if the workspace doesn't have any assigned.
+  if ($workspace->primary_language->count() === 0 && $workspace->secondary_languages->count() === 0) {
+    return $element;
+  }
+
+  $languages = [$workspace->primary_language->value];
+  foreach ($workspace->secondary_languages as $item) {
+    $languages[] = $item->value;
+  }
+
+  foreach (array_keys($element['#options']) as $key) {
+    if (!in_array($key, $languages)) {
+      unset($element['#options'][$key]);
+    }
+
+  }
+
+  if (!in_array($element['#default_value'], $languages)) {
+    $element['#default_value'] = $languages[0];
+  }
+
+  return $element;
 }

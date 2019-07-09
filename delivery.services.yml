@@ -1,7 +1,12 @@
 services:
   delivery.service:
     class: Drupal\delivery\DeliveryService
-    arguments: ['@entity_type.manager', '@workspaces.manager', '@entity.repository', '@conflict_resolver.manager']
+    arguments:
+    - '@entity_type.manager'
+    - '@workspaces.manager'
+    - '@entity.repository'
+    - '@conflict.resolver.manager'
+    - '@workspaces.association'
 
   delivery.conflict_resolver_ui_sections:
     class: Drupal\delivery\ConflictResolverUI\ConflictResolverUISections
@@ -14,18 +19,59 @@ services:
     tags:
     - { name: event_subscriber }
 
-  delivery.revision_index:
-    class: Drupal\delivery\RevisionIndex
-    arguments: ['@entity_type.manager', '@workspaces.manager']
-
   conflict_resolution.merge_invisible_fields:
     class: Drupal\delivery\ConflictResolution\MergeInvisibleProperties
     tags:
       - { name: event_subscriber }
 
-#  delivery.language_manager:
-#    class: Drupal\delivery\Language\DeliveryLanguageManager
-#    public: false
-#    decorates: language_manager
-#    decoration_priority: 3
-#    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
+  conflict_resolution.merge_blacklisted_fields:
+    class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields
+    tags:
+      - { name: event_subscriber }
+
+  conflict_discovery.blacklisted:
+    class: Drupal\delivery\ConflictDiscovery\BlacklistedFieldsDiscovery
+    tags:
+      - { name: event_subscriber }
+
+  Drupal\workspaces\EntityOperations:
+    class: Drupal\delivery\DeliveryEntityOperations
+    arguments:
+      - '@entity_type.manager'
+      - '@workspaces.manager'
+      - '@workspaces.association'
+      - '@cache_tags.invalidator'
+
+  delivery.filtered_language_manager:
+    class: Drupal\delivery\FilteredLanguageManager
+    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
+
+  delivery.content_translation.route_subscriber:
+    class: Drupal\delivery\Routing\DeliveryContentTranslationRouteSubscriber
+    arguments: ['@content_translation.manager']
+    tags:
+      - { name: event_subscriber }
+
+  delivery.plugin.manager.menu.link:
+    decorates: plugin.manager.menu.link
+    class: Drupal\delivery\MenuLinkManager
+    arguments:
+    - '@delivery.plugin.manager.menu.link.inner'
+    - '@workspaces.manager'
+    public: false
+    decoration_priority: 50
+  delivery.menu.tree_storage:
+    decorates: menu.tree_storage
+    class: Drupal\delivery\MenuTreeStorage
+    arguments:
+    - '@workspaces.manager'
+    - '@entity_type.manager'
+    - '@database'
+    - '@cache.menu'
+    - '@cache_tags.invalidator'
+    - '@workspaces.association'
+    - 'menu_tree'
+    public: false
+    decoration_priority: 50
+    tags:
+      - { name: backend_overridable }

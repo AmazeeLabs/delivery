@@ -442,6 +442,32 @@ XML;
     $this->assertMergeResult($source, $left, $right, $result);
   }
 
+  public function testRightChangesMediaWithSlot() {
+    $source = <<<XML
+  <div class="media" slot="media" data-media-uuid="1"></div>
+XML;
+
+    $left = <<<XML
+  <div class="media" slot="media" data-media-uuid="1"></div>
+XML;
+
+    $right = <<<XML
+  <div class="media" slot="media" data-media-uuid="2"></div>
+XML;
+
+      $result = <<<XML
+  <ck-conflict-media slot="media">
+    <ck-conflict-media-option from="left">
+      <div class="media" slot="media" data-media-uuid="1"/>
+    </ck-conflict-media-option>
+    <ck-conflict-media-option from="right">
+      <div class="media" slot="media" data-media-uuid="2"/>
+    </ck-conflict-media-option>
+  </ck-conflict-media>
+XML;
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
   public function testChangesToEqualMedia() {
     $source = <<<XML
   <div class="media" data-media-uuid="1"></div>
@@ -678,6 +704,160 @@ XML;
     $this->assertMergeResult($source, $left, $right, $result);
   }
 
+  public function testLeftChangesAttribute() {
+    $source = <<<XML
+<div class="container">
+  <div class="test" data-color="green">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $left = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $right = <<<XML
+<div class="container">
+  <div class="test" data-color="green">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $result = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
+  public function testRightChangesAttribute() {
+    $source = <<<XML
+<div class="container">
+  <div class="test" data-color="green">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $left = <<<XML
+<div class="container">
+  <div class="test" data-color="green">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $right = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $result = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
+  public function testBothChangeAttribute() {
+    $source = <<<XML
+<div class="container">
+  <div class="test" data-color="green">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $left = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $right = <<<XML
+<div class="container">
+  <div class="test" data-color="blue">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $result = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
+  public function testChangeAttributeAndText() {
+    $source = <<<XML
+<div class="container">
+  <div class="test" data-color="green">
+    <p class="text">Test</p>
+  </div>
+</div>
+XML;
+
+    $left = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <p class="text">A</p>
+  </div>
+</div>
+XML;
+
+    $right = <<<XML
+<div class="container">
+  <div class="test" data-color="blue">
+    <p class="text">B</p>
+  </div>
+</div>
+XML;
+
+    $result = <<<XML
+<div class="container">
+  <div class="test" data-color="red">
+    <ck-conflict-text class="text">
+      <ck-conflict-option from="source">
+        <p class="text">Test</p>
+      </ck-conflict-option>
+      <ck-conflict-option from="left">
+        <p class="text">A</p>
+      </ck-conflict-option>
+      <ck-conflict-option from="right">
+        <p class="text">B</p>
+      </ck-conflict-option>
+    </ck-conflict-text>
+  </div>
+</div>
+XML;
+
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
   public function testRealWorldExample() {
     $folder = dirname(__FILE__);
     $source = file_get_contents($folder . '/files/cards/source.html');
@@ -687,4 +867,21 @@ XML;
     $this->assertMergeResult($source, $left, $right, $result);
   }
 
+  public function testLinksExample() {
+    $folder = dirname(__FILE__);
+    $source = file_get_contents($folder . '/files/links/source.html');
+    $left = file_get_contents($folder . '/files/links/left.html');
+    $right = file_get_contents($folder . '/files/links/right.html');
+    $result = file_get_contents($folder . '/files/links/result.html');
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
+  public function testRichTextExample() {
+    $folder = dirname(__FILE__);
+    $source = file_get_contents($folder . '/files/rich_text/source.xml');
+    $left = file_get_contents($folder . '/files/rich_text/left.xml');
+    $right = file_get_contents($folder . '/files/rich_text/right.xml');
+    $result = file_get_contents($folder . '/files/rich_text/result.xml');
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
 }

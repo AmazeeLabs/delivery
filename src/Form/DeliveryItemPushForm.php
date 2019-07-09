@@ -15,9 +15,6 @@ use Drupal\delivery\Entity\Delivery;
 use Drupal\delivery\Entity\DeliveryItem;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-/**
- *
- */
 class DeliveryItemPushForm extends ConfirmFormBase {
 
   public static $BATCH_THRESHOLD = 10;
@@ -45,7 +42,7 @@ class DeliveryItemPushForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
-   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
    *  The entity repository service.
    */
   protected $entityRepository;
@@ -98,7 +95,7 @@ class DeliveryItemPushForm extends ConfirmFormBase {
    */
   public function getQuestion() {
     return $this->t('Are you sure you want to push the changes of the %title item?', [
-      '%title' => $this->sourceEntity->label(),
+      '%title' => $this->sourceEntity->label()
     ]);
   }
 
@@ -151,6 +148,9 @@ class DeliveryItemPushForm extends ConfirmFormBase {
     $this->messenger->addStatus($this->t('The changes have been imported.'));
   }
 
+  /**
+   *
+   */
   public function finishPushChanges($success, $results) {
     if ($success) {
     }
@@ -158,5 +158,4 @@ class DeliveryItemPushForm extends ConfirmFormBase {
       $this->messenger->addError($this->t('An error occurred trying to push the changes.'), 'error');
     }
   }
-
 }

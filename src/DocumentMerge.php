@@ -5,28 +5,39 @@ namespace Drupal\delivery;
 class DocumentMerge implements DocumentMergeInterface {
 
   /**
+   * The source tree.
+   *
    * @var \Drupal\delivery\Tree
-   *  The source tree.
    */
   protected $sourceTree;
 
   /**
+   * The left tree.
+   *
    * @var \Drupal\delivery\Tree
-   *  The left tree.
    */
   protected $leftTree;
 
   /**
+   * The right tree.
+   *
    * @var \Drupal\delivery\Tree
-   *  The right tree.
    */
   protected $rightTree;
 
   /**
+   * The result (merge) tree.
+   *
    * @var \Drupal\delivery\Tree
-   *  The result (merge) tree.
    */
   protected $resultTree;
+
+  /**
+   * Conflict options labels.
+   *
+   * @var array
+   */
+  protected $labels;
 
   /**
    * {@inheritdoc}
@@ -114,7 +125,8 @@ class DocumentMerge implements DocumentMergeInterface {
         // just copy the updated element, with the entire subtree, in the
         // result. If there is no match, then this is a big conflict, so we will
         // create a node with references to the source, left and right subtree.
-        // Case 1.1.
+
+        // Case 1.1
         if ($currentNode->isLeaf() && $leftNode->isLeaf()) {
           // Check now if the content and attributes are the same. If yes, just
           // add the node to the result tree. Also, stop traversing, it does
@@ -152,6 +164,12 @@ class DocumentMerge implements DocumentMergeInterface {
         // Case 1.2: the left and right positions match, but the node is not a
         // leaf.
         else {
+          if ($sourceNode = $this->sourceTree->search($currentNode->getId())) {
+            // First try to merge attributes from left to right.
+            // TODO: Implement actual attribute conflict resolution.
+            $currentNode->mergeAttributes($leftNode, $sourceNode);
+          }
+
           // Check first if the nodes have the same attributes. In that case,
           // the node can be added to the result tree, and we will continue
           // checking the branches for potential conflicts. The is actually the
@@ -182,14 +200,16 @@ class DocumentMerge implements DocumentMergeInterface {
               }
               else {
                 $id = 'conflict-' . $leftNode->getId() . '-' . $currentNode->getId();
-                $conflictNode = $this->createConflictNode($id, $sourceNode, $leftNode, $currentNode);
+                $conflictNode = $this->createConflictNode($id, $sourceNode->getDomNode()->ownerDocument, $sourceNode, $leftNode, $currentNode);
                 $this->resultTree->addNode($conflictNode, $resultParent);
+                $nextResultParent = $conflictNode;
               }
             }
             else {
               $id = 'conflict-' . $leftNode->getId() . '-' . $currentNode->getId();
               $conflictNode = $this->createConflictNode($id, $this->sourceTree->getRoot()->getDomNode()->ownerDocument, $leftNode, $currentNode);
               $this->resultTree->addNode($conflictNode, $resultParent);
+              $nextResultParent = $conflictNode;
             }
             // In any of these case, we also stop traversing (because we just
             // cloned entire branches) and flag the left node and its branch as
@@ -216,7 +236,7 @@ class DocumentMerge implements DocumentMergeInterface {
         // 2.3 The source position, attributes and content do not match any of
         // the left and right tree. In this case we have a move and edit
         // operation in both trees. And in such a case we apply the same logic
-        // as for 2.2.
+        // as for 2.2
         $sourceNode = $this->sourceTree->search($currentNode->getId());
         $clonedTree = Tree::cloneSubtree($currentNode);
         $path = $this->rightTree->getPathFromRoot($currentNode);
@@ -242,8 +262,7 @@ class DocumentMerge implements DocumentMergeInterface {
               $cloneTreeFromLeft->getRoot()->flag('removed', 'right');
             }
           }
-        }
-        else {
+        } else {
           $clonedTree->getRoot()->flag('added', 'right');
           if (!empty($nodeFromLeft)) {
             $cloneTreeFromLeft->getRoot()->flag('added', 'left');
@@ -279,6 +298,7 @@ class DocumentMerge implements DocumentMergeInterface {
       // and mark it is 'added by right'. Also, we add the element from the same
       // position in the left subtree (if any) and mark it as 'added by left'.
       // In any of these cases, we don't process any other children.
+
       // Case 1: The node is not found in the source tree.
       $sourceNode = $this->sourceTree->search($currentNode->getId());
       if (empty($sourceNode)) {
@@ -314,7 +334,7 @@ class DocumentMerge implements DocumentMergeInterface {
       }
       $stopTraversing = TRUE;
     }
-    if (empty($stopTraversing)) {
+    if (empty($stopTraversing) || $currentNode->getDomNode()->tagName == 'ck-button') {
       foreach ($currentNode->getChildren() as $child) {
         $this->traverseRight($child, $nextResultParent);
       }
@@ -396,7 +416,7 @@ class DocumentMerge implements DocumentMergeInterface {
    *   The current node to be processed.
    */
   protected function removeDuplicatesFromTree(TreeNode $node) {
-    $children = $node->getChildren();
+    $children  = $node->getChildren();
     if (!empty($children)) {
       $count = count($children);
       for ($index = 0; $index < $count - 1; $index++) {
@@ -419,7 +439,7 @@ class DocumentMerge implements DocumentMergeInterface {
   }
 
   /**
-   * Creates a new node to highlight a conflict between the left and right nodes
+   * Creates a new node to highlight a conflict bewteen the left and right nodes
    * compared to a source.
    *
    * @param $id
@@ -435,6 +455,22 @@ class DocumentMerge implements DocumentMergeInterface {
    *   The conflict node.
    */
   protected function createConflictNode($id, \DOMDocument $document, TreeNode $source = NULL, TreeNode $left = NULL, TreeNode $right = NULL) {
+    if (!empty($left) && $left->getDomNode()->hasAttribute('link-target')) {
+      $domNode = $document->importNode($left->getDomNode(), TRUE);
+      $node = new TreeNode($id, $domNode);
+      $node->flag('link-conflict', TRUE);
+
+      if (!empty($left)) {
+        $node->flag('left', $left);
+      }
+      if (!empty($right)) {
+        $node->flag('right', $right);
+      }
+      if (!empty($source)) {
+        $node->flag('source', $source);
+      }
+      return $node;
+    }
     // In case of media items, don't show a conflict but silently copy over
     // the left value until we have conflict resolution for media.
     // TODO: More solid detection of media items by using template data.
@@ -454,6 +490,7 @@ class DocumentMerge implements DocumentMergeInterface {
 
     $domNode = $document->createElement('ck-conflict-text');
     $node = new TreeNode($id, $domNode);
+
     $node->flag('conflict', TRUE);
     if (!empty($source)) {
       $node->flag('source', $source);
@@ -471,10 +508,9 @@ class DocumentMerge implements DocumentMergeInterface {
    * Builds a node tree from an xml string.
    *
    * @param string $string
-   *   The xml source string.
-   *
+   *  The xml source string.
    * @return \Drupal\delivery\Tree | NULL
-   *   The node tree.
+   *  The node tree.
    */
   protected function getTree($string) {
     libxml_use_internal_errors(TRUE);
@@ -488,11 +524,11 @@ class DocumentMerge implements DocumentMergeInterface {
    * Builds the DOM document from a tree.
    *
    * @param \Drupal\delivery\Tree $node
-   *   The current node being processed.
+   *  The current node being processed.
    * @param \DOMNode $domParentNode
-   *   The current dom node to be used as parent.
-   * @param \DOMDocument $document
-   *   The document that will be built.
+   *  The current dom node to be used as parent.
+   * @param  \DOMDocument $document
+   *  The document that will be built.
    */
   protected function buildDocumentFromTree(TreeNode $node, \DOMNode $domParentNode, \DOMDocument $document) {
     // If the node is a leaf, we also just set its content.
@@ -516,12 +552,11 @@ class DocumentMerge implements DocumentMergeInterface {
    * added, removed or conflict), returns a new node with all the flags applied.
    *
    * @param \DOMNode $domNode
-   *   The source DOM node.
-   * @param \Drupal\smart_editor\TreeNode $node
-   *   The tree node with all the flags information.
-   *
+   *  The source DOM node.
+   * @param \Drupal\delivery\TreeNode $node
+   *  The tree node with all the flags information.
    * @return \DOMNode
-   *   The result DOM node.
+   *  The result DOM node.
    */
   protected function getNodeWithFlags(\DOMNode $domNode, TreeNode $node) {
     // Check the added flag.
@@ -532,10 +567,10 @@ class DocumentMerge implements DocumentMergeInterface {
       return $newNode;
 
       // This is the case when we want to have a wrapper.
-      // $newNode = $domNode->ownerDocument->createElement('ck-added');
-      // $newNode->setAttribute('by', $added);
-      // $newNode->appendChild($domNode);
-      // return $newNode;.
+      //$newNode = $domNode->ownerDocument->createElement('ck-added');
+      //$newNode->setAttribute('by', $added);
+      //$newNode->appendChild($domNode);
+      //return $newNode;
     }
     if ($removed = $node->getFlag('removed')) {
       $newNode = $domNode->ownerDocument->importNode($domNode, TRUE);
@@ -544,10 +579,29 @@ class DocumentMerge implements DocumentMergeInterface {
       return $newNode;
 
       // This is the case when we want to have a wrapper.
-      // $newNode = $domNode->ownerDocument->createElement('ck-deleted');
-      // $newNode->setAttribute('by', $removed);
-      // $newNode->appendChild($domNode);
-      // return $newNode;.
+      //$newNode = $domNode->ownerDocument->createElement('ck-deleted');
+      //$newNode->setAttribute('by', $removed);
+      //$newNode->appendChild($domNode);
+      //return $newNode;
+    }
+
+    if ($link_conflict = $node->getFlag('link-conflict')) {
+      if ($leftNodeElement = $node->getFlag('left')) {
+        $attributes = $this->getDomNodeAttributes($leftNodeElement->getDomNode());
+        $attributes['label'] = $this->labels['left'] ?? 'left';
+        $domNode->setAttribute('left', json_encode($attributes));
+      }
+      if ($rightNodeElement = $node->getFlag('right')) {
+        $attributes = $this->getDomNodeAttributes($rightNodeElement->getDomNode());
+        $attributes['label'] = $this->labels['right'] ?? 'right';
+        $domNode->setAttribute('right', json_encode($attributes));
+      }
+      if ($sourceNodeElement = $node->getFlag('source')) {
+        $attributes = $this->getDomNodeAttributes($sourceNodeElement->getDomNode());
+        $attributes['label'] = $this->labels['source'] ?? 'source';
+        $domNode->setAttribute('source', json_encode($attributes));
+      }
+      return $domNode;
     }
 
     if ($media_conflict = $node->getFlag('media-conflict')) {
@@ -555,8 +609,11 @@ class DocumentMerge implements DocumentMergeInterface {
 
       // Add the left node.
       $leftNode = $domNode->ownerDocument->createElement('ck-conflict-media-option');
-      $leftNode->setAttribute('from', 'left');
+      $leftNode->setAttribute('from', $this->labels['left'] ?? 'left');
       if ($leftNodeElement = $node->getFlag('left')) {
+        if ($slot = $leftNodeElement->getDomNode()->getAttribute('slot')) {
+          $newNode->setAttribute('slot', $slot);
+        }
         $leftNodeImported = $domNode->ownerDocument->importNode($leftNodeElement->getDomNode(), TRUE);
         $leftNode->appendChild($leftNodeImported);
       }
@@ -564,7 +621,7 @@ class DocumentMerge implements DocumentMergeInterface {
 
       // Add the right node.
       $rightNode = $domNode->ownerDocument->createElement('ck-conflict-media-option');
-      $rightNode->setAttribute('from', 'right');
+      $rightNode->setAttribute('from', $this->labels['right'] ?? 'right');
       if ($rightNodeElement = $node->getFlag('right')) {
         $rightNodeImported = $domNode->ownerDocument->importNode($rightNodeElement->getDomNode(), TRUE);
         $rightNode->appendChild($rightNodeImported);
@@ -579,10 +636,9 @@ class DocumentMerge implements DocumentMergeInterface {
       // Set the current class on the conflict element, so that it is applicable
       // at this position for the editor.
       $newNode->setAttribute('class', $node->getFlag('left')->getDomNode()->getAttribute('class'));
-
       // Add the source node.
       $sourceNode = $domNode->ownerDocument->createElement('ck-conflict-option');
-      $sourceNode->setAttribute('from', 'source');
+      $sourceNode->setAttribute('from', $this->labels['source'] ?? 'source');
       if ($sourceNodeElement = $node->getFlag('source')) {
         $sourceNodeImported = $domNode->ownerDocument->importNode($sourceNodeElement->getDomNode(), TRUE);
         $sourceNode->appendChild($sourceNodeImported);
@@ -591,7 +647,7 @@ class DocumentMerge implements DocumentMergeInterface {
 
       // Add the left node.
       $leftNode = $domNode->ownerDocument->createElement('ck-conflict-option');
-      $leftNode->setAttribute('from', 'left');
+      $leftNode->setAttribute('from', $this->labels['left'] ?? 'left');
       if ($leftNodeElement = $node->getFlag('left')) {
         $leftNodeImported = $domNode->ownerDocument->importNode($leftNodeElement->getDomNode(), TRUE);
         $leftNode->appendChild($leftNodeImported);
@@ -600,7 +656,7 @@ class DocumentMerge implements DocumentMergeInterface {
 
       // Add the right node.
       $rightNode = $domNode->ownerDocument->createElement('ck-conflict-option');
-      $rightNode->setAttribute('from', 'right');
+      $rightNode->setAttribute('from', $this->labels['right'] ?? 'right');
       if ($rightNodeElement = $node->getFlag('right')) {
         $rightNodeImported = $domNode->ownerDocument->importNode($rightNodeElement->getDomNode(), TRUE);
         $rightNode->appendChild($rightNodeImported);
@@ -609,6 +665,28 @@ class DocumentMerge implements DocumentMergeInterface {
       return $newNode;
     }
     return $domNode;
+  }
+
+  /**
+   * Get all attributes for domNode.
+   */
+  protected function getDomNodeAttributes($domNode) {
+    $attributes = [];
+    foreach ($domNode->attributes as $attr) {
+      $attributes[$attr->nodeName] = $attr->nodeValue;
+    }
+    return $attributes;
+  }
+  /**
+   * Set conflict option label.
+   *
+   * @param string $key
+   *   Option key.
+   * @param string $label
+   *   Options label.
+   */
+  public function setLabel($key, $label) {
+    $this->labels[$key] = $label;
   }
 
 }

@@ -9,7 +9,9 @@ use Drupal\Core\Session\AccountProxy;
 use Drupal\Core\Url;
 use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
@@ -79,7 +81,13 @@ class RedirectListener implements EventSubscriberInterface {
 
     // If the workspace has any language restrictions, make sure that we are on
     // one of the allowed languages.
-    $allowed_languages = $current_workspace->get('allowed_languages')->getValue();
+    $primary_language = $current_workspace->get('primary_language')->getValue();
+    if (!$primary_language) {
+      return;
+    }
+    $secondary_languages = $current_workspace->get('secondary_languages')->getValue();
+    $allowed_languages = array_merge($primary_language, $secondary_languages);
+
     if (!empty($allowed_languages)) {
       $language_found = FALSE;
       foreach ($allowed_languages as $allowed_language) {
@@ -89,27 +97,29 @@ class RedirectListener implements EventSubscriberInterface {
         }
       }
       if (!$language_found) {
-        $request = $event->getRequest();
-        // Get the request query, we want to keep them.
-        parse_str($event->getRequest()->getQueryString(), $request_query);
-        try {
-          $url = Url::createFromRequest($request);
-        }
-        catch (ResourceNotFoundException $e) {
-          return FALSE;
-        }
-        $url->setOption('query', (array) $url->getOption('query') + $request_query);
-
-        // For now, we just pick the first allowed language. As an improvement
-        // for the future, we could run the language negotiation again.
-        $language = $this->languageManager->getLanguage($allowed_languages[0]['value']);
-        $url->setOption('language', $language);
-
-        // Give other modules a chance to alter the redirect url.
-        $this->moduleHandler->alter('workspaces_allowed_languages_redirect', $url, $request);
-
-        $response = new TrustedRedirectResponse($url->toString());
-        $event->setResponse($response);
+        $event->setResponse(new TrustedRedirectResponse('/system/404'));
+        // TODO: Re-enable the redirect. Did not work reliably so it was turned into a 404 response.
+//        $request = $event->getRequest();
+//        // Get the request query, we want to keep them.
+//        parse_str($event->getRequest()->getQueryString(), $request_query);
+//        try {
+//          $url = Url::createFromRequest($request);
+//        }
+//        catch (ResourceNotFoundException $e) {
+//          return FALSE;
+//        }
+//        $url->setOption('query', (array) $url->getOption('query') + $request_query);
+//
+//        // For now, we just pick the first allowed language. As an improvement
+//        // for the future, we could run the language negotiation again.
+//        $language = $primary_language[0]['value'];
+//        $url->setOption('language', $this->languageManager->getLanguage($language));
+//
+//        // Give other modules a chance to alter the redirect url.
+//        $this->moduleHandler->alter('workspaces_allowed_languages_redirect', $url, $request);
+//
+//        $response = new TrustedRedirectResponse($url->toString());
+//        $event->setResponse($response);
       }
     }
   }

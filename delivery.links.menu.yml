@@ -5,3 +5,9 @@ entity.delivery.collection:
 
   parent: system.admin_content
   weight: 10
+
+delivery.settings:
+  title: 'Delivery settings'
+  route_name: delivery.settings
+  description: 'Configure the content delivery system'
+  parent: system.admin_config_workflow

@@ -27,19 +27,19 @@ class DeliveryItemStatus extends FieldPluginBase implements ContainerFactoryPlug
     $this->addAdditionalFields(['id', 'source_revision', 'resolution', 'entity_type', 'entity_id', 'target_workspace']);
 
     $currentRevisions = \Drupal::service('plugin.manager.views.join')->createInstance('standard', [
-      'table' => 'revision_tree_index',
-      'field' => 'entity_id',
+      'table' => 'workspace_association',
+      'field' => 'target_entity_id',
       'type' => 'LEFT',
       'left_table' => $base_table,
       'left_field' => 'entity_id',
       'extra' => [
-        ['left_field' => 'entity_type', 'field' => 'entity_type'],
+        ['left_field' => 'entity_type', 'field' => 'target_entity_type_id'],
         ['left_field' => 'target_workspace', 'field' => 'workspace'],
-      ],
+      ]
     ]);
 
-    $currentRevisionsAlias = $this->query->addTable('revision_tree_index', $base_table, $currentRevisions);
-    $this->aliases['current_revision'] = $this->query->addField($currentRevisionsAlias, 'revision_id', 'current_revision');
+    $currentRevisionsAlias = $this->query->addTable('workspace_association', $base_table, $currentRevisions);
+    $this->aliases['current_revision'] = $this->query->addField($currentRevisionsAlias, 'target_entity_revision_id', 'current_revision');
   }
 
   /**
@@ -99,11 +99,10 @@ class DeliveryItemStatus extends FieldPluginBase implements ContainerFactoryPlug
         ], [
           'query' => [
             'destination' => $destination,
-          ],
+          ]
         ]),
         '#attached' => ['library' => ['delivery/entity-status']],
       ];
     }
   }
-
 }

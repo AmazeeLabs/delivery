@@ -134,7 +134,7 @@ class LanguageNegotiationWorkspaceAndUrl extends LanguageNegotiationUrl implemen
     }
     // No need to actually call the parent processor here because it should be
     // called by the language manager.
-    return $path;
+    return parent::processOutbound($path, $options, $request, $bubbleable_metadata);
   }
 
 }

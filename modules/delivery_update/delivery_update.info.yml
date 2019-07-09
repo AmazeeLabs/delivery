@@ -1,0 +1,7 @@
+name: 'Delivery update'
+type: module
+description: 'Delivery module upgrade path'
+core: 8.x
+configure:
+dependencies:
+  - delivery

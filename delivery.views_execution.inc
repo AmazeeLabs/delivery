@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide views runtime hooks for smart_custom.module.
+ * Provide views runtime hooks for delivery.module.
  */
 
 use Drupal\views\ViewExecutable;

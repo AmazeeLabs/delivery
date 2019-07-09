@@ -63,7 +63,7 @@ class DeliveryPullForm extends ConfirmFormBase {
   public function access(AccountInterface $account, DeliveryInterface $delivery) {
     $workspace = $this->deliveryService->getActiveWorkspace();
     $canForward = FALSE;
-    foreach ($delivery->workspaces as $item) {
+    foreach($delivery->workspaces as $item) {
       $canForward = $canForward || $item->target_id === $workspace->id();
     }
     $result = AccessResult::allowedIf($canForward);

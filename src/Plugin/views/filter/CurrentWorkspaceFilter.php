@@ -9,13 +9,13 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\views\Plugin\ViewsHandlerManager;
 
 /**
- * Filter to show only the latest revision of an entity in current workspace.
+ * Filter a list of entities to show only entities relevant for the current workspace.
  *
  * @ingroup views_filter_handlers
  *
- * @ViewsFilter("latest_workspace_revision")
+ * @ViewsFilter("current_workspace_filter")
  */
-class LatestWorkspaceRevision extends LatestRevision {
+class CurrentWorkspaceFilter extends LatestRevision {
 
   /**
    * @var \Drupal\workspaces\WorkspaceManagerInterface
@@ -66,9 +66,9 @@ class LatestWorkspaceRevision extends LatestRevision {
     $entity_type = $this->entityTypeManager->getDefinition($this->getEntityType());
     $keys = $entity_type->getKeys();
     $definition = [
-      'table' => 'revision_tree_index',
+      'table' => 'workspace_association',
       'type' => 'INNER',
-      'field' => 'entity_id',
+      'field' => 'target_entity_id',
       'left_table' => $query_base_table,
       'left_field' => $keys['id'],
       'extra' => [
@@ -78,13 +78,9 @@ class LatestWorkspaceRevision extends LatestRevision {
           'operator' => '=',
         ],
         [
-          'field' => 'revision_id',
-          'left_field' => $keys['revision'],
-        ],
-        [
-          'field' => 'entity_type',
+          'field' => 'target_entity_type_id',
           'value' => $entity_type->id(),
-        ],
+        ]
       ],
     ];
 

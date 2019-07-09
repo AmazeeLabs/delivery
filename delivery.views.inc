@@ -9,23 +9,6 @@
  * Implements hook_views_data_alter().
  */
 function delivery_views_data_alter(array &$data) {
-  $data['node_revision']['workspace'] = [
-    'title' => t('Workspace ID'),
-    'field' => [
-      'title' => t('Workspace ID'),
-      'help' => t('Displays the workspace ID for a node revision.'),
-      'id' => 'node_revision_workspace',
-    ],
-  ];
-  $data['node_revision']['workspace_filter'] = [
-    'title' => t('Workspace ID filter'),
-    'filter' => [
-      'title' => t('Workspace ID filter'),
-      'help' => t('Provides a filter for node revisions for their workspace.'),
-      'field' => 'workspace',
-      'id' => 'node_revision_workspace_filter',
-    ],
-  ];
   $data['delivery']['delivery_status'] = [
     'title' => t('Delivery status'),
     'field' => [
@@ -43,11 +26,7 @@ function delivery_views_data_alter(array &$data) {
     ],
   ];
 
-  // Set the revision argument id handler to 'numeric', since the 'vid'
-  // handler is broken.
-  $data['node_field_revision']['vid']['argument']['id'] = 'numeric';
-
-  $workspace_manager = \Drupal::service('workspaces.manager');
+  $workspace_manager =  \Drupal::service('workspaces.manager');
   $entity_type_manager = \Drupal::entityTypeManager();
   $entity_types = $entity_type_manager->getDefinitions();
 
@@ -58,9 +37,18 @@ function delivery_views_data_alter(array &$data) {
       continue;
     }
 
+    $entity_table = $entity_type->getDataTable() ?: $entity_type->getBaseTable();
     $entity_revision_table = $entity_type->getRevisionDataTable() ?: $entity_type->getRevisionTable();
     $t_args = [
       '@entity_type' => $entity_type->getLabel(),
+    ];
+
+    // Add a filter to ensure the views listing joins the workspace_association
+    // table.
+    $data[$entity_table]['current_workspace_filter'] = [
+      'title' => t('Current workspace revisions'),
+      'help' => t('Adjust the view to display only entities with a revision in the current workspace.'),
+      'filter' => ['id' => 'current_workspace_filter'],
     ];
 
     $data[$entity_revision_table]['entity_delivery_status'] = [
@@ -75,28 +63,5 @@ function delivery_views_data_alter(array &$data) {
         'label' => t('Delivery status filter'),
       ],
     ];
-
-    // Add a filter for showing only the latest revisions of an entity in current workspace.
-    $data[$entity_type->getRevisionTable()]['latest_workspace_revision'] = [
-      'title' => t('Is Latest Revision in Current Workspace'),
-      'help' => t('Restrict the view to only revisions that are the latest revision of their entity.'),
-      'filter' => ['id' => 'latest_workspace_revision'],
-    ];
   }
-
-  $data['media_field_revision']['mid']['relationship']['id'] = 'standard';
-  $data['media_field_revision']['mid']['relationship']['base'] = 'media_field_data';
-  $data['media_field_revision']['mid']['relationship']['base field'] = 'mid';
-  $data['media_field_revision']['mid']['relationship']['title'] = t('Media');
-  $data['media_field_revision']['mid']['relationship']['label'] = t('Get the actual media from a media revision.');
-  $data['media_field_revision']['mid']['relationship']['extra'][] = [
-    'field' => 'langcode',
-    'left_field' => 'langcode',
-  ];
-
-  // Make sure node data is also joined with the nid so all revisions can get
-  // unrevisioned data.
-  $data['node_field_revision']['vid']['relationship']['base field'] = 'nid';
-  $data['node_field_revision']['vid']['relationship']['left field'] = 'nid';
-  $data['node_field_revision']['vid']['relationship']['field'] = 'nid';
 }

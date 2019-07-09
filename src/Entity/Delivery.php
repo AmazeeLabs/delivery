@@ -137,41 +137,41 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Label'))
       ->setDescription(t('The label of the delivery.'))
-      ->setSettings([
+      ->setSettings(array(
         'default_value' => '',
         'max_length' => 255,
         'text_processing' => 0,
-      ])
+      ))
       ->setRequired(TRUE)
-      ->setDisplayOptions('view', [
+      ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'string',
         'weight' => -6,
-      ])
-      ->setDisplayOptions('form', [
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'string_textfield',
         'weight' => -6,
-      ])
+      ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Description'))
       ->setDescription(t('The description of the delivery.'))
-      ->setSettings([
+      ->setSettings(array(
         'default_value' => '',
         'text_processing' => 0,
-      ])
-      ->setDisplayOptions('view', [
+      ))
+      ->setDisplayOptions('view', array(
         'label' => 'above',
         'type' => 'string',
         'weight' => -6,
-      ])
-      ->setDisplayOptions('form', [
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'string_textarea',
         'rows' => '5',
         'weight' => -6,
-      ])
+      ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -180,21 +180,21 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
       ->setDescription(t('The name of the creator of this delivery.'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', [
+      ->setDisplayOptions('view', array(
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ])
-      ->setDisplayOptions('form', [
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'entity_reference_autocomplete',
-        'settings' => [
+        'settings' => array(
           'match_operator' => 'CONTAINS',
           'size' => 60,
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ],
+        ),
         'weight' => -3,
-      ])
+      ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -212,21 +212,21 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
       ->setDescription(t('The source workspace for this delivery.'))
       ->setSetting('target_type', 'workspace')
       ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', [
+      ->setDisplayOptions('view', array(
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ])
-      ->setDisplayOptions('form', [
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'entity_reference_autocomplete',
-        'settings' => [
+        'settings' => array(
           'match_operator' => 'CONTAINS',
           'size' => 60,
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ],
+        ),
         'weight' => -3,
-      ])
+      ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -236,21 +236,21 @@ class Delivery extends ContentEntityBase implements DeliveryInterface {
       ->setDescription(t('The target workspaces for this delivery.'))
       ->setSetting('target_type', 'workspace')
       ->setSetting('handler', 'default')
-      ->setDisplayOptions('view', [
+      ->setDisplayOptions('view', array(
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ])
-      ->setDisplayOptions('form', [
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'entity_reference_autocomplete',
-        'settings' => [
+        'settings' => array(
           'match_operator' => 'CONTAINS',
           'size' => 60,
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ],
+        ),
         'weight' => -3,
-      ])
+      ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 

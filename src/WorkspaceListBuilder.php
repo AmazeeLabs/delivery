@@ -39,41 +39,51 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
     return $this->storage->loadMultiple($entity_ids);
   }
 
+  protected function hasPermission($permission) {
+    return \Drupal::currentUser()->hasPermission('add delivery to assigned workspaces');
+  }
+
   /**
    * {@inheritdoc}
    */
   protected function offCanvasRender(array &$build) {
     parent::offCanvasRender($build);
     $active_workspace = $this->workspaceManager->getActiveWorkspace();
+    if ($active_workspace->id() == 'live') {
+      return;
+    }
+
     $build['active_workspace']['actions']['deploy']['#access'] = FALSE;
     $userWorkspaces = $this->getUserWorkspaces();
 
-    // Show delivery button only in case it's allowed.
-    if ($active_workspace->id() == 'live' ||
-      (!\Drupal::currentUser()->hasPermission('add delivery to assigned workspaces') ||
-      !in_array($active_workspace->id(), $userWorkspaces))) {
-      if (!\Drupal::currentUser()->hasPermission('add delivery to any workspaces')) {
-        return;
-      }
+    $isAssigned = $this->hasPermission('add delivery to assigned workspaces') || !in_array($active_workspace->id(), $userWorkspaces);
+
+    if (
+      $this->hasPermission('add delivery to any workspace') ||
+      ($isAssigned && $this->hasPermission('add delivery to assigned workspace'))
+    ) {
+      $build['active_workspace']['actions']['deliver'] = [
+        '#type' => 'link',
+        '#title' => t('Deliver content'),
+        '#url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $active_workspace->id()]),
+        '#attributes' => [
+          'class' => ['button', 'active-workspace__button'],
+        ]
+      ];
     }
-    $build['active_workspace']['actions']['deliver'] = [
-      '#type' => 'link',
-      '#title' => t('Deliver content'),
-      '#url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $active_workspace->id()]),
-      '#attributes' => [
-        'class' => ['button', 'active-workspace__button'],
-      ],
-    ];
   }
 
   /**
-   * Return workspaces ids.
+   * Return workpsaces ids.
    */
   protected function getUserWorkspaces() {
     $account = \Drupal::currentUser();
-    $assignedWorkspaces = \Drupal::entityManager()->getStorage('user')->load($account->id())->get('field_assigned_workspaces')->referencedEntities();
+    $assignedWorkpsaces = \Drupal::entityManager()
+      ->getStorage('user')->load($account->id())
+      ->get('assigned_workspaces')
+      ->referencedEntities();
     $workspaces = [];
-    foreach ($assignedWorkspaces as $workspace) {
+    foreach ($assignedWorkpsaces as $workspace) {
       $workspaces[] = $workspace->id();
     }
     $result = $workspaces;
@@ -88,7 +98,7 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
    */
   protected function getWorkspaceChildren($id) {
     $query = \Drupal::service('entity_type.manager')->getStorage('workspace')->getQuery();
-    $query->condition('parent_workspace', $id);
+    $query->condition('parent', $id);
     $result = $query->execute();
     return $result;
   }

@@ -17,7 +17,7 @@ class TreeNode implements TreeNodeInterface {
   protected $children;
 
   /**
-   * @var \DOMNode
+   * @var \DOMElement
    * The actual DOM node this tree node is referencing to.
    */
   protected $domNode;
@@ -218,6 +218,46 @@ class TreeNode implements TreeNodeInterface {
       $attributes['class'] = implode(' ', $words);
     }
     return $attributes;
+  }
+
+  public function setAttributes($attributes) {
+    foreach ($attributes as $key => $value) {
+      $this->domNode->setAttribute($key, $value);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function mergeAttributes(TreeNode $leftNode, TreeNode $sourceNode) {
+    $right = $this->getSortedAttributes();
+    $left = $leftNode->getSortedAttributes();
+    $source = $sourceNode->getSortedAttributes();
+
+    // We only merge data attributes.
+    $keys = array_filter(array_unique(array_merge(array_keys($right), array_keys($left), array_keys($source))), function ($key) {
+      return substr($key, 0, 5) === 'data-';
+    });
+
+    $result = [];
+
+    foreach ($keys as $key) {
+      $right[$key] = isset($right[$key]) ? $right[$key] : NULL;
+      $left[$key] = isset($left[$key]) ? $left[$key] : NULL;
+      $source[$key] = isset($source[$key]) ? $source[$key] : NULL;
+
+      // In case only the right attribute changed, take over the right one.
+      if ($left[$key] === $source[$key] && $right[$key] !== $source[$key]) {
+        $result[$key] = $right[$key];
+      }
+      // In any other case we take the left one, since it has precedence.
+      else {
+        $result[$key] = $left[$key];
+      }
+    }
+
+    $this->setAttributes($result);
+    $leftNode->setAttributes($result);
   }
 
 }

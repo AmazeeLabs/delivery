@@ -4,14 +4,13 @@ namespace Drupal\delivery\Plugin\views\traits;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\revision_tree\RevisionTreeQueryInterface;
 use Drupal\views\Plugin\ViewsHandlerManager;
 use Drupal\workspaces\Entity\Workspace;
 use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Common functionality for the Delivery Service.
+ * Common functionality for the
  */
 trait EntityDeliveryStatusTrait {
   public static $NOT_APPLICABLE = -1;
@@ -21,25 +20,6 @@ trait EntityDeliveryStatusTrait {
   public static $CONFLICT = 3;
   public static $NEW = 4;
 
-  /**
-   * Retrieve the human readable label for an entity status.
-   *
-   * @param $status
-   *   The status code.
-   *
-   * @return string
-   *   The label.
-   */
-  public function getStatusLabel($status) {
-    return (string) [
-      static::$NOT_APPLICABLE => $this->t('Not applicable'),
-      static::$IDENTICAL => $this->t('Delivered'),
-      static::$MODIFIED => $this->t('Modified'),
-      static::$OUTDATED => $this->t('Outdated'),
-      static::$CONFLICT => $this->t('Conflict'),
-      static::$NEW => $this->t('New'),
-    ][$status];
-  }
 
   /**
    * Entity Type Manager service.
@@ -61,11 +41,6 @@ trait EntityDeliveryStatusTrait {
    * @var \Drupal\workspaces\WorkspaceManagerInterface
    */
   protected $workspaceManager;
-
-  /**
-   * @var \Drupal\revision_tree\RevisionTreeQueryInterface
-   */
-  protected $revisionTreeQuery;
 
   /**
    * The default workspace id.
@@ -96,13 +71,6 @@ trait EntityDeliveryStatusTrait {
   protected $lcaAlias;
 
   /**
-   * The revision target workspace id.
-   *
-   * @var string
-   */
-  protected $revisionTargetWorkspace;
-
-  /**
    * The source workspace id.
    *
    * @var string
@@ -119,7 +87,7 @@ trait EntityDeliveryStatusTrait {
   /**
    * Indicator that the field currently is not applicable.
    *
-   * @var bool
+   * @var boolean
    */
   protected $notApplicable = FALSE;
 
@@ -138,19 +106,15 @@ trait EntityDeliveryStatusTrait {
    *   Views Handler Plugin Manager.
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
    *   The workspace manager.
-   * @param \Drupal\revision_tree\RevisionTreeQueryInterface $revisionTreeQuery
-   *   The revision tree querying service.
    * @param string $defaultWorkspace
    *   The default workspace id.
    */
   public function __construct(
-    array $configuration,
-  $plugin_id,
+    array $configuration, $plugin_id,
     $plugin_definition,
     EntityTypeManagerInterface $entity_type_manager,
     ViewsHandlerManager $join_handler,
     WorkspaceManagerInterface $workspaceManager,
-    RevisionTreeQueryInterface $revisionTreeQuery,
     $defaultWorkspace
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -158,14 +122,13 @@ trait EntityDeliveryStatusTrait {
     $this->entityTypeManager = $entity_type_manager;
     $this->joinHandler = $join_handler;
     $this->workspaceManager = $workspaceManager;
-    $this->revisionTreeQuery = $revisionTreeQuery;
     $this->defaultWorkspace = $defaultWorkspace;
   }
 
   protected function getWorkspaceHierarchy($workspaceId) {
     $workspace = $this->entityTypeManager->getStorage('workspace')->load($workspaceId);
     $context = [$workspace->id()];
-    while ($workspace = $workspace->parent_workspace->entity) {
+    while ($workspace = $workspace->parent->entity) {
       $context[] = $workspace->id();
     }
     $context[] = NULL;
@@ -181,7 +144,6 @@ trait EntityDeliveryStatusTrait {
       $container->get('entity_type.manager'),
       $container->get('plugin.manager.views.join'),
       $container->get('workspaces.manager'),
-      $container->get('revision_tree.query'),
       $container->hasParameter('workspace.default')
         ? $container->getParameter('workspace.default')
         : 'live'
@@ -203,11 +165,12 @@ trait EntityDeliveryStatusTrait {
   public function buildDeliveryStatusOptionsForm(&$form, FormStateInterface $form_state) {
     $workspaceOptions = array_map(function (Workspace $workspace) {
         return $workspace->label();
-    }, $this->entityTypeManager->getStorage('workspace')->loadMultiple()) + [
-      '__current' => $this->t('Current workspace'),
-      '__parent' => $this->t('Parent of current workspace'),
-      '__argument' => $this->t('From views argument'),
-    ];
+      }, $this->entityTypeManager->getStorage('workspace')->loadMultiple()) + [
+        '__current' => $this->t('Current workspace'),
+        '__parent' => $this->t('Parent of current workspace'),
+        '__argument' => $this->t('From views argument'),
+      ];
+
 
     $form['source_workspace'] = [
       '#type' => 'select',
@@ -269,25 +232,22 @@ trait EntityDeliveryStatusTrait {
     switch ($this->options[$key . '_workspace']) {
       case '__current':
         return $this->workspaceManager->getActiveWorkspace()->id();
-
-      break;
+        break;
       case '__parent':
-        $parent = $this->workspaceManager->getActiveWorkspace()->parent_workspace->entity;
+        $parent = $this->workspaceManager->getActiveWorkspace()->parent->entity;
         if ($parent) {
           return $parent->id();
         }
         break;
-
       case '__argument':
         $arg = intval($this->options[$key . '_workspace_arg']);
         if (isset($this->view->args[$arg])) {
           return $this->view->args[$arg];
         }
         break;
-
       default:
         return $this->options[$key . '_workspace'];
-      break;
+        break;
     }
   }
 
@@ -314,11 +274,9 @@ trait EntityDeliveryStatusTrait {
     $targetHierarchy = $this->getWorkspaceHierarchy($target);
     $lcaHierarchy = array_intersect($sourceHierarchy, $targetHierarchy);
 
-    $activeSourceLeaves = $this->revisionTreeQuery->getActiveLeaves($entity_type, ['workspace' => [$source, $target]]);
-    $activeTargetLeaves = $this->revisionTreeQuery->getActiveLeaves($entity_type, ['workspace' => [$target]]);
-    $activeTargetLeaves->addField('base', 'workspace', 'targetworkspace');
-
-    $activeLcaLeaves = $this->revisionTreeQuery->getActiveLeaves($entity_type, ['workspace' => array_shift($lcaHierarchy)]);
+    $activeSourceLeaves = \Drupal::database()->select('workspace_association', 'wa')->condition('workspace', $source);
+    $activeTargetLeaves = \Drupal::database()->select('workspace_association', 'wa')->condition('workspace', $target);
+    $activeLcaLeaves = \Drupal::database()->select('workspace_association', 'wa')->condition('workspace', array_shift($lcaHierarchy));
 
     $base_table = $this->relationship ?: $this->view->storage->get('base_table');
 
@@ -336,13 +294,12 @@ trait EntityDeliveryStatusTrait {
       $baseQuery->condition('workspace', $source);
     }
 
-    $baseQuery->innerJoin($activeSourceLeaves, 'source', "base.{$keys['revision']} = source.revision_id");
-    $baseQuery->innerJoin($activeTargetLeaves, 'target', "base.{$keys['id']} = target.entity_id");
-    $baseQuery->innerJoin($activeLcaLeaves, 'lca', "base.{$keys['id']} = lca.entity_id");
-    $baseQuery->addField('source', 'revision_id', 'source_revision');
-    $baseQuery->addField('target', 'revision_id', 'target_revision');
-    $baseQuery->addField('target', 'targetworkspace', 'targetworkspace');
-    $baseQuery->addField('lca', 'revision_id', 'lca_revision');
+    $baseQuery->innerJoin($activeSourceLeaves, 'source', "base.{$keys['revision']} = source.target_entity_revision_id");
+    $baseQuery->innerJoin($activeTargetLeaves, 'target', "base.{$keys['id']} = target.target_entity_id");
+    $baseQuery->innerJoin($activeLcaLeaves, 'lca', "base.{$keys['id']} = lca.target_entity_id");
+    $baseQuery->addField('source', 'target_entity_revision_id', 'source_revision');
+    $baseQuery->addField('target', 'target_entity_revision_id', 'target_revision');
+    $baseQuery->addField('lca', 'target_entity_revision_id', 'lca_revision');
 
     // If the first argument is set, we display the status of an existing delivery.
     // This means we join with the entity id. In the other case we have to restrict
@@ -360,8 +317,7 @@ trait EntityDeliveryStatusTrait {
           'left_field' => $keys['revision'],
         ]
       );
-    }
-    else {
+    } else {
       $revisionsTable = $this->joinHandler->createInstance(
         'standard',
         [
@@ -371,7 +327,7 @@ trait EntityDeliveryStatusTrait {
           'left_table' => $base_table,
           'left_field' => $keys['id'],
         ]
-          );
+      );
     }
 
     $revisionsAlias = $this->query->addTable($entity_type->getRevisionTable() . '_source', $this->relationship, $revisionsTable);
@@ -379,7 +335,6 @@ trait EntityDeliveryStatusTrait {
     $this->sourceAlias = $this->query->addField($revisionsAlias, 'source_revision', 'source_rev');
     $this->targetAlias = $this->query->addField($revisionsAlias, 'target_revision', 'target_rev');
     $this->lcaAlias = $this->query->addField($revisionsAlias, 'lca_revision', 'lca_rev');
-    $this->revisionTargetWorkspace = $this->query->addField($revisionsAlias, 'targetworkspace', 'rev_target');
   }
 
 }
