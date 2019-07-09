@@ -242,6 +242,10 @@ class TreeNode implements TreeNodeInterface {
     $result = [];
 
     foreach ($keys as $key) {
+      $right[$key] = isset($right[$key]) ? $right[$key] : NULL;
+      $left[$key] = isset($left[$key]) ? $left[$key] : NULL;
+      $source[$key] = isset($source[$key]) ? $source[$key] : NULL;
+
       // In case only the right attribute changed, take over the right one.
       if ($left[$key] === $source[$key] && $right[$key] !== $source[$key]) {
         $result[$key] = $right[$key];

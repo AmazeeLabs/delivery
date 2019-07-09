@@ -68,9 +68,24 @@ class DeliveryItemResolveForm extends FormBase {
    */
   protected $deliveryItem;
 
+  /**
+   * @var \Drupal\Core\Entity\ContentEntityInterface
+   */
   protected $sourceEntity;
+
+  /**
+   * @var \Drupal\Core\Entity\ContentEntityInterface
+   */
   protected $targetEntity;
+
+  /**
+   * @var \Drupal\Core\Entity\ContentEntityInterface
+   */
   protected $parentEntity;
+
+  /**
+   * @var \Drupal\Core\Entity\ContentEntityInterface
+   */
   protected $resultEntity;
 
   /**
@@ -313,6 +328,30 @@ class DeliveryItemResolveForm extends FormBase {
 
     $form_state->set('workspace_safe', TRUE);
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    foreach ($this->resultEntity->getTranslationLanguages() as $language) {
+      $context = new ParameterBag();
+      $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
+      $context->set('resolution_custom_values', $form_state->getValue('custom')[$language->getId()]);
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $resultTranslation */
+      $resultTranslation = $this->getTranslation($this->resultEntity, $language->getId());
+      $this->conflictResolverManager->resolveConflicts(
+        $this->getTranslation($this->targetEntity, $language->getId()),
+        $this->getTranslation($this->sourceEntity, $language->getId()),
+        $this->getTranslation($this->parentEntity, $language->getId()),
+        $resultTranslation,
+        $context
+      );
+      $violations = $resultTranslation->validate();
+      foreach ($violations as $violation) {
+        $form_state->setError($form[$language->getId()], $violation->getMessage());
+      }
+    }
   }
 
   /**
