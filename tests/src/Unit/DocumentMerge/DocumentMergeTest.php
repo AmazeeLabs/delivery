@@ -458,10 +458,10 @@ XML;
       $result = <<<XML
   <ck-conflict-media slot="media">
     <ck-conflict-media-option from="left">
-      <div class="media" slot="media" data-media-uuid="1"/>
+      <div class="media" data-media-uuid="1"/>
     </ck-conflict-media-option>
     <ck-conflict-media-option from="right">
-      <div class="media" slot="media" data-media-uuid="2"/>
+      <div class="media" data-media-uuid="2"/>
     </ck-conflict-media-option>
   </ck-conflict-media>
 XML;

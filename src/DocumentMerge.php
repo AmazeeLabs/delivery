@@ -607,6 +607,7 @@ class DocumentMerge implements DocumentMergeInterface {
           $newNode->setAttribute('slot', $slot);
         }
         $leftNodeImported = $domNode->ownerDocument->importNode($leftNodeElement->getDomNode(), TRUE);
+        $leftNodeImported->removeAttribute('slot');
         $leftNode->appendChild($leftNodeImported);
       }
       $newNode->appendChild($leftNode);
@@ -616,6 +617,7 @@ class DocumentMerge implements DocumentMergeInterface {
       $rightNode->setAttribute('from', $this->labels['right'] ?? 'right');
       if ($rightNodeElement = $node->getFlag('right')) {
         $rightNodeImported = $domNode->ownerDocument->importNode($rightNodeElement->getDomNode(), TRUE);
+        $rightNodeImported->removeAttribute('slot');
         $rightNode->appendChild($rightNodeImported);
       }
       $newNode->appendChild($rightNode);
