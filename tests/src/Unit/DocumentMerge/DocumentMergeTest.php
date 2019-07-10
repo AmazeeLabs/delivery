@@ -442,6 +442,32 @@ XML;
     $this->assertMergeResult($source, $left, $right, $result);
   }
 
+  public function testBothChangeMedia() {
+    $source = <<<XML
+  <div class="media" data-media-uuid="1"></div>
+XML;
+
+    $left = <<<XML
+  <div class="media" data-media-uuid="2"></div>
+XML;
+
+    $right = <<<XML
+  <div class="media" data-media-uuid="3"></div>
+XML;
+
+    $result = <<<XML
+  <ck-conflict-media>
+    <ck-conflict-media-option from="left">
+      <div class="media" data-media-uuid="2"/>
+    </ck-conflict-media-option>
+    <ck-conflict-media-option from="right">
+      <div class="media" data-media-uuid="3"/>
+    </ck-conflict-media-option>
+  </ck-conflict-media>
+XML;
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
   public function testRightChangesMediaWithSlot() {
     $source = <<<XML
   <div class="media" slot="media" data-media-uuid="1"></div>
@@ -462,6 +488,58 @@ XML;
     </ck-conflict-media-option>
     <ck-conflict-media-option from="right">
       <div class="media" slot="media" data-media-uuid="2"/>
+    </ck-conflict-media-option>
+  </ck-conflict-media>
+XML;
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
+  public function testLeftChangesMediaWithSlot() {
+    $source = <<<XML
+  <div class="media" slot="media" data-media-uuid="1"></div>
+XML;
+
+    $left = <<<XML
+  <div class="media" slot="media" data-media-uuid="2"></div>
+XML;
+
+    $right = <<<XML
+  <div class="media" slot="media" data-media-uuid="1"></div>
+XML;
+
+    $result = <<<XML
+  <ck-conflict-media slot="media">
+    <ck-conflict-media-option from="left">
+      <div class="media" slot="media" data-media-uuid="2"/>
+    </ck-conflict-media-option>
+    <ck-conflict-media-option from="right">
+      <div class="media" slot="media" data-media-uuid="1"/>
+    </ck-conflict-media-option>
+  </ck-conflict-media>
+XML;
+    $this->assertMergeResult($source, $left, $right, $result);
+  }
+
+  public function testBothChangeMediaWithSlot() {
+    $source = <<<XML
+  <div class="media" slot="media" data-media-uuid="1"></div>
+XML;
+
+    $left = <<<XML
+  <div class="media" slot="media" data-media-uuid="2"></div>
+XML;
+
+    $right = <<<XML
+  <div class="media" slot="media" data-media-uuid="3"></div>
+XML;
+
+    $result = <<<XML
+  <ck-conflict-media slot="media">
+    <ck-conflict-media-option from="left">
+      <div class="media" slot="media" data-media-uuid="2"/>
+    </ck-conflict-media-option>
+    <ck-conflict-media-option from="right">
+      <div class="media" slot="media" data-media-uuid="3"/>
     </ck-conflict-media-option>
   </ck-conflict-media>
 XML;
