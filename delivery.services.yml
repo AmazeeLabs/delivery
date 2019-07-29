@@ -8,12 +8,6 @@ services:
     - '@conflict.resolver.manager'
     - '@workspaces.association'
 
-  delivery.conflict_resolver_ui_sections:
-    class: Drupal\delivery\ConflictResolverUI\ConflictResolverUISections
-    arguments: ['@entity_type.manager', '@entity.form_builder']
-    tags:
-      - { name: conflict_resolver_ui, priority: 1 }
-
   delivery.route_subscriber:
     class: Drupal\delivery\Routing\RouteSubscriber
     tags:
