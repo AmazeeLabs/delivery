@@ -122,7 +122,7 @@ class DeliveryItemPushForm extends ConfirmFormBase {
     $sourceEntity = $this->entityTypeManager
       ->getStorage($delivery_item->getTargetType())
       ->loadRevision($delivery_item->getSourceRevision());
-    return $sourceEntity->access('edit', $account, TRUE);
+    return $sourceEntity->access('update', $account, TRUE);
   }
 
   /**
