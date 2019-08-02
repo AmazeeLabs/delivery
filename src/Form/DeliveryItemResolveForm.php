@@ -371,7 +371,7 @@ class DeliveryItemResolveForm extends FormBase {
       );
       $violations = $resultTranslation->validate();
       foreach ($violations as $violation) {
-        $form_state->setError($form[$language->getId()], $violation->getMessage());
+        $form_state->setError($form, $violation->getMessage());
       }
     }
   }
