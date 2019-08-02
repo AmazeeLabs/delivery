@@ -24,9 +24,9 @@ services:
       - { name: event_subscriber }
 
   conflict_discovery.blacklisted:
-    class: Drupal\delivery\ConflictDiscovery\BlacklistedFieldsDiscovery
+    class: Drupal\delivery\MergeStrategy\BlacklistedFieldsStrategy
     tags:
-      - { name: event_subscriber }
+      - { name: event_subscriber, priority: 999 }
 
   Drupal\workspaces\EntityOperations:
     class: Drupal\delivery\DeliveryEntityOperations

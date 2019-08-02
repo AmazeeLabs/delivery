@@ -1,40 +1,40 @@
 <?php
 
-namespace Drupal\delivery\ConflictDiscovery;
+namespace Drupal\delivery\MergeStrategy;
 
-use Drupal\Core\Conflict\Event\EntityConflictEvents;
-use Drupal\Core\Conflict\Event\EntityConflictDiscoveryEvent;
-use Drupal\Core\Conflict\ConflictDiscovery\ConflictDiscoveryBase;
+use Drupal\Core\Conflict\ConflictResolution\MergeStrategyBase;
+use Drupal\Core\Conflict\Event\EntityConflictResolutionEvent;
 
 /**
  * Blacklisted fields discovery.
  */
-class BlacklistedFieldsDiscovery extends ConflictDiscoveryBase {
+class BlacklistedFieldsStrategy extends MergeStrategyBase {
 
   /**
    * {@inheritdoc}
    */
-  public function discoverConflictsContentEntity(EntityConflictDiscoveryEvent $event) {
+  public function getMergeStrategyId(): string {
+    return 'blacklisted-fields';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resolveConflictsContentEntity(EntityConflictResolutionEvent $event) {
     $conflicts = array_keys($event->getConflicts());
     $baseEntity = $event->getBaseEntity();
     $fieldConfig = \Drupal::entityManager()->getStorage('field_config');
+    $resultEntity = $event->getResultEntity();
+    $localEntity = $event->getLocalEntity();
 
     if ($conflicts) {
       foreach ($conflicts as $property) {
         $fieldConflictConfig = $fieldConfig->load($baseEntity->getEntityTypeId() . '.' . $baseEntity->bundle() . '.' . $property);
         if ($fieldConflictConfig && $fieldConflictConfig->getThirdPartySetting('delivery', 'blacklisted')) {
           $event->removeConflict($property);
+          $resultEntity->{$property} = $localEntity->{$property};
         }
       }
     }
   }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents() {
-    $events[EntityConflictEvents::ENTITY_CONFLICT_DISCOVERY][] = ['discoverConflicts', -100];
-    return $events;
-  }
-
 }
