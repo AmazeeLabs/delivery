@@ -67,6 +67,7 @@ class MergeInvisibleProperties extends MergeStrategyBase {
 
         if ($selection === '__custom__' && isset($custom[$property])) {
           $result_entity->set($property, $custom[$property]);
+          $event->removeConflict($property);
         }
       }
     }

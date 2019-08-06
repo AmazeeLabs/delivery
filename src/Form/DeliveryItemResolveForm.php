@@ -380,45 +380,9 @@ class DeliveryItemResolveForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->workspaceManager->executeInWorkspace($this->deliveryItem->getTargetWorkspace(), function () use ($form_state) {
-      $formDisplay = EntityFormDisplay::collectRenderDisplay($this->resultEntity, 'merge');
-      /** @var \Drupal\Core\Field\WidgetPluginManager $widgetPluginManager */
-      $widgetPluginManager = \Drupal::service('plugin.manager.field.widget');
-      /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager */
-      $entityFieldManager = \Drupal::service('entity_field.manager');
+    $this->workspaceManager->executeInWorkspace($this->deliveryItem->getTargetWorkspace(), function () use ($form, $form_state) {
       $this->resultEntity->setSyncing(TRUE);
       $this->resultEntity->save();
-      foreach ($this->resultEntity->getTranslationLanguages() as $language) {
-        $context = new ParameterBag();
-        $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
-        $customValues = $form_state->getValue('custom')[$language->getId()];
-
-        foreach ($customValues as $field => $input) {
-          $component = $formDisplay->getComponent($field);
-          $entityType = $this->sourceEntity->getEntityType();
-          $bundle = $this->sourceEntity->bundle();
-          $definitions = $entityFieldManager->getFieldDefinitions($entityType->id(), $bundle);
-          /** @var \Drupal\Core\Field\WidgetInterface $widget */
-          $widget = $widgetPluginManager->getInstance([
-            'field_definition' => $definitions[$field],
-            'form_mode' => 'merge',
-            // No need to prepare, defaults have been merged in setComponent().
-            'prepare' => FALSE,
-            'configuration' => $component,
-          ]);
-          $customValues[$field] = $widget->massageFormValues($input, $form, $form_state);
-        }
-        $context->set('resolution_custom_values', $customValues);
-        $resultTranslation = $this->getTranslation($this->resultEntity, $language->getId());
-        $this->conflictResolverManager->resolveConflicts(
-          $this->getTranslation($this->targetEntity, $language->getId()),
-          $this->getTranslation($this->sourceEntity, $language->getId()),
-          $this->getTranslation($this->parentEntity, $language->getId()),
-          $resultTranslation,
-          $context
-        );
-        $resultTranslation->save();
-      }
       $this->deliveryItem->result_revision = $this->resultEntity->getRevisionId();
     });
     // TODO: actually compare entities.
