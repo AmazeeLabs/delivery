@@ -1,0 +1,7 @@
+{
+  "name": "drupal/delivery",
+  "type": "drupal-module",
+  "description": "Content delivery based on workspaces",
+  "license": "GPL-2.0-or-later",
+  "minimum-stability": "dev"
+}
