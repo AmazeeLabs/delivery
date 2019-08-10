@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -200,6 +201,12 @@ class DeliveryItemResolveForm extends FormBase {
     $sourceWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($delivery_item->getSourceWorkspace());
 
+    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
+    $targetLanguages = [$targetPrimaryLanguage];
+    foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+      $targetLanguages[] = $secondaryLanguage->value;
+    }
+
     $viewDisplay = EntityViewDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
     $formDisplay = EntityFormDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
 
@@ -218,16 +225,28 @@ class DeliveryItemResolveForm extends FormBase {
         $parentTranslation = $this->getTranslation($this->parentEntity, $languageId);
         $targetTranslation = $this->getTranslation($this->targetEntity, $languageId);
 
+        $context = new ParameterBag();
+        $context->set('supported_languages', $targetLanguages);
 
         $conflicts = $this->conflictResolverManager->resolveConflicts(
           $targetTranslation,
           $sourceTranslation,
           $parentTranslation,
-          $resultTranslation
+          $resultTranslation,
+          $context
         );
 
         $hadConflicts = $hadConflicts || count($conflicts) > 0;
 
+        // If the current language is not the target workspace primary language,
+        // ignore all conflicts in non-translatable fields.
+        if ($languageId !== $targetPrimaryLanguage) {
+          foreach (array_keys($conflicts) as $prop) {
+            if(!$sourceTranslation->get($prop)->getFieldDefinition()->isTranslatable()) {
+              unset($conflicts[$prop]);
+            }
+          }
+        }
 
         if ($conflicts) {
           $sourceBuild = $viewDisplay->build($sourceTranslation);
@@ -339,10 +358,49 @@ class DeliveryItemResolveForm extends FormBase {
     $widgetPluginManager = \Drupal::service('plugin.manager.field.widget');
     /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager */
     $entityFieldManager = \Drupal::service('entity_field.manager');
+
+    $targetWorkspace = $this->entityTypeManager->getStorage('workspace')
+      ->load($this->deliveryItem->getTargetWorkspace());
+
+    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
+    $targetLanguages = [$targetPrimaryLanguage];
+    foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+      $targetLanguages[] = $secondaryLanguage->value;
+    }
+
+    // Copy resolutions of non-translatable fields from primary language to
+    // other languages.
+    $allResolutions = $form_state->getValue('languages');
+    foreach ($allResolutions[$targetPrimaryLanguage] as $key => $value) {
+      if ($this->resultEntity->get($key)->getFieldDefinition()->isTranslatable()) {
+        continue;
+      }
+      foreach (array_keys($allResolutions) as $lang) {
+        if ($lang !== $targetPrimaryLanguage) {
+          $allResolutions[$lang][$key] = $value;
+        }
+      }
+    }
+
+    // Copy manual merges of non-translatable fields from primary language to
+    // other languages.
+    $allCustomValues = $form_state->getValue('custom');
+    foreach ($allCustomValues[$targetPrimaryLanguage] as $key => $value) {
+      if ($this->resultEntity->get($key)->getFieldDefinition()->isTranslatable()) {
+        continue;
+      }
+      foreach (array_keys($allCustomValues) as $lang) {
+        if ($lang !== $targetPrimaryLanguage) {
+          $allCustomValues[$lang][$key] = $value;
+        }
+      }
+    }
+
     foreach ($this->resultEntity->getTranslationLanguages() as $language) {
       $context = new ParameterBag();
-      $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
-      $customValues = $form_state->getValue('custom')[$language->getId()];
+      $context->set('supported_languages', $targetLanguages);
+      $context->set('resolution_form_result', $allResolutions[$language->getId()]);
+      $customValues = $allCustomValues[$language->getId()];
 
       foreach ($customValues as $field => $input) {
         $component = $formDisplay->getComponent($field);
@@ -369,9 +427,11 @@ class DeliveryItemResolveForm extends FormBase {
         $resultTranslation,
         $context
       );
-      $violations = $resultTranslation->validate();
-      foreach ($violations as $violation) {
-        $form_state->setError($form, $violation->getMessage());
+      if (in_array($language->getId(), $targetLanguages)) {
+        $violations = $resultTranslation->validate();
+        foreach ($violations as $violation) {
+          $form_state->setError($form, $violation->getMessage());
+        }
       }
     }
   }

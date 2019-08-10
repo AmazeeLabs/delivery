@@ -40,7 +40,11 @@ class MergeInvisibleProperties extends MergeStrategyBase {
       }
     }
 
-    if ($local_entity instanceof FieldableEntityInterface) {
+    // If the current language is in the list of languages supported by the
+    // target workspace, remove these fields from the automerge list. Else
+    // just merge from left to right.
+    $supportedLanguages = $event->getContextParameter('supported_languages');
+    if (in_array($result_entity->language()->getId(), $supportedLanguages) && $local_entity instanceof FieldableEntityInterface) {
       $viewDisplay = EntityViewDisplay::collectRenderDisplay($local_entity, 'merge');
       $formDisplay = EntityFormDisplay::collectRenderDisplay($local_entity, 'merge');
       $resolvable = array_merge(array_keys($viewDisplay->getComponents()), array_keys($formDisplay->getComponents()));
