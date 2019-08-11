@@ -2,6 +2,7 @@
 
 namespace Drupal\delivery\Form;
 
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
@@ -430,7 +431,10 @@ class DeliveryItemResolveForm extends FormBase {
       if (in_array($language->getId(), $targetLanguages)) {
         $violations = $resultTranslation->validate();
         foreach ($violations as $violation) {
-          $form_state->setError($form, $violation->getMessage());
+          // Ignore all violations that can not be resolved in this form.
+          if (isset($form[$language->getId()][$violation->getPropertyPath()])) {
+            $form_state->setError($form, $violation->getMessage());
+          }
         }
       }
     }
