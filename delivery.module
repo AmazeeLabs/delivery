@@ -13,9 +13,11 @@ use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\Core\Form\FormStateInterface;
@@ -216,7 +218,91 @@ function delivery_entity_base_field_info(EntityTypeInterface $entity_type) {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
   }
+
+  if ($entity_type->id() === 'workspace') {
+    $fields['auto_push'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(new TranslatableMarkup('Auto push'))
+      ->setDescription(new TranslatableMarkup('Automatically merge default revisions into the parent workspace'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
+      ->setDefaultValue(FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'settings' => [
+          'display_label' => TRUE,
+        ],
+        'weight' => 7,
+      ])
+      ->setDisplayConfigurable('form', TRUE);
+  }
+
   return $fields;
+}
+
+function delivery_entity_update(EntityInterface $entity) {
+  if ($entity instanceof ContentEntityInterface && !$entity->isSyncing()) {
+    $entityType = $entity->getEntityType();
+
+    /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+    $workspaceManager = \Drupal::service('workspaces.manager');
+    if (!$workspaceManager->isEntityTypeSupported($entityType)) {
+      return;
+    }
+
+    $activeWorkspace = $workspaceManager->getActiveWorkspace();
+    if (!$activeWorkspace->auto_push->value || !$activeWorkspace->parent->entity) {
+      return;
+    }
+
+    /** @var \Drupal\content_moderation\ModerationInformationInterface $content_moderation_info */
+    $content_moderation_info = \Drupal::service('content_moderation.moderation_information');
+    $workflow = $content_moderation_info->getWorkflowForEntity($entity);
+    if (!($workflow && $workflow->getTypePlugin()->hasState($entity->moderation_state->value))) {
+      return;
+    }
+
+    $current_state = $workflow->getTypePlugin()->getState($entity->moderation_state->value);
+    if (!$current_state->isDefaultRevisionState()) {
+      return;
+    }
+
+    /** @var \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssiociaton */
+    $workspaceAssiociaton = \Drupal::service('workspaces.association');
+    /** @var \Drupal\workspaces\WorkspaceInterface $parentWorkspace */
+    $parentWorkspace = $activeWorkspace->parent->entity;
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    $storage = \Drupal::entityTypeManager()->getStorage($entity->getEntityTypeId());
+
+    $parentRevisions = $workspaceAssiociaton->getTrackedEntities(
+      $parentWorkspace->id(),
+      $entity->getEntityTypeId(),
+      [$entity->id()]
+    );
+
+    if (empty($parentRevisions)) {
+      $parentRevisions = array_keys($storage->getQuery()->allRevisions()
+        ->notExists('workspace')
+        ->condition($storage->getEntityType()->getKey('id'), $entity->id())
+        ->execute());
+    }
+    else {
+      $parentRevisions = array_keys($parentRevisions[$entity->getEntityTypeId()]);
+    }
+
+    /** @var ContentEntityInterface $result */
+    $result = $storage->createRevision($entity);
+
+    $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
+    $revisionMergeParentField = $entityType->getRevisionMetadataKey('revision_merge_parent');
+
+    $result->{$revisionMergeParentField}->target_revision_id = $entity->getRevisionId();
+    $result->{$revisionParentField}->target_revision_id = array_pop($parentRevisions);
+    $result->workspace = $parentWorkspace;
+    $result->setSyncing(TRUE);
+    $workspaceManager->executeInWorkspace($parentWorkspace->id(), function () use ($result) {
+      $result->save();
+    });
+  }
 }
 
 /**
