@@ -14,3 +14,5 @@ add delivery to assigned workspaces:
   title: 'Add delivery to assigned workspaces'
 add delivery to any workspaces:
   title: 'Add delivery to any workspace'
+deliver items:
+  title: 'Deliver items'

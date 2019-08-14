@@ -58,6 +58,12 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
   $workspacesManager = \Drupal::service('workspaces.manager');
   /** @var \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssociation */
   $workspaceAssociation = \Drupal::service('workspaces.association');
+  if ($operation == 'deliver') {
+    if ($account->hasPermission('deliver items')) {
+      return AccessResult::allowed();
+    }
+    return AccessResult::forbidden();
+  }
   if ($workspacesManager->isEntityTypeSupported($entity->getEntityType())) {
     $activeWorkspace = $workspacesManager->getActiveWorkspace();
     $trackingWorkspaces = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
