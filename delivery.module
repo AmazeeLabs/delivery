@@ -17,6 +17,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\delivery\Entity\MenuLinkContent;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\Core\Form\FormStateInterface;
@@ -80,6 +81,7 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
  */
 function delivery_entity_type_build(array &$entity_types) {
   $entity_types['menu_link_content']->setHandlerClass('storage', MenuLinkContentStorage::class);
+  $entity_types['menu_link_content']->setClass(MenuLinkContent::class);
   // Override the list builder so we can inject our own deploy button.
   $entity_types['workspace']->setHandlerClass('list_builder', WorkspaceListBuilder::class);
 

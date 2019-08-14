@@ -124,8 +124,7 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
 
       foreach ($workspace_revisions as $workspace_revision) {
         if (isset($links[$workspace_revision->getPluginId()])) {
-          $pending_plugin_definition = $workspace_revision->getPluginDefinition();
-          $links[$workspace_revision->getPluginId()] = $localLinks[$workspace_revision->getPluginId()] + $links[$workspace_revision->getPluginId()];
+          $links[$workspace_revision->getPluginId()] = $localLinks[$workspace_revision->getPluginId()] ?? [] + $links[$workspace_revision->getPluginId()];
         }
       }
     }
