@@ -13,7 +13,6 @@ use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -177,6 +176,19 @@ function delivery_entity_base_field_info_alter(&$fields, EntityTypeInterface $en
   // Make sure all languages are simultaneously published.
   if (isset($fields['status'])) {
     $fields['status']->setTranslatable(FALSE);
+  }
+  // Set menu tree related fields revisionable.
+  if ($entity_type->id() === 'menu_link_content') {
+    $revisionableFields = [
+      'weight',
+      'expanded',
+      'enabled',
+      'parent',
+    ];
+
+    foreach ($revisionableFields as $revisionableField) {
+      $fields[$revisionableField]->setRevisionable(TRUE);
+    }
   }
 }
 

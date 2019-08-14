@@ -1,0 +1,8 @@
+<?php
+
+function delivery_install() {
+  // Drop the menu tree table so it gets recreated with the new workspace field.
+  \Drupal::database()->schema()->dropTable('menu_tree');
+  // Rebuild the menu tree.
+  \Drupal::service('plugin.manager.menu.link')->rebuild();
+}
