@@ -118,14 +118,25 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
         return $menuLinkContent->getPluginId();
       }, $workspace_revisions);
 
+      $recheckParenthood = [];
+
       foreach (array_diff($all_menu_content_ids, $workspace_plugin_ids) as $removable) {
+        if ($links[$removable]['parent']) {
+          $recheckParenthood[] = $links[$removable]['parent'];
+        }
         unset($links[$removable]);
-     }
+      }
 
       foreach ($workspace_revisions as $workspace_revision) {
         if (isset($links[$workspace_revision->getPluginId()])) {
           $links[$workspace_revision->getPluginId()] = $localLinks[$workspace_revision->getPluginId()] ?? [] + $links[$workspace_revision->getPluginId()];
         }
+      }
+
+      foreach ($recheckParenthood as $parentId) {
+        $links[$parentId]['has_children'] = count(array_filter($links, function ($link) use ($parentId) {
+          return $link['parent'] === $parentId;
+        })) > 0 ? '1' : '0';
       }
     }
 
