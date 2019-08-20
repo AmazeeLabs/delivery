@@ -46,7 +46,7 @@ delivery.workspace_delivery_controller:
     _form: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm'
     _title_callback: '\Drupal\delivery\Form\DeliveryFromWorkspaceForm::title'
   requirements:
-    _permission: 'access content'
+    _permission: 'deliver items'
 
 delivery.delivery_forward:
   path: '/delivery/{delivery}/forward'

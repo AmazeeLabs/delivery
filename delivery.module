@@ -17,6 +17,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\delivery\Entity\MenuLinkContent;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
@@ -164,6 +165,42 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
   }
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function delivery_form_menu_edit_form_alter(&$form, FormStateInterface $form_state) {
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $manager */
+  $workspacesManager = \Drupal::service('workspaces.manager');
+  /** @var \Drupal\system\Entity\Menu $menu */
+  $menu = $form_state->getFormObject()->getEntity();
+  $currentUser = \Drupal::currentUser();
+  $activeWorkspace = $workspacesManager->getActiveWorkspace();
+
+  if (!$activeWorkspace->isDefaultWorkspace()) {
+    $form['actions']['publish'] = [
+      '#type' => 'link',
+      '#title' => new TranslatableMarkup('Publish'),
+      '#access' => $currentUser->hasPermission('deliver items'),
+      '#attributes' => [
+        'class' => ['button', 'button--primary'],
+      ],
+      '#weight' => 6,
+      '#url' => Url::fromRoute(
+        'delivery.workspace_delivery_controller',
+        [
+          'workspace' => $activeWorkspace->id(),
+        ],
+        [
+          'query' => [
+            'entity_type' => 'menu_link_content',
+            'bundle' => $menu->id(),
+            'hide_options_elements' => 1,
+          ]
+        ]
+      ),
+    ];
+  }
+}
 
 /**
  * Implements hook_entity_bundle_info_alter().
@@ -339,3 +376,5 @@ function delivery_entity_load(array $entities, $entity_type_id) {
     }
   }
 }
+
+

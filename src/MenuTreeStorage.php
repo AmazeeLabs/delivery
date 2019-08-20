@@ -134,9 +134,11 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
       }
 
       foreach ($recheckParenthood as $parentId) {
-        $links[$parentId]['has_children'] = count(array_filter($links, function ($link) use ($parentId) {
-          return $link['parent'] === $parentId;
-        })) > 0 ? '1' : '0';
+        if (isset($links[$parentId])) {
+          $links[$parentId]['has_children'] = count(array_filter($links, function ($link) use ($parentId) {
+            return $link['parent'] === $parentId;
+          })) > 0 ? '1' : '0';
+        }
       }
     }
 
