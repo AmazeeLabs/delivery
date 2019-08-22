@@ -42,8 +42,16 @@ function delivery_post_update_revisionable_menu_tree(&$sandbox) {
  * Make the menu tree index workspace sensitive.
  */
 function delivery_post_update_add_menu_tree_per_workspace() {
+  $database = \Drupal::database();
   // Drop the menu tree table so it gets recreated with the new workspace field.
-  \Drupal::database()->schema()->dropTable('menu_tree');
+  $database->schema()->dropTable('menu_tree');
+  // Mark all menu_link_content items to be rediscovered.
+  if ($database->schema()->tableExists('menu_link_content_data')) {
+    $database->update('menu_link_content_data')->fields([
+      'rediscover' => TRUE,
+    ])->execute();
+  }
+  $database->schema()->dropTable('menu_tree');
   // Rebuild the menu tree.
   \Drupal::service('plugin.manager.menu.link')->rebuild();
 }
