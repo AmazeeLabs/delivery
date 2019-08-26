@@ -18,6 +18,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\delivery\Entity\MenuLinkContent;
+use Drupal\delivery\Form\MenuPushForm;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\Core\Form\FormStateInterface;
@@ -164,6 +165,24 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
   }
 }
 
+function delivery_form_menu_edit_form_alter(&$form, FormStateInterface $formState) {
+  $menuId = $formState->getFormObject()->getEntity()->id();
+  $messenger = \Drupal::messenger();
+  $differences = MenuPushForm::differences($menuId);
+  if ($differences !== FALSE) {
+    if ($differences) {
+      $messenger->addWarning(t('There are @count unpublished menu changes. <a href=":link">Publish them?</a>', [
+        '@count' => count($differences),
+        ':link' => \Drupal\Core\Url::fromRoute('delivery.menu_push', [
+          'menu' => $menuId,
+        ])->toString(),
+      ]));
+    }
+    else {
+      $messenger->addMessage(t('This menu is fully published.'));
+    }
+  }
+}
 
 /**
  * Implements hook_entity_bundle_info_alter().

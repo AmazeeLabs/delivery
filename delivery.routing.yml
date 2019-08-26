@@ -83,6 +83,17 @@ delivery.delivery_push:
   requirements:
     _permission: 'push changes to workspaces'
 
+delivery.menu_push:
+  path: '/delivery/menu/{menu}/push'
+  defaults:
+    _form: '\Drupal\delivery\Form\MenuPushForm'
+  options:
+    parameters:
+      menu:
+        type: entity:menu
+  requirements:
+    _permission: 'administer menu'
+
 delivery_item.push:
   path: '/delivery/{delivery}/push/{delivery_item}'
   defaults:
