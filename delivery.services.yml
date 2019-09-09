@@ -1,4 +1,7 @@
 services:
+  delivery.workspace_assignment:
+    class: Drupal\delivery\WorkspaceAssigment
+    arguments: ['@entity_type.manager']
   delivery.service:
     class: Drupal\delivery\DeliveryService
     arguments:

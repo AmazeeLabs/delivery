@@ -13,7 +13,6 @@ use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageInterface;
-use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -92,11 +91,6 @@ class DeliveryItemResolveForm extends FormBase {
   protected $resultEntity;
 
   /**
-   * @var \Drupal\Core\Language\LanguageManagerInterface
-   */
-  protected $languageManager;
-
-  /**
    * DeliveryPushConfirmFom constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -106,7 +100,6 @@ class DeliveryItemResolveForm extends FormBase {
    * @param \Drupal\Core\Render\RendererInterface $renderer
    * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
-   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -115,8 +108,7 @@ class DeliveryItemResolveForm extends FormBase {
     DeliveryService $deliveryService,
     RendererInterface $renderer,
     ConflictResolverManagerInterface $conflictResolverManager,
-    WorkspaceManagerInterface $workspaceManager,
-    LanguageManagerInterface $languageManager
+    WorkspaceManagerInterface $workspaceManager
   ) {
     $this->deliveryService = $deliveryService;
     $this->entityTypeManager = $entity_type_manager;
@@ -125,7 +117,6 @@ class DeliveryItemResolveForm extends FormBase {
     $this->renderer = $renderer;
     $this->conflictResolverManager = $conflictResolverManager;
     $this->workspaceManager = $workspaceManager;
-    $this->languageManager = $languageManager;
   }
 
   public function access(AccountInterface $account, Delivery $delivery, DeliveryItem $delivery_item) {
@@ -156,8 +147,7 @@ class DeliveryItemResolveForm extends FormBase {
       $container->get('delivery.service'),
       $container->get('renderer'),
       $container->get('conflict.resolver.manager'),
-      $container->get('workspaces.manager'),
-      $container->get('language_manager')
+      $container->get('workspaces.manager')
     );
   }
 
@@ -212,7 +202,7 @@ class DeliveryItemResolveForm extends FormBase {
     $sourceWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($delivery_item->getSourceWorkspace());
 
-    $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: $this->languageManager->getDefaultLanguage()->getId();
+    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
     $targetLanguages = [$targetPrimaryLanguage];
     foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
       $targetLanguages[] = $secondaryLanguage->value;
