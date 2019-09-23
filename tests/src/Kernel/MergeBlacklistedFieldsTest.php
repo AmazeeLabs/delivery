@@ -13,8 +13,6 @@ use Drupal\field\Entity\FieldConfig;
 
 /**
  * Blacklisted fields merging test.
- *
- * @requires module conflict
  */
 class MergeBlacklistedFieldsTest extends KernelTestBase {
   use WorkspaceTestTrait;
@@ -26,8 +24,9 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     'workspaces',
     'entity_test',
     'delivery',
-    'conflict',
     'revision_tree',
+    'language',
+    'content_translation',
     'user',
     'system',
     'filter',
@@ -42,8 +41,8 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     parent::setUp();
 
     $this->installSchema('system', ['key_value_expire', 'sequences']);
-    $this->installSchema('revision_tree', ['workspace_association']);
 
+    $this->installEntitySchema('workspace');
     $this->installEntitySchema('entity_test');
     $this->installEntitySchema('entity_test_rev');
     $this->installEntitySchema('entity_test_mulrevpub');
@@ -104,13 +103,11 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
    * Test blacklisted fields merge.
    */
   public function testBlacklistFieldsMerge() {
-    /** @var \Drupal\revision_tree\Entity\EntityRepository $repository */
-    $repository = $this->container->get('entity.repository');
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
     $storage = $this->entityManager->getStorage('entity_test_rev');
 
     /** @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManager $conflictManager */
-    $conflictManager = $this->container->get('conflict_resolver.manager');
+    $conflictManager = $this->container->get('conflict.resolver.manager');
 
     $this->switchToWorkspace('live');
 
