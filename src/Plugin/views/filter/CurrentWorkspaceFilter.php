@@ -85,7 +85,23 @@ class CurrentWorkspaceFilter extends LatestRevision {
     ];
 
     $join = $this->joinHandler->createInstance('standard', $definition);
-    $query->addTable($query_base_table, $this->relationship, $join);
+    $associations = $query->addTable($query_base_table, $this->relationship, $join);
+
+    $deletedJoin = $this->joinHandler->createInstance('standard', [
+      'table' => $entity_type->getRevisionTable(),
+      'type' => 'INNER',
+      'field' => $keys['id'],
+      'left_table' => $associations,
+      'left_field' => 'target_entity_revision_id',
+      'extra' => [
+        [
+          'field' => 'deleted',
+          'value' => '0',
+          'operator' => '=',
+        ],
+      ],
+    ]);
+    $query->addTable($query_base_table, $this->relationship, $deletedJoin);
   }
 
 }

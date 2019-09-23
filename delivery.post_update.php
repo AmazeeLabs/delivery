@@ -55,3 +55,20 @@ function delivery_post_update_add_menu_tree_per_workspace() {
   // Rebuild the menu tree.
   \Drupal::service('plugin.manager.menu.link')->rebuild();
 }
+
+function delivery_post_update_deleted_field() {
+  $entityTypeManager = \Drupal::entityTypeManager();
+  $updateManager = \Drupal::entityDefinitionUpdateManager();
+
+
+  foreach ($entityTypeManager->getDefinitions() as $entityType) {
+    $baseFields = delivery_entity_base_field_info($entityType);
+    if (array_key_exists('deleted', $baseFields)) {
+      $revision_metadata_keys = $entityType->get('revision_metadata_keys');
+      $revision_metadata_keys['deleted'] = 'deleted';
+      $entityType->set('revision_metadata_keys', $revision_metadata_keys);
+      $updateManager->updateEntityType($entityType);
+      $updateManager->installFieldStorageDefinition('deleted', $entityType->id(), 'delivery', $baseFields['deleted']);
+    }
+  }
+}

@@ -28,7 +28,11 @@ class DeliveryEntityConverter extends EntityConverter {
     /** @var \Drupal\Core\Entity\EntityInterface $result */
     $result = parent::convert($value, $definition, $name, $defaults);
 
-    if (
+    if ($result->deleted->value !== '0') {
+      return NULL;
+    }
+
+   if (
       $result &&
       $workspacesManager->isEntityTypeSupported($result->getEntityType()) &&
       !($result->workspace && $result->workspace->target_id)
