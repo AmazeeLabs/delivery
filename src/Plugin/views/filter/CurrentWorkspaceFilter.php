@@ -90,7 +90,7 @@ class CurrentWorkspaceFilter extends LatestRevision {
     $deletedJoin = $this->joinHandler->createInstance('standard', [
       'table' => $entity_type->getRevisionTable(),
       'type' => 'INNER',
-      'field' => $keys['id'],
+      'field' => $keys['revision'],
       'left_table' => $associations,
       'left_field' => 'target_entity_revision_id',
       'extra' => [
