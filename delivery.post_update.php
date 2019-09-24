@@ -69,6 +69,7 @@ function delivery_post_update_deleted_field() {
       $entityType->set('revision_metadata_keys', $revision_metadata_keys);
       $updateManager->updateEntityType($entityType);
       $updateManager->installFieldStorageDefinition('deleted', $entityType->id(), 'delivery', $baseFields['deleted']);
+      \Drupal::database()->update($entityType->getRevisionTable())->fields(['deleted' => 0])->execute();
     }
   }
 }
