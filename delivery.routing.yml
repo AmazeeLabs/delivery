@@ -92,7 +92,7 @@ delivery.menu_push:
       menu:
         type: entity:menu
   requirements:
-    _permission: 'administer menu'
+    _permission: 'publish menus'
 
 delivery_item.push:
   path: '/delivery/{delivery}/push/{delivery_item}'
