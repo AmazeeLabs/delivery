@@ -124,6 +124,7 @@ class WorkspaceRevision extends RelationshipPluginBase {
     $revisionJoin = $this->joinHandler->createInstance('standard', [
       'table' => $entity_type->getRevisionTable(),
       'field' => $keys['revision'],
+      'type' => 'INNER',
       'left_table' => $associations,
       'left_field' => 'target_entity_revision_id',
     ]);
