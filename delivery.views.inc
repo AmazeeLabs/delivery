@@ -51,6 +51,16 @@ function delivery_views_data_alter(array &$data) {
       'filter' => ['id' => 'current_workspace_filter'],
     ];
 
+    $data[$entity_table]['delivery_workspace_revision'] = [
+      'title' => t('Workspace revision'),
+      'help' => t('Relate to the current revision of the same entity in another workspace.'),
+      'relationship' => [
+        'id' => 'delivery_workspace_revision',
+        'label' => t('Workspace revision'),
+        'base' => $entity_revision_table,
+      ],
+    ];
+
     $data[$entity_revision_table]['entity_delivery_status'] = [
       'title' => t('Delivery status for @entity_type', $t_args),
       'help' => t('Operate on the current delivery status of @entity_type entities.', $t_args),
