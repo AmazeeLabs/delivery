@@ -16,3 +16,5 @@ add delivery to any workspaces:
   title: 'Add delivery to any workspace'
 deliver items:
   title: 'Deliver items'
+publish menus:
+  title: Publish menus
