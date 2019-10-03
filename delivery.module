@@ -20,6 +20,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\delivery\Entity\DeliveryItem;
 use Drupal\delivery\Entity\MenuLinkContent;
 use Drupal\delivery\Form\MenuPushForm;
 use Drupal\delivery\MenuLinkContentStorage;
@@ -78,6 +79,16 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
     $trackingWorkspaces = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
     if (!in_array($activeWorkspace->id(), $trackingWorkspaces)) {
       return AccessResult::forbidden();
+    }
+  }
+  if ($entity instanceof DeliveryItem) {
+    $storage = \Drupal::entityTypeManager()
+      ->getStorage('delivery');
+    $deliveries = $storage
+      ->getQuery()
+      ->condition('items', $entity->id())->execute();
+    if ($delivery = $storage->load(array_pop($deliveries))) {
+      return $delivery->access($operation, $account, TRUE);
     }
   }
 }

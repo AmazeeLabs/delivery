@@ -1,8 +1,14 @@
-entity-status:
+item-status:
   version: VERSION
   css:
     component:
-      assets/entity-status.css: {}
+      assets/item-status.css: {}
+  js:
+    assets/item-status.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+    - core/drupalSettings
 
 conflict-resolution:
   version: VERSION
@@ -11,15 +17,6 @@ conflict-resolution:
       assets/conflict-resolution.css: {}
   js:
     assets/conflict-resolution.js: {}
-  dependencies:
-    - core/jquery
-    - core/jquery.once
-    - core/drupalSettings
-
-entity-status-callback:
-  version: VERSION
-  js:
-    assets/entity-status-callback.js: {}
   dependencies:
     - core/jquery
     - core/jquery.once

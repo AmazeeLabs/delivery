@@ -128,8 +128,8 @@ class DeliveryItemResolveForm extends FormBase {
     $this->languageManager = $languageManager;
   }
 
-  public function access(AccountInterface $account, Delivery $delivery, DeliveryItem $delivery_item) {
-    if (isset($delivery->resolution->value)) {
+  public function access(AccountInterface $account, DeliveryItem $delivery_item) {
+    if (isset($delivery_item->resolution->value)) {
       return AccessResult::forbidden();
     }
     // TODO: Restrict access to conflict resolution based on target permnissions.
@@ -140,7 +140,7 @@ class DeliveryItemResolveForm extends FormBase {
 //    return $this->sourceEntity->access('edit', $account, TRUE);
   }
 
-  public function title($delivery, $delivery_item) {
+  public function title($delivery_item) {
     // TODO: Implement a proper title.
     return $this->t('Resolve conflict');
   }
@@ -177,7 +177,7 @@ class DeliveryItemResolveForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DeliveryInterface $delivery = NULL, DeliveryItem $delivery_item = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, DeliveryItem $delivery_item = NULL) {
     $form['#attached']['library'][] = 'delivery/conflict-resolution';
     $this->deliveryItem = $delivery_item;
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
@@ -344,15 +344,40 @@ class DeliveryItemResolveForm extends FormBase {
       }
     }
 
+    $args = [
+      ':source' => $sourceWorkspace->label(),
+      ':target' => $targetWorkspace->label(),
+      ':title' => $parentEntity->label(),
+    ];
+
+    $buttons = [
+      DeliveryItem::STATUS_NEW => $this->t('Add to :target', $args),
+      DeliveryItem::STATUS_MODIFIED_BY_SOURCE => $this->t('Apply changes to :target', $args),
+      DeliveryItem::STATUS_CONFLICT => $this->t('Conflict'),
+      DeliveryItem::STATUS_CONFLICT_AUTO => $this->t('Apply changes to :target', $args),
+      DeliveryItem::STATUS_DELETED => $this->t('Mark as resolved'),
+      DeliveryItem::STATUS_DELETED_BY_SOURCE => $this->t('Delete from :target', $args),
+      DeliveryItem::STATUS_RESTORED_BY_SOURCE => $this->t('Restore to :target', $args),
+    ];
+
+    $messages = [
+      DeliveryItem::STATUS_NEW => $this->t(':source added ":title". Also add it to :target?', $args),
+      DeliveryItem::STATUS_MODIFIED_BY_SOURCE => $this->t('":title" was modified in :source. Apply changes to :target?', $args),
+      DeliveryItem::STATUS_CONFLICT_AUTO => $this->t('The conflict in ":title" could be resolved automatically. Apply changes to :target?', $args),
+      DeliveryItem::STATUS_DELETED => $this->t('":title" has been deleted from both :source and :target. Mark this as resolved?', $args),
+      DeliveryItem::STATUS_DELETED_BY_SOURCE => $this->t('":title" was deleted from :source. Also delete it from :target?', $args),
+      DeliveryItem::STATUS_RESTORED_BY_SOURCE => $this->t(':source has restored ":title". Also restore it to :target?', $args),
+    ];
+
     if (!$hadConflicts) {
       $form['message'] = [
-        '#markup' => '<p><em>' . $this->t('All conflicts could be solved automatically. Do you want to proceed?') . "</em></p>",
+        '#markup' => '<p><em>' . $messages[$delivery_item->getStatus()['status']] . "</em></p>",
       ];
     }
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $hadConflicts ? $this->t('Resolve conflicts') : $this->t('Deliver content'),
+      '#value' => $hadConflicts ? $this->t('Resolve conflicts') : $buttons[$delivery_item->getStatus()['status']],
       '#button_type' => 'primary',
     ];
 
