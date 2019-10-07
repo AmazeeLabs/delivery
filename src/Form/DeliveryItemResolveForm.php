@@ -188,7 +188,7 @@ class DeliveryItemResolveForm extends FormBase {
     /** @var \Drupal\Core\Entity\ContentEntityInterface $this->targetEntity */
     $this->targetEntity = $storage->loadRevision($this->deliveryService->getActiveRevision($delivery_item));
 
-    $this->resultEntity = $storage->createRevision($this->targetEntity);
+    $this->resultEntity = $storage->createRevision($this->sourceEntity);
 
     $entityType = $this->entityTypeManager->getDefinition($this->deliveryItem->getTargetType());
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
