@@ -125,8 +125,10 @@ class MenuPushForm extends ConfirmFormBase {
       [':target' => $target->id()]
     );
 
-    $query->leftJoin('menu_link_content_data', 'mld', 'mld.id = source.target_entity_id');
-    $query->condition('mld.menu_name', $menu);
+    $menuNameQuery = $database->select('menu_link_content_data', 'mld');
+    $menuNameQuery->addField('mld', 'id');
+    $menuNameQuery->condition('menu_name', $menu);
+    $query->condition('source.target_entity_id', $menuNameQuery, 'IN');
 
     $query->where('source.workspace = :source and (source.target_entity_revision_id != target.target_entity_revision_id or target.target_entity_revision_id is null)', [
       ':source' => $source->id()
