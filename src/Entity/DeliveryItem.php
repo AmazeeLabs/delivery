@@ -223,11 +223,29 @@ class DeliveryItem extends ContentEntityBase implements DeliveryItemInterface {
     /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
     $workspaceManager = \Drupal::service('workspaces.manager');
     /** @var \Drupal\Core\Entity\ContentEntityInterface $currentTargetRevision */
-    $currentTargetRevision = $workspaceManager->executeInWorkspace($this->getTargetWorkspace(), function () {
-      /** @var \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository */
-      $entityRepository = \Drupal::service('entity.repository');
-      return $entityRepository->getActive($this->getTargetType(), $this->getTargetId());
-    });
+    $currentTargetRevision = $workspaceManager->executeInWorkspace(
+      $this->getTargetWorkspace(),
+      function () use ($sourceRevision) {
+        /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+        $storage = \Drupal::entityTypeManager()->getStorage($sourceRevision->getEntityTypeId());
+        $query = $storage->getQuery();
+        $query->condition($sourceRevision->getEntityType()->getKey('id'), $sourceRevision->id());
+        $query->addTag('workspace_sensitive');
+        $result = array_keys($query->execute() ?? []);
+        if ($result) {
+          return $storage->loadRevision(reset($result));
+        }
+        return NULL;
+      }
+    );
+
+    if (!$currentTargetRevision && $sourceRevision->deleted->value) {
+      return static::STATUS_DELETED;
+    }
+
+    if (!$currentTargetRevision) {
+      return static::STATUS_NEW;
+    }
 
     if ($currentTargetRevision->deleted->value && $sourceRevision->deleted->value) {
       return static::STATUS_DELETED;
