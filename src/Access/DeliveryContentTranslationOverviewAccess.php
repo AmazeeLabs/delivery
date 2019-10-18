@@ -26,7 +26,7 @@ class DeliveryContentTranslationOverviewAccess extends ContentTranslationOvervie
   public function access(RouteMatchInterface $route_match, AccountInterface $account, $entity_type_id) {
     $currentWorkspace = $this->workspaceManager->getActiveWorkspace();
     $entity = $route_match->getParameter($entity_type_id);
-    if (!$entity->access('update')) {
+    if (!$entity->access('view')) {
       return AccessResult::forbidden()->addCacheableDependency($entity)->addCacheContexts(['workspace']);
     }
 
