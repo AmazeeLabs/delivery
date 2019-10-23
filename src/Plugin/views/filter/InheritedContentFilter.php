@@ -37,11 +37,10 @@ class InheritedContentFilter extends InOperator {
    */
   public function query() {
     $this->traitQuery();
-    $query = $this->query;
     $query_base_table = $this->relationship ?: $this->view->storage->get('base_table');
 
     $values = $this->value;
-    $aliases = array_keys($query->tables[$query_base_table]);
+    $aliases = array_keys($this->query->tables[$query_base_table]);
     $alias = end($aliases);
 
     foreach ($values as $value) {
