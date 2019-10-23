@@ -75,7 +75,7 @@ function delivery_views_data_alter(array &$data) {
     ];
 
     // Add filter for inherited/own version content
-    $data[$entity_revision_table]['inherited_content_filter'] = [
+    $data[$entity_table]['inherited_content_filter'] = [
       'title' => t('Inherited flag'),
       'help' => t('Operate on whether the revision is inherited from another workspace.'),
       'field' => [
