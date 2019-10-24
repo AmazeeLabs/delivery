@@ -73,5 +73,19 @@ function delivery_views_data_alter(array &$data) {
         'label' => t('Delivery status filter'),
       ],
     ];
+
+    // Add filter for inherited/own version content
+    $data[$entity_table]['inherited_content_filter'] = [
+      'title' => t('Inherited'),
+      'help' => t('Operate on whether the revision is inherited from another workspace.'),
+      'field' => [
+        'id' => 'inherited_content_field',
+        'label' => t('Inherited'),
+      ],
+      'filter' => [
+        'id' => 'inherited_content_filter',
+        'label' => t('Inherited'),
+      ],
+    ];
   }
 }

@@ -695,4 +695,16 @@ class DeliveryService {
     ];
   }
 
+  /**
+   * Returns true if the entity passed belongs the the current / active workspace
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *
+   * @return bool
+   */
+  public function getEntityInheritedFlag(ContentEntityInterface $entity) {
+    $entity_workspace = $entity->get('workspace')->target_id;
+    $current_workspace = $this->workspaceManager->getActiveWorkspace()->id();
+
+    return $entity_workspace === $current_workspace;
+  }
 }
