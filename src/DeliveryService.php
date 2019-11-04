@@ -578,8 +578,7 @@ class DeliveryService {
   }
 
   /**
-   * Returns the current workspace ids
-   * along with descent ids
+   * Returns the current workspace id along with descendent ids
    *
    * @return array
    */
@@ -592,7 +591,7 @@ class DeliveryService {
   }
 
   /**
-   * Get the descendent workspace ids for a given workspace id
+   * Returns the descendent workspace ids for a given workspace id
    * @param $workspaceId
    *
    * @return array
