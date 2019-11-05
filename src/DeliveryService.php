@@ -578,6 +578,34 @@ class DeliveryService {
   }
 
   /**
+   * Returns the current workspace id along with descendent ids
+   *
+   * @return array
+   */
+  public function getCurrentWorkspaceIdWithDescendentIds() {
+    $current_workspace_id = $this->getActiveWorkspace()->id();
+    // Retrieve descendents of current workspace id
+    $descendent_ids = $this->getWorkspaceDescendentIds($current_workspace_id);
+    // Return current workspace id along with descendent ids
+    return array_merge([$current_workspace_id], $descendent_ids);
+  }
+
+  /**
+   * Returns the descendent workspace ids for a given workspace id
+   * @param $workspaceId
+   *
+   * @return array
+   */
+  public function getWorkspaceDescendentIds($workspaceId) {
+    /** @var \Drupal\workspaces\WorkspaceStorage $workspace_storage */
+    $workspace_storage = $this->entityTypeManager->getStorage('workspace');
+    // Get the workspace hierarchy
+    $workspace_tree = $workspace_storage->loadTree();
+    // Return descendents of given workspace id
+    return (isset($workspace_tree[$workspaceId])) ? $workspace_tree[$workspaceId]->_descendants : [];
+  }
+
+  /**
    * Helper method to return the current active workspace.
    *
    * @return \Drupal\workspaces\WorkspaceInterface
