@@ -75,9 +75,14 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
     return AccessResult::forbidden();
   }
   if ($workspacesManager->isEntityTypeSupported($entity->getEntityType())) {
+    // Statically cache results in an array keyed by $account->id().
+    $trackingWorkspaces = &drupal_static(__FUNCTION__);
+    $key = $entity->getEntityTypeId() . ':' . $entity->id();
+    if (!isset($trackingWorkspaces[$key])) {
+      $trackingWorkspaces[$key] = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
+    }
     $activeWorkspace = $workspacesManager->getActiveWorkspace();
-    $trackingWorkspaces = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
-    if (!in_array($activeWorkspace->id(), $trackingWorkspaces)) {
+    if (!in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
       return AccessResult::forbidden();
     }
   }
