@@ -380,7 +380,7 @@ function delivery_entity_update(EntityInterface $entity) {
     $result->setSyncing(TRUE);
     $workspaceManager->executeInWorkspace($parentWorkspace->id(), function () use ($result) {
       $result->save();
-    });
+    }, TRUE);
   }
 }
 

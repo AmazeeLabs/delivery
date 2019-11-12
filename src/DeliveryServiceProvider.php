@@ -39,6 +39,11 @@ class DeliveryServiceProvider extends ServiceProviderBase {
       $definition = $container->getDefinition('entity_usage.usage');
       $definition->setClass(DeliveryEntityUsage::class);
     }
+
+    if ($container->hasDefinition('workspaces.manager')) {
+      $definition = $container->getDefinition('workspaces.manager');
+      $definition->setClass(DeliveryWorkspaceManager::class);
+    }
   }
 
 }
