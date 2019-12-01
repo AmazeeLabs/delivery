@@ -9,6 +9,7 @@ use Drupal\Core\Url;
 use Drupal\delivery\WorkspaceAssigment;
 use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
 use Drupal\workspaces\WorkspaceManagerInterface;
+use Drupal\workspaces\WorkspaceRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -19,17 +20,18 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
   /**
    * @var \Drupal\delivery\WorkspaceAssigment
    */
-  protected $smartUserService;
+  protected $workspaceAssigment;
 
   public function __construct(
     EntityTypeInterface $entity_type,
     EntityStorageInterface $storage,
     WorkspaceManagerInterface $workspace_manager,
+    WorkspaceRepositoryInterface $workspace_repository,
     RendererInterface $renderer,
-    WorkspaceAssigment $smartUserService
+    WorkspaceAssigment $workspaceAssigment
   ) {
-    $this->smartUserService = $smartUserService;
-    parent::__construct($entity_type, $storage, $workspace_manager, $renderer);
+    $this->workspaceAssigment = $workspaceAssigment;
+    parent::__construct($entity_type, $storage, $workspace_manager, $workspace_repository, $renderer);
   }
 
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
@@ -37,6 +39,7 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
       $entity_type,
       $container->get('entity_type.manager')->getStorage($entity_type->id()),
       $container->get('workspaces.manager'),
+      $container->get('workspaces.repository'),
       $container->get('renderer'),
       $container->get('delivery.workspace_assignment')
     );
@@ -111,6 +114,6 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
    */
   protected function getUserWorkspaces() {
     $account = \Drupal::currentUser();
-    return $this->smartUserService->getUserWorkspaces($account);
+    return $this->workspaceAssigment->getUserWorkspaces($account);
   }
 }

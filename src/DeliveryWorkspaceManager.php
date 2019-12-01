@@ -10,7 +10,7 @@ class DeliveryWorkspaceManager extends WorkspaceManager {
   /**
    * {@inheritDoc}
    */
-  protected function doSwitchWorkspace(WorkspaceInterface $workspace, $safe = FALSE) {
+  protected function doSwitchWorkspace($workspace, $safe = FALSE) {
     // If we are switching the workspace for a safe operation then we dont' need
     // to check the access to the target workspace. Otherwise, we just fallback
     // to the parent implementation.
