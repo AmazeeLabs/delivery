@@ -39,9 +39,9 @@ class DeliveryEntityUsage extends EntityUsage {
     /** @var \Drupal\workspaces\WorkspaceStorage $workspace_storage */
     $workspace_storage = \Drupal::entityTypeManager()->getStorage('workspace');
     // Get the workspace hierarchy
-    $workspace_tree = $workspace_storage->loadTree();
+    $workspace_tree = \Drupal::service('workspace.repository')->loadTree();
     // Return descendents of given workspace id
-    return (isset($workspace_tree[$workspaceId])) ? $workspace_tree[$workspaceId]->_descendants : [];
+    return (isset($workspace_tree[$workspaceId])) ? $workspace_tree[$workspaceId]['descendents'] : [];
   }
 
   /**
