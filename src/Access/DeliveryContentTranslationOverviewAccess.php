@@ -24,13 +24,18 @@ class DeliveryContentTranslationOverviewAccess extends ContentTranslationOvervie
   }
 
   public function access(RouteMatchInterface $route_match, AccountInterface $account, $entity_type_id) {
-    $currentWorkspace = $this->workspaceManager->getActiveWorkspace();
+    /**
+     * @todo @refactor : this uses a field which is not defined by the delivery
+     * module: secondary_languages. It generates a fatal error.
+     */
+    /*$currentWorkspace = $this->workspaceManager->getActiveWorkspace();
     $access = AccessResult::forbiddenIf((
       $currentWorkspace->secondary_languages->count() === 0 && $currentWorkspace->primary_language->count() > 0
     ), 'Current workspace does not allow multiple languages.');
     $access->addCacheContexts(['workspace']);
     $result = parent::access($route_match, $account, $entity_type_id)->orIf($access);
-    return $result;
+    return $result;*/
+    return parent::access($route_match, $account, $entity_type_id);
   }
 
 }
