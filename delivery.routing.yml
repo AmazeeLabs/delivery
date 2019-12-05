@@ -137,3 +137,6 @@ delivery.update_revisions_index:
     _title: 'Update revision tree index'
   requirements:
     _permission: 'administer delivery entities'
+
+route_callbacks:
+  - '\Drupal\delivery\Routing\DeliveryRoutes::routes'
