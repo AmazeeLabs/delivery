@@ -22,6 +22,10 @@ class FilteredLanguageManager extends ConfigurableLanguageManager {
   }
 
   public function getLanguages($flags = LanguageInterface::STATE_CONFIGURABLE) {
+    return parent::getLanguages($flags);
+
+    // @todo: this uses a field from the workspaces_allowed_languages module, it
+    // should be refactored (primary language).
     $workspace = $this->getWorkspaceManager()->getActiveWorkspace();
 
     if ($workspace->primary_language->count() === 0) {

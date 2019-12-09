@@ -83,6 +83,7 @@ delivery.delivery_push:
   defaults:
     _form: '\Drupal\delivery\Form\DeliveryPushForm'
   options:
+    _admin_route: TRUE
     parameters:
       delivery:
         type: entity:delivery
@@ -94,6 +95,7 @@ delivery_item.push:
   defaults:
     _form: '\Drupal\delivery\Form\DeliveryItemPushForm'
   options:
+    _admin_route: TRUE
     parameters:
       delivery:
         type: entity:delivery
@@ -108,6 +110,7 @@ delivery_item.resolve:
     _form: '\Drupal\delivery\Form\DeliveryItemResolveForm'
     _title_callback: '\Drupal\delivery\Form\DeliveryItemResolveForm::title'
   options:
+    _admin_route: TRUE
     parameters:
       delivery:
         type: entity:delivery
