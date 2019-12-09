@@ -13,6 +13,8 @@ entity.delivery.canonical:
     _title: 'Delivery status'
   requirements:
     _entity_access: 'delivery.view'
+  options:
+    _admin_route: TRUE
 
 entity.delivery.collection:
   path: '/admin/content/deliveries'
@@ -30,6 +32,8 @@ delivery.delivery_add:
     _title: 'Add Delivery'
   requirements:
     _entity_create_access: 'delivery'
+  options:
+    _admin_route: TRUE
 
 entity.delivery.edit_form:
   path: '/delivery/{delivery}/edit'
@@ -38,6 +42,8 @@ entity.delivery.edit_form:
     _title: 'Edit Delivery'
   requirements:
     _entity_access: 'delivery.edit'
+  options:
+    _admin_route: TRUE
 
 
 delivery.workspace_delivery_controller:
