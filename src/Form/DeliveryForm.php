@@ -8,7 +8,9 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Drupal\Core\Url;
 use Drupal\delivery\Entity\DeliveryItem;
+use Drupal\workspaces\Entity\Workspace;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -49,6 +51,39 @@ class DeliveryForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+    // Add an overview of the delivery cart, if any, but only if we are creating
+    // a delivery.
+    if ($this->entity->isNew()) {
+      $cart = $this->userPrivateStore->get('delivery_cart');
+      $items = [];
+      if (!empty($cart)) {
+        foreach ($cart as $entity_type_id => $entity_ids) {
+          $entityStorage = $this->entityTypeManager->getStorage($entity_type_id);
+          foreach ($entity_ids as $entity_id_data) {
+            $sourceWorkspace = Workspace::load($entity_id_data['workspace_id']);
+            $entity = $entityStorage->loadRevision($entity_id_data['revision_id']);
+
+            $items[] = $this->t('@entity_type: %entity_label (Workspace: @workspace) - <a href=":delivery_cart_remove">Remove</a>', [
+              '@entity_type' => $entityStorage->getEntityType()->getLabel(),
+              '%entity_label' => $entity->label(),
+              '@workspace' => $sourceWorkspace->label(),
+              ':delivery_cart_remove' => Url::fromRoute('entity.' . $entity_type_id . '.delivery_cart_remove', [$entity_type_id => $entity->id()], ['query' => \Drupal::destination()->getAsArray()])->toString(),
+            ]);
+          }
+        }
+      }
+      if (!empty($items)) {
+        $form['items_overview'] = [
+          '#theme' => 'item_list',
+          '#title' => t('Content to be delivered'),
+          '#items' => $items,
+        ];
+      } else {
+        $form['items_overview'] = [
+          '#markup' => $this->t('You have no items in the delivery cart. To add content, just navigate to the view page of a content and click on the <em>Add to the delivery cart</em> tab.'),
+        ];
+      }
+    }
     $form_state->set('workspace_safe', TRUE);
     return $form;
   }
