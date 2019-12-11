@@ -1,0 +1,62 @@
+.delivery-item-status {
+  font-weight: bold;
+  padding: 0.3em 1em 0.5em;
+  background-color: #eaeaea;
+  border-radius: 5px;
+}
+
+a.delivery-item-status-resolved,
+a.delivery-item-status-pending {
+  color: inherit;
+}
+
+.delivery-item-status-pending {
+  font-style: italic;
+}
+
+.delivery-item-status-inline {
+  margin: 0 0.2em;
+  padding: 0.3em 0.5em 0.5em;
+}
+
+.delivery-item-status-modified-by-target {
+  background-color: #bbd7ee;
+  color: #0b2840;
+}
+
+.delivery-item-status-conflict-auto,
+.delivery-item-status-modified-by-source {
+  background-color: #eede8d;
+  color: #b46014;
+}
+
+.delivery-item-status-conflict {
+  color: #f3ccc9;
+  background-color: #cd2c20;
+}
+
+.delivery-item-status-deleted-by-source {
+  background-color: #f3ccc9;
+  color: #cd2c20;
+}
+
+.delivery-item-status-identical {
+  background-color: #cceeb1;
+  color: #28402d;
+}
+
+.delivery-item-status-new {
+  background-color: #c4a7ee;
+  color: #362a40;
+}
+
+.delivery-item-status-restored-by-source {
+  color: #c4a7ee;
+  background-color: #362a40;
+}
+
+.delivery-item-status-deleted {
+  font-style: italic;
+  text-decoration: line-through;
+  color: #3b3b3b;
+}

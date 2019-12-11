@@ -2,13 +2,46 @@
 
 namespace Drupal\delivery;
 
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
+use Drupal\delivery\WorkspaceAssigment;
 use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
+use Drupal\workspaces\WorkspaceManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Local override of workspaces entity list builder to replace the deploy button.
  */
 class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
+
+  /**
+   * @var \Drupal\delivery\WorkspaceAssigment
+   */
+  protected $smartUserService;
+
+  public function __construct(
+    EntityTypeInterface $entity_type,
+    EntityStorageInterface $storage,
+    WorkspaceManagerInterface $workspace_manager,
+    RendererInterface $renderer,
+    WorkspaceAssigment $smartUserService
+  ) {
+    $this->smartUserService = $smartUserService;
+    parent::__construct($entity_type, $storage, $workspace_manager, $renderer);
+  }
+
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    return new static(
+      $entity_type,
+      $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('workspaces.manager'),
+      $container->get('renderer'),
+      $container->get('delivery.workspace_assignment')
+    );
+  }
+
 
   /**
    * Loads entity IDs using a pager sorted by the entity id.
@@ -78,29 +111,6 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
    */
   protected function getUserWorkspaces() {
     $account = \Drupal::currentUser();
-    $assignedWorkpsaces = \Drupal::entityManager()
-      ->getStorage('user')->load($account->id())
-      ->get('assigned_workspaces')
-      ->referencedEntities();
-    $workspaces = [];
-    foreach ($assignedWorkpsaces as $workspace) {
-      $workspaces[] = $workspace->id();
-    }
-    $result = $workspaces;
-    foreach ($workspaces as $workspaceId) {
-      $result = array_merge($result, $this->getWorkspaceChildren($workspaceId));
-    }
-    return $result;
+    return $this->smartUserService->getUserWorkspaces($account);
   }
-
-  /**
-   * Get workspace children.
-   */
-  protected function getWorkspaceChildren($id) {
-    $query = \Drupal::service('entity_type.manager')->getStorage('workspace')->getQuery();
-    $query->condition('parent', $id);
-    $result = $query->execute();
-    return $result;
-  }
-
 }

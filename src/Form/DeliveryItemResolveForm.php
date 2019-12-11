@@ -2,6 +2,7 @@
 
 namespace Drupal\delivery\Form;
 
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
@@ -11,6 +12,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -89,6 +92,11 @@ class DeliveryItemResolveForm extends FormBase {
   protected $resultEntity;
 
   /**
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
    * DeliveryPushConfirmFom constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -98,6 +106,7 @@ class DeliveryItemResolveForm extends FormBase {
    * @param \Drupal\Core\Render\RendererInterface $renderer
    * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -106,7 +115,8 @@ class DeliveryItemResolveForm extends FormBase {
     DeliveryService $deliveryService,
     RendererInterface $renderer,
     ConflictResolverManagerInterface $conflictResolverManager,
-    WorkspaceManagerInterface $workspaceManager
+    WorkspaceManagerInterface $workspaceManager,
+    LanguageManagerInterface $languageManager
   ) {
     $this->deliveryService = $deliveryService;
     $this->entityTypeManager = $entity_type_manager;
@@ -115,10 +125,11 @@ class DeliveryItemResolveForm extends FormBase {
     $this->renderer = $renderer;
     $this->conflictResolverManager = $conflictResolverManager;
     $this->workspaceManager = $workspaceManager;
+    $this->languageManager = $languageManager;
   }
 
-  public function access(AccountInterface $account, Delivery $delivery, DeliveryItem $delivery_item) {
-    if (isset($delivery->resolution->value)) {
+  public function access(AccountInterface $account, DeliveryItem $delivery_item) {
+    if (isset($delivery_item->resolution->value)) {
       return AccessResult::forbidden();
     }
     // TODO: Restrict access to conflict resolution based on target permnissions.
@@ -129,7 +140,7 @@ class DeliveryItemResolveForm extends FormBase {
 //    return $this->sourceEntity->access('edit', $account, TRUE);
   }
 
-  public function title($delivery, $delivery_item) {
+  public function title($delivery_item) {
     // TODO: Implement a proper title.
     return $this->t('Resolve conflict');
   }
@@ -145,7 +156,8 @@ class DeliveryItemResolveForm extends FormBase {
       $container->get('delivery.service'),
       $container->get('renderer'),
       $container->get('conflict.resolver.manager'),
-      $container->get('workspaces.manager')
+      $container->get('workspaces.manager'),
+      $container->get('language_manager')
     );
   }
 
@@ -165,7 +177,7 @@ class DeliveryItemResolveForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DeliveryInterface $delivery = NULL, DeliveryItem $delivery_item = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, DeliveryItem $delivery_item = NULL) {
     $form['#attached']['library'][] = 'delivery/conflict-resolution';
     $this->deliveryItem = $delivery_item;
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
@@ -176,7 +188,7 @@ class DeliveryItemResolveForm extends FormBase {
     /** @var \Drupal\Core\Entity\ContentEntityInterface $this->targetEntity */
     $this->targetEntity = $storage->loadRevision($this->deliveryService->getActiveRevision($delivery_item));
 
-    $this->resultEntity = $storage->createRevision($this->targetEntity);
+    $this->resultEntity = $storage->createRevision($this->sourceEntity);
 
     $entityType = $this->entityTypeManager->getDefinition($this->deliveryItem->getTargetType());
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
@@ -200,6 +212,12 @@ class DeliveryItemResolveForm extends FormBase {
     $sourceWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($delivery_item->getSourceWorkspace());
 
+    $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: $this->languageManager->getDefaultLanguage()->getId();
+    $targetLanguages = [$targetPrimaryLanguage];
+    foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+      $targetLanguages[] = $secondaryLanguage->value;
+    }
+
     $viewDisplay = EntityViewDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
     $formDisplay = EntityFormDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
 
@@ -218,16 +236,28 @@ class DeliveryItemResolveForm extends FormBase {
         $parentTranslation = $this->getTranslation($this->parentEntity, $languageId);
         $targetTranslation = $this->getTranslation($this->targetEntity, $languageId);
 
+        $context = new ParameterBag();
+        $context->set('supported_languages', $targetLanguages);
 
         $conflicts = $this->conflictResolverManager->resolveConflicts(
           $targetTranslation,
           $sourceTranslation,
           $parentTranslation,
-          $resultTranslation
+          $resultTranslation,
+          $context
         );
 
         $hadConflicts = $hadConflicts || count($conflicts) > 0;
 
+        // If the current language is not the target workspace primary language,
+        // ignore all conflicts in non-translatable fields.
+        if ($languageId !== $targetPrimaryLanguage) {
+          foreach (array_keys($conflicts) as $prop) {
+            if(!$sourceTranslation->get($prop)->getFieldDefinition()->isTranslatable()) {
+              unset($conflicts[$prop]);
+            }
+          }
+        }
 
         if ($conflicts) {
           $sourceBuild = $viewDisplay->build($sourceTranslation);
@@ -314,15 +344,40 @@ class DeliveryItemResolveForm extends FormBase {
       }
     }
 
+    $args = [
+      ':source' => $sourceWorkspace->label(),
+      ':target' => $targetWorkspace->label(),
+      ':title' => $parentEntity->label(),
+    ];
+
+    $buttons = [
+      DeliveryItem::STATUS_NEW => $this->t('Add to :target', $args),
+      DeliveryItem::STATUS_MODIFIED_BY_SOURCE => $this->t('Apply changes to :target', $args),
+      DeliveryItem::STATUS_CONFLICT => $this->t('Conflict'),
+      DeliveryItem::STATUS_CONFLICT_AUTO => $this->t('Apply changes to :target', $args),
+      DeliveryItem::STATUS_DELETED => $this->t('Mark as resolved'),
+      DeliveryItem::STATUS_DELETED_BY_SOURCE => $this->t('Delete from :target', $args),
+      DeliveryItem::STATUS_RESTORED_BY_SOURCE => $this->t('Restore to :target', $args),
+    ];
+
+    $messages = [
+      DeliveryItem::STATUS_NEW => $this->t(':source added ":title". Also add it to :target?', $args),
+      DeliveryItem::STATUS_MODIFIED_BY_SOURCE => $this->t('":title" was modified in :source. Apply changes to :target?', $args),
+      DeliveryItem::STATUS_CONFLICT_AUTO => $this->t('The conflict in ":title" could be resolved automatically. Apply changes to :target?', $args),
+      DeliveryItem::STATUS_DELETED => $this->t('":title" has been deleted from both :source and :target. Mark this as resolved?', $args),
+      DeliveryItem::STATUS_DELETED_BY_SOURCE => $this->t('":title" was deleted from :source. Also delete it from :target?', $args),
+      DeliveryItem::STATUS_RESTORED_BY_SOURCE => $this->t(':source has restored ":title". Also restore it to :target?', $args),
+    ];
+
     if (!$hadConflicts) {
       $form['message'] = [
-        '#markup' => '<p><em>' . $this->t('All conflicts could be solved automatically. Do you want to proceed?') . "</em></p>",
+        '#markup' => '<p><em>' . $messages[$delivery_item->getStatus()['status']] . "</em></p>",
       ];
     }
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $hadConflicts ? $this->t('Resolve conflicts') : $this->t('Deliver content'),
+      '#value' => $hadConflicts ? $this->t('Resolve conflicts') : $buttons[$delivery_item->getStatus()['status']],
       '#button_type' => 'primary',
     ];
 
@@ -334,10 +389,71 @@ class DeliveryItemResolveForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    $formDisplay = EntityFormDisplay::collectRenderDisplay($this->resultEntity, 'merge');
+    /** @var \Drupal\Core\Field\WidgetPluginManager $widgetPluginManager */
+    $widgetPluginManager = \Drupal::service('plugin.manager.field.widget');
+    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager */
+    $entityFieldManager = \Drupal::service('entity_field.manager');
+
+    $targetWorkspace = $this->entityTypeManager->getStorage('workspace')
+      ->load($this->deliveryItem->getTargetWorkspace());
+
+    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
+    $targetLanguages = [$targetPrimaryLanguage];
+    foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+      $targetLanguages[] = $secondaryLanguage->value;
+    }
+
+    // Copy resolutions of non-translatable fields from primary language to
+    // other languages.
+    $allResolutions = $form_state->getValue('languages');
+    foreach ($allResolutions[$targetPrimaryLanguage] as $key => $value) {
+      if ($this->resultEntity->get($key)->getFieldDefinition()->isTranslatable()) {
+        continue;
+      }
+      foreach (array_keys($allResolutions) as $lang) {
+        if ($lang !== $targetPrimaryLanguage) {
+          $allResolutions[$lang][$key] = $value;
+        }
+      }
+    }
+
+    // Copy manual merges of non-translatable fields from primary language to
+    // other languages.
+    $allCustomValues = $form_state->getValue('custom');
+    foreach ($allCustomValues[$targetPrimaryLanguage] as $key => $value) {
+      if ($this->resultEntity->get($key)->getFieldDefinition()->isTranslatable()) {
+        continue;
+      }
+      foreach (array_keys($allCustomValues) as $lang) {
+        if ($lang !== $targetPrimaryLanguage) {
+          $allCustomValues[$lang][$key] = $value;
+        }
+      }
+    }
+
     foreach ($this->resultEntity->getTranslationLanguages() as $language) {
       $context = new ParameterBag();
-      $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
-      $context->set('resolution_custom_values', $form_state->getValue('custom')[$language->getId()]);
+      $context->set('supported_languages', $targetLanguages);
+      $context->set('resolution_form_result', $allResolutions[$language->getId()]);
+      $customValues = $allCustomValues[$language->getId()];
+
+      foreach ($customValues as $field => $input) {
+        $component = $formDisplay->getComponent($field);
+        $entityType = $this->sourceEntity->getEntityType();
+        $bundle = $this->sourceEntity->bundle();
+        $definitions = $entityFieldManager->getFieldDefinitions($entityType->id(), $bundle);
+        /** @var \Drupal\Core\Field\WidgetInterface $widget */
+        $widget = $widgetPluginManager->getInstance([
+          'field_definition' => $definitions[$field],
+          'form_mode' => 'merge',
+          // No need to prepare, defaults have been merged in setComponent().
+          'prepare' => FALSE,
+          'configuration' => $component,
+        ]);
+        $customValues[$field] = $widget->massageFormValues($input, $form, $form_state);
+      }
+      $context->set('resolution_custom_values', $customValues);
       /** @var \Drupal\Core\Entity\ContentEntityInterface $resultTranslation */
       $resultTranslation = $this->getTranslation($this->resultEntity, $language->getId());
       $this->conflictResolverManager->resolveConflicts(
@@ -347,9 +463,14 @@ class DeliveryItemResolveForm extends FormBase {
         $resultTranslation,
         $context
       );
-      $violations = $resultTranslation->validate();
-      foreach ($violations as $violation) {
-        $form_state->setError($form[$language->getId()], $violation->getMessage());
+      if (in_array($language->getId(), $targetLanguages)) {
+        $violations = $resultTranslation->validate();
+        foreach ($violations as $violation) {
+          // Ignore all violations that can not be resolved in this form.
+          if (isset($form[$language->getId()][$violation->getPropertyPath()])) {
+            $form_state->setError($form, $violation->getMessage());
+          }
+        }
       }
     }
   }
@@ -358,23 +479,9 @@ class DeliveryItemResolveForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->workspaceManager->executeInWorkspace($this->deliveryItem->getTargetWorkspace(), function () use ($form_state) {
+    $this->workspaceManager->executeInWorkspace($this->deliveryItem->getTargetWorkspace(), function () use ($form, $form_state) {
       $this->resultEntity->setSyncing(TRUE);
       $this->resultEntity->save();
-      foreach ($this->resultEntity->getTranslationLanguages() as $language) {
-        $context = new ParameterBag();
-        $context->set('resolution_form_result', $form_state->getValue('languages')[$language->getId()]);
-        $context->set('resolution_custom_values', $form_state->getValue('custom')[$language->getId()]);
-        $resultTranslation = $this->getTranslation($this->resultEntity, $language->getId());
-        $this->conflictResolverManager->resolveConflicts(
-          $this->getTranslation($this->targetEntity, $language->getId()),
-          $this->getTranslation($this->sourceEntity, $language->getId()),
-          $this->getTranslation($this->parentEntity, $language->getId()),
-          $resultTranslation,
-          $context
-        );
-        $resultTranslation->save();
-      }
       $this->deliveryItem->result_revision = $this->resultEntity->getRevisionId();
     });
     // TODO: actually compare entities.

@@ -1,0 +1,29 @@
+<?php
+
+function delivery_install() {
+  // Drop the menu tree table so it gets recreated with the new workspace field.
+  \Drupal::database()->schema()->dropTable('menu_tree');
+  // Rebuild the menu tree.
+  \Drupal::service('plugin.manager.menu.link')->rebuild();
+}
+
+/**
+ * Implements hook_module_preinstall().
+ */
+function delivery_module_preinstall($module) {
+  if ($module !== 'delivery') {
+    return;
+  }
+
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspace_manager */
+  $workspace_manager = \Drupal::service('workspaces.manager');
+  $entity_definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($entity_definition_update_manager->getEntityTypes() as $entity_type) {
+    $revision_metadata_keys = $entity_type->get('revision_metadata_keys');
+    if ($workspace_manager->isEntityTypeSupported($entity_type)) {
+      $revision_metadata_keys['deleted'] = 'deleted';
+      $entity_type->set('revision_metadata_keys', $revision_metadata_keys);
+      $entity_definition_update_manager->updateEntityType($entity_type);
+    }
+  }
+}

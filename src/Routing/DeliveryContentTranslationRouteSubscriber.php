@@ -18,6 +18,21 @@ class DeliveryContentTranslationRouteSubscriber extends ContentTranslationRouteS
       if ($route = $collection->get("entity.$entity_type_id.content_translation_overview")) {
         $route->setDefault('_controller', '\Drupal\delivery\Controller\DeliveryContentTranslationController::overview');
       }
+
+      if ($entity_type->hasLinkTemplate('drupal:content-translation-add')) {
+        $route = $collection->get("entity.$entity_type_id.content_translation_add");
+        $route->setRequirement('_entity_access', str_replace('view', 'update', $route->getRequirement('_entity_access')));
+      }
+
+      if ($entity_type->hasLinkTemplate('drupal:content-translation-edit')) {
+        $route = $collection->get("entity.$entity_type_id.content_translation_edit");
+        $route->addRequirements(['_entity_access' => $entity_type_id . '.update']);
+      }
+
+      if ($entity_type->hasLinkTemplate('drupal:content-translation-delete')) {
+        $route = $collection->get("entity.$entity_type_id.content_translation_delete");
+        $route->addRequirements(['_entity_access' => $entity_type_id . '.update']);
+      }
     }
   }
 

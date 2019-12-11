@@ -5,6 +5,7 @@ namespace Drupal\delivery;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Menu\MenuTreeParameters;
 use Drupal\Core\Menu\MenuTreeStorage as CoreMenuTreeStorage;
@@ -102,36 +103,104 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
     $active_workspace = $this->workspaceManager->getActiveWorkspace();
     if (!$active_workspace->isDefaultWorkspace()) {
       $tracked_revisions = $this->workspaceAssociation->getTrackedEntities($active_workspace->id(), 'menu_link_content');
-      if (isset($tracked_revisions['menu_link_content'])) {
+      $this->currentWorkspace = $active_workspace->id();
+      $localLinks = parent::loadLinks($menu_name, $parameters);
+      $this->currentWorkspace = NULL;
 
-        /** @var \Drupal\menu_link_content\MenuLinkContentInterface[] $workspace_revisions */
-        $workspace_revisions = $this->entityTypeManager->getStorage('menu_link_content')->loadMultipleRevisions(array_keys($tracked_revisions['menu_link_content']));
-        $workspace_plugin_ids = array_map(function (MenuLinkContent $menuLinkContent) {
-          return $menuLinkContent->getPluginId();
-        }, $workspace_revisions);
+      /** @var \Drupal\menu_link_content\MenuLinkContentInterface[] $workspace_revisions */
+      $workspace_revisions = isset($tracked_revisions['menu_link_content'])
+        ? $this->entityTypeManager
+          ->getStorage('menu_link_content')
+          ->loadMultipleRevisions(array_keys($tracked_revisions['menu_link_content']))
+        : [];
 
-        foreach (array_diff($all_menu_content_ids, $workspace_plugin_ids) as $removable) {
-          unset($links[$removable]);
+      $workspace_plugin_ids = array_map(function (MenuLinkContent $menuLinkContent) {
+        return $menuLinkContent->getPluginId();
+      }, $workspace_revisions);
+
+      $recheckParenthood = [];
+
+      foreach (array_diff($all_menu_content_ids, $workspace_plugin_ids) as $removable) {
+        if ($links[$removable]['parent']) {
+          $recheckParenthood[] = $links[$removable]['parent'];
         }
+        unset($links[$removable]);
+      }
 
-        foreach ($workspace_revisions as $workspace_revision) {
-          if (isset($links[$workspace_revision->getPluginId()])) {
-            $pending_plugin_definition = $workspace_revision->getPluginDefinition();
-            $links[$workspace_revision->getPluginId()] = [
-              'title' => serialize($pending_plugin_definition['title']),
-              'description' => serialize($pending_plugin_definition['description']),
-              'enabled' => (string) $pending_plugin_definition['enabled'],
-              'url' => $pending_plugin_definition['url'],
-              'route_name' => $pending_plugin_definition['route_name'],
-              'route_parameters' => serialize($pending_plugin_definition['route_parameters']),
-              'options' => serialize($pending_plugin_definition['options']),
-            ] + $links[$workspace_revision->getPluginId()];
-          }
+      foreach ($workspace_revisions as $workspace_revision) {
+        if (isset($links[$workspace_revision->getPluginId()])) {
+          $links[$workspace_revision->getPluginId()] = $localLinks[$workspace_revision->getPluginId()] ?? [] + $links[$workspace_revision->getPluginId()];
+        }
+      }
+
+      foreach ($recheckParenthood as $parentId) {
+        if (isset($links[$parentId])) {
+          $links[$parentId]['has_children'] = count(array_filter($links, function ($link) use ($parentId) {
+            return $link['parent'] === $parentId;
+          })) > 0 ? '1' : '0';
         }
       }
     }
 
     return $links;
+  }
+
+  protected static function schemaDefinition() {
+    $schema = parent::schemaDefinition();
+    $schema['fields']['workspace'] = [
+      'type' => 'varchar_ascii',
+      'length' => 128,
+      'not null' => FALSE,
+      'description' => 'The workspace ID.',
+    ];
+    $schema['indexes']['workspace'] = ['workspace'];
+    $schema['unique keys']['id'] = ['id', 'workspace'];
+    return $schema;
+  }
+
+  protected $currentWorkspace = NULL;
+
+  protected function doSave(array $link) {
+    $affected_menus = parent::doSave($link);
+    if ($link['provider'] === 'menu_link_content') {
+      $entityId = $link['metadata']['entity_id'];
+      /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+      $storage = $this->entityTypeManager->getStorage('menu_link_content');
+      // TODO: Integrate this into WorkspaceAssociation.
+      $result = \Drupal::database()->select('workspace_association', 'wa')
+        ->fields('wa', ['workspace', 'target_entity_revision_id'])
+        ->condition('target_entity_type_id', 'menu_link_content')
+        ->condition('target_entity_id', $entityId)
+        ->execute();
+      while($row = $result->fetch()) {
+        $this->currentWorkspace = $row->workspace;
+        /** @var \Drupal\menu_link_content\MenuLinkContentInterface $localLinkEntity */
+        $localLinkEntity = $storage->loadRevision($row->target_entity_revision_id);
+        $pluginDefinition = $localLinkEntity->getPluginDefinition();
+        $pluginDefinition['workspace'] = $row->workspace;
+        $affected_menus += parent::doSave($pluginDefinition);
+      }
+      $this->currentWorkspace = NULL;
+    }
+    return $affected_menus;
+  }
+
+  protected function safeExecuteSelect(SelectInterface $query) {
+    if ($this->currentWorkspace) {
+      $query->condition('workspace', $this->currentWorkspace);
+    }
+    else {
+      $query->isNull('workspace');
+    }
+    return parent::safeExecuteSelect($query);
+  }
+
+  protected function preSave(array &$link, array $original) {
+    $fields = parent::preSave($link, $original);
+    if (isset($link['workspace'])) {
+      $fields['workspace'] = $link['workspace'];
+    }
+    return $fields;
   }
 
 }

@@ -1,4 +1,7 @@
 services:
+  delivery.workspace_assignment:
+    class: Drupal\delivery\WorkspaceAssigment
+    arguments: ['@entity_type.manager']
   delivery.service:
     class: Drupal\delivery\DeliveryService
     arguments:
@@ -8,14 +11,11 @@ services:
     - '@conflict.resolver.manager'
     - '@workspaces.association'
 
-  delivery.conflict_resolver_ui_sections:
-    class: Drupal\delivery\ConflictResolverUI\ConflictResolverUISections
-    arguments: ['@entity_type.manager', '@entity.form_builder']
-    tags:
-      - { name: conflict_resolver_ui, priority: 1 }
-
   delivery.route_subscriber:
     class: Drupal\delivery\Routing\RouteSubscriber
+    arguments:
+      - '@entity_type.manager'
+      - '@config.factory'
     tags:
     - { name: event_subscriber }
 
@@ -30,9 +30,9 @@ services:
       - { name: event_subscriber }
 
   conflict_discovery.blacklisted:
-    class: Drupal\delivery\ConflictDiscovery\BlacklistedFieldsDiscovery
+    class: Drupal\delivery\MergeStrategy\BlacklistedFieldsStrategy
     tags:
-      - { name: event_subscriber }
+      - { name: event_subscriber, priority: 999 }
 
   Drupal\workspaces\EntityOperations:
     class: Drupal\delivery\DeliveryEntityOperations
