@@ -140,5 +140,15 @@ delivery.update_revisions_index:
   requirements:
     _permission: 'administer delivery entities'
 
+delivery.cart:
+  path: '/delivery/cart'
+  defaults:
+    _controller: '\Drupal\delivery\Controller\DeliveryCart::overview'
+    _title: 'Cart'
+  requirements:
+    _permission: 'add any entity to the delivery cart'
+  options:
+    _admin_route: TRUE
+
 route_callbacks:
   - '\Drupal\delivery\Routing\DeliveryRoutes::routes'
