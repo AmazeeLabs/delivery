@@ -177,6 +177,9 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
   $formObject = $formState->getFormObject();
 
   // Set the default language to the current workspace primary language.
+  // @todo: refactor this, because it uses a field which is not defined by this
+  // module (primary_language)
+  return;
   if (
     $formObject instanceof EntityFormInterface &&
     $formObject->getEntity() instanceof ContentEntityInterface &&

@@ -12,10 +12,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @Action(
- *   id = "delivery_add_to_cart_action",
- *   label = @Translation("Add to the delivery cart"),
- *   type = "node",
- *   confirm = TRUE,
+ *   id = "entity:delivery_add_to_cart_action",
+ *   action_label = @Translation("Add to the delivery cart"),
+ *   deriver = "Drupal\delivery\Plugin\Action\Derivative\DeliveryAddToCartActionDeriver",
  * )
  */
 class DeliveryAddToCartAction extends ActionBase implements ContainerFactoryPluginInterface {
