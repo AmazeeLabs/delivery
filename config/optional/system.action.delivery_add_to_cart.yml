@@ -1,0 +1,11 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - delivery
+id: delivery_add_to_cart
+label: 'Add to the delivery cart'
+type: node
+confirm: true
+plugin: delivery_add_to_cart_action
+configuration: {  }

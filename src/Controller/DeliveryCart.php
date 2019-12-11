@@ -7,30 +7,22 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\TempStore\PrivateTempStore;
-use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\Core\Url;
-use Drupal\workspaces\WorkspaceManagerInterface;
+use Drupal\delivery\DeliveryCartService;
+use Drupal\workspaces\Entity\Workspace;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class DeliveryCart extends ControllerBase {
 
   /**
-   * The private temp store.
-   * @var PrivateTempStore
+   * The delivery cart serivice.
+   * @var DeliveryCartService
    */
-  protected $userPrivateStore;
+  protected $deliveryCart;
 
-  /**
-   * The workspace manager service.
-   * @var WorkspaceManagerInterface
-   */
-  protected $workspaceManager;
-
-  public function __construct(PrivateTempStoreFactory $tempStoreFactory, WorkspaceManagerInterface $workspaceManager) {
-    $this->userPrivateStore = $tempStoreFactory->get('delivery');
-    $this->workspaceManager = $workspaceManager;
+  public function __construct(DeliveryCartService $deliveryCart) {
+    $this->deliveryCart = $deliveryCart;
   }
 
   /**
@@ -38,8 +30,7 @@ class DeliveryCart extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('user.private_tempstore'),
-      $container->get('workspaces.manager')
+      $container->get('delivery.cart')
     );
   }
 
@@ -49,20 +40,7 @@ class DeliveryCart extends ControllerBase {
   public function addToCart(RouteMatchInterface $routeMatch, $entity_type_id) {
     /* @var EntityInterface $entity */
     $entity = $routeMatch->getParameter($entity_type_id);
-    $entityDefinition = $this->entityTypeManager()->getDefinition($entity_type_id);
-    $revisionIdField = $entityDefinition->getKey('revision');
-
-    $cart = $this->userPrivateStore->get('delivery_cart');
-    if (empty($cart)) {
-      $cart = [];
-    }
-    $cart[$entity->getEntityTypeId()][$entity->id()] = [
-      'entity_id' => $entity->id(),
-      'revision_id' => $entity->{$revisionIdField}->getValue()[0]['value'],
-      'workspace_id' => $this->workspaceManager->getActiveWorkspace()->id(),
-    ];
-    $this->userPrivateStore->set('delivery_cart', $cart);
-
+    $this->deliveryCart->addToCart($entity);
     $this->messenger()->addStatus($this->t('@title has been added to the delivery cart.', ['@title' => $entity->label()]));
     $url = Url::fromRoute('entity.' . $entity->getEntityTypeId() . '.canonical', [$entity->getEntityTypeId() => $entity->id()])->toString();
     return new RedirectResponse($url);
@@ -74,8 +52,7 @@ class DeliveryCart extends ControllerBase {
   public function addToCartAccess(RouteMatchInterface $routeMatch, AccountInterface $account, $entity_type_id) {
     /* @var EntityInterface $entity */
     $entity = $routeMatch->getParameter($entity_type_id);
-    $cart = $this->userPrivateStore->get('delivery_cart');
-    if (!empty($cart[$entity->getEntityTypeId()][$entity->id()])) {
+    if ($this->deliveryCart->entityExistsInCart($entity)) {
       return AccessResult::forbidden();
     }
     return AccessResult::allowedIfHasPermission($account, 'add any entity to the delivery cart');
@@ -87,24 +64,7 @@ class DeliveryCart extends ControllerBase {
   public function removeFromCart(RouteMatchInterface $routeMatch, $entity_type_id) {
     /* @var EntityInterface $entity */
     $entity = $routeMatch->getParameter($entity_type_id);
-    $cart = $this->userPrivateStore->get('delivery_cart');
-    if (!empty($cart) && isset($cart[$entity->getEntityTypeId()][$entity->id()])) {
-      unset($cart[$entity->getEntityTypeId()][$entity->id()]);
-      // Check if there are any entries left for this entity type. If not, just
-      // remove it.
-      if (empty($cart[$entity->getEntityTypeId()])) {
-        unset($cart[$entity->getEntityTypeId()]);
-      }
-
-      // If the cart is empty, we can just unset it from the private store.
-      if (empty($cart)) {
-        $this->userPrivateStore->delete('delivery_cart');
-      }
-      else {
-        $this->userPrivateStore->set('delivery_cart', $cart);
-      }
-    }
-
+    $this->deliveryCart->removeFromCart($entity);
     $this->messenger()->addStatus($this->t('@title has been removed from the delivery cart.', ['@title' => $entity->label()]));
     $url = Url::fromRoute('entity.' . $entity->getEntityTypeId() . '.canonical', [$entity->getEntityTypeId() => $entity->id()])->toString();
     return new RedirectResponse($url);
@@ -116,10 +76,45 @@ class DeliveryCart extends ControllerBase {
   public function removeFromCartAccess(RouteMatchInterface $routeMatch, AccountInterface $account, $entity_type_id) {
     /* @var EntityInterface $entity */
     $entity = $routeMatch->getParameter($entity_type_id);
-    $cart = $this->userPrivateStore->get('delivery_cart');
-    if (empty($cart[$entity->getEntityTypeId()][$entity->id()])) {
+    if (!$this->deliveryCart->entityExistsInCart($entity)) {
       return AccessResult::forbidden();
     }
     return AccessResult::allowedIfHasPermission($account, 'add any entity to the delivery cart');
+  }
+
+  /**
+   * Returns an overview of the current cart.
+   */
+  public function overview() {
+    $cart = $this->deliveryCart->getCart();
+    $items = [];
+    if (!empty($cart)) {
+      foreach ($cart as $entity_type_id => $entity_ids) {
+        $entityStorage = $this->entityTypeManager()->getStorage($entity_type_id);
+        foreach ($entity_ids as $entity_id_data) {
+          $sourceWorkspace = Workspace::load($entity_id_data['workspace_id']);
+          $entity = $entityStorage->loadRevision($entity_id_data['revision_id']);
+
+          $items[] = $this->t('@entity_type: %entity_label (Workspace: @workspace) - <a href=":delivery_cart_remove">Remove</a>', [
+            '@entity_type' => $entityStorage->getEntityType()->getLabel(),
+            '%entity_label' => $entity->label(),
+            '@workspace' => $sourceWorkspace->label(),
+            ':delivery_cart_remove' => Url::fromRoute('entity.' . $entity_type_id . '.delivery_cart_remove', [$entity_type_id => $entity->id()], ['query' => \Drupal::destination()->getAsArray()])->toString(),
+          ]);
+        }
+      }
+    }
+    if (!empty($items)) {
+      $build['cart'] = [
+        '#theme' => 'item_list',
+        '#title' => t('Cart overview'),
+        '#items' => $items,
+      ];
+    } else {
+      $build['cart'] = [
+        '#markup' => $this->t('You have no items in the delivery cart. To add content, just navigate to the view page of a content and click on the <em>Add to the delivery cart</em> tab.'),
+      ];
+    }
+    return $build;
   }
 }
