@@ -43,16 +43,14 @@ class DeliveryCartService {
    * Adds the entity from the current request to the delivery cart.
    */
   public function addToCart(EntityInterface $entity) {
-    $entityDefinition = $this->entityTypeManager->getDefinition($entity->getEntityTypeId());
-    $revisionIdField = $entityDefinition->getKey('revision');
-
     $cart = $this->userPrivateStore->get('delivery_cart');
     if (empty($cart)) {
       $cart = [];
     }
-    $cart[$entity->getEntityTypeId()][$entity->id()] = [
+    $revisionId = $this->getEntityRevisionId($entity);
+    $cart[$entity->getEntityTypeId()][$revisionId] = [
       'entity_id' => $entity->id(),
-      'revision_id' => $entity->{$revisionIdField}->getValue()[0]['value'],
+      'revision_id' => $revisionId,
       'workspace_id' => $this->workspaceManager->getActiveWorkspace()->id(),
     ];
     $this->userPrivateStore->set('delivery_cart', $cart);
@@ -63,8 +61,9 @@ class DeliveryCartService {
    */
   public function removeFromCart(EntityInterface $entity) {
     $cart = $this->userPrivateStore->get('delivery_cart');
-    if (!empty($cart) && isset($cart[$entity->getEntityTypeId()][$entity->id()])) {
-      unset($cart[$entity->getEntityTypeId()][$entity->id()]);
+    $revisionId = $this->getEntityRevisionId($entity);
+    if (!empty($cart) && isset($cart[$entity->getEntityTypeId()][$revisionId])) {
+      unset($cart[$entity->getEntityTypeId()][$revisionId]);
       // Check if there are any entries left for this entity type. If not, just
       // remove it.
       if (empty($cart[$entity->getEntityTypeId()])) {
@@ -86,7 +85,8 @@ class DeliveryCartService {
    */
   public function entityExistsInCart(EntityInterface $entity) {
     $cart = $this->userPrivateStore->get('delivery_cart');
-    if (!empty($cart[$entity->getEntityTypeId()][$entity->id()])) {
+    $revisionId = $this->getEntityRevisionId($entity);
+    if (!empty($cart[$entity->getEntityTypeId()][$revisionId])) {
       return TRUE;
     }
     return FALSE;
@@ -97,5 +97,14 @@ class DeliveryCartService {
    */
   public function getCart() {
     return $this->userPrivateStore->get('delivery_cart');
+  }
+
+  /**
+   * Returns the revision id of an entity.
+   */
+  protected function getEntityRevisionId(EntityInterface $entity) {
+    $entityDefinition = $this->entityTypeManager->getDefinition($entity->getEntityTypeId());
+    $revisionIdField = $entityDefinition->getKey('revision');
+    return $entity->{$revisionIdField}->getValue()[0]['value'];
   }
 }
