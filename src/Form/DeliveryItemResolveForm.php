@@ -212,11 +212,15 @@ class DeliveryItemResolveForm extends FormBase {
     $sourceWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($delivery_item->getSourceWorkspace());
 
-    $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: $this->languageManager->getDefaultLanguage()->getId();
+    // @todo: refactor this, because it uses fields from a different module
+    // (primary_language, secondary_languages)
+    /*$targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: $this->languageManager->getDefaultLanguage()->getId();
     $targetLanguages = [$targetPrimaryLanguage];
     foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
       $targetLanguages[] = $secondaryLanguage->value;
-    }
+    }*/
+    $targetPrimaryLanguage = $this->languageManager->getDefaultLanguage()->getId();
+    $targetLanguages = [$targetPrimaryLanguage];
 
     $viewDisplay = EntityViewDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
     $formDisplay = EntityFormDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
@@ -398,11 +402,16 @@ class DeliveryItemResolveForm extends FormBase {
     $targetWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($this->deliveryItem->getTargetWorkspace());
 
-    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
+    // @todo: refactor this, because it uses fields from a different module
+    // (primary_language, secondary_languages)
+    /*$targetPrimaryLanguage = $targetWorkspace->primary_language->value;
     $targetLanguages = [$targetPrimaryLanguage];
     foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
       $targetLanguages[] = $secondaryLanguage->value;
-    }
+    }*/
+    $targetPrimaryLanguage = $this->languageManager->getDefaultLanguage()->getId();
+    $targetLanguages = [$targetPrimaryLanguage];
+    // end @todo.
 
     // Copy resolutions of non-translatable fields from primary language to
     // other languages.
