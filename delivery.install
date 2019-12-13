@@ -3,6 +3,14 @@
 function delivery_install() {
   // Drop the menu tree table so it gets recreated with the new workspace field.
   \Drupal::database()->schema()->dropTable('menu_tree');
+
+  // Mark all menu_link_content items to be rediscovered.
+  if (\Drupal::database()->schema()->tableExists('menu_link_content_data')) {
+    \Drupal::database()->update('menu_link_content_data')->fields([
+      'rediscover' => TRUE,
+    ])->execute();
+  }
+
   // Rebuild the menu tree.
   \Drupal::service('plugin.manager.menu.link')->rebuild();
 }

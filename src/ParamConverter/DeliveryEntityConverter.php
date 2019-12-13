@@ -33,7 +33,8 @@ class DeliveryEntityConverter extends EntityConverter {
       $workspacesManager->isEntityTypeSupported($result->getEntityType()) &&
       (
         !($result->workspace && $result->workspace->target_id)
-        || $result->deleted->value !== '0'
+        // The deleted field can also be NULL, so we can't just compare with '0'
+        || !empty($result->deleted->value)
       )
     ) {
       return NULL;
