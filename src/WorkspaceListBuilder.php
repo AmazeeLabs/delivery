@@ -55,6 +55,12 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
 
     if (!\Drupal::currentUser()->hasPermission('administer workspaces')) {
       $workspaces = $this->getUserWorkspaces();
+      // If the user does not have any workspace assigned, then no workspaces
+      // should be available in the listing.
+      if (empty($workspaces)) {
+        // There should be no workspace with the id 0!
+        $workspaces = [0];
+      }
       $query->condition($this->entityType->getKey('id'), $workspaces, 'IN');
     }
     // Only add the pager if a limit is specified.
