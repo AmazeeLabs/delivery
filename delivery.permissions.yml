@@ -16,6 +16,8 @@ add delivery to any workspaces:
   title: 'Add delivery to any workspace'
 add any entity to the delivery cart:
   title: 'Add any entity to the delivery cart'
+access entities in any workspace:
+  title: 'Access entities in any workspace'
 deliver items:
   title: 'Deliver items'
 publish menus:

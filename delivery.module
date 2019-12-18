@@ -85,6 +85,16 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
     if (!in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
       return AccessResult::forbidden();
     }
+    // Also, if the user does not have the permission to access entities in all
+    // the workspaces, check if the current workspace is part of the user's
+    // assigned workspaces.
+    // @todo: should this be actually part of the delivery module?
+    if (!$account->hasPermission('access entities in any workspace')) {
+      $assigned_workspaces = \Drupal::service('delivery.workspace_assignment')->getUserWorkspaces($account);
+      if (!in_array($activeWorkspace->id(), $assigned_workspaces)) {
+        return AccessResult::forbidden();
+      }
+    }
   }
   if ($entity instanceof DeliveryItem) {
     $storage = \Drupal::entityTypeManager()
