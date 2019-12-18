@@ -41,7 +41,7 @@ class DeliveryCart extends ControllerBase {
     /* @var EntityInterface $entity */
     $entity = $routeMatch->getParameter($entity_type_id);
     $this->deliveryCart->addToCart($entity);
-    $this->messenger()->addStatus($this->t('@title has been added to the delivery cart.', ['@title' => $entity->label()]));
+    $this->messenger()->addStatus($this->t('@title has been added to the delivery <a href=":cart_link">cart</a>.', ['@title' => $entity->label(), ':cart_link' => Url::fromRoute('delivery.cart')->toString()]));
     $url = Url::fromRoute('entity.' . $entity->getEntityTypeId() . '.canonical', [$entity->getEntityTypeId() => $entity->id()])->toString();
     return new RedirectResponse($url);
   }
@@ -65,7 +65,7 @@ class DeliveryCart extends ControllerBase {
     /* @var EntityInterface $entity */
     $entity = $routeMatch->getParameter($entity_type_id);
     $this->deliveryCart->removeFromCart($entity);
-    $this->messenger()->addStatus($this->t('@title has been removed from the delivery cart.', ['@title' => $entity->label()]));
+    $this->messenger()->addStatus($this->t('@title has been removed from the delivery <a href=":cart_link">cart</a>.', ['@title' => $entity->label(), ':cart_link' => Url::fromRoute('delivery.cart')->toString()]));
     $url = Url::fromRoute('entity.' . $entity->getEntityTypeId() . '.canonical', [$entity->getEntityTypeId() => $entity->id()])->toString();
     return new RedirectResponse($url);
   }

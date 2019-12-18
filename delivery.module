@@ -151,6 +151,18 @@ function delivery_entity_type_build(array &$entity_types) {
   }
 }
 
+
+/**
+ * Implements hook_entity_type_alter().
+ */
+function delivery_entity_type_alter(array &$entity_types) {
+  // Set a custom class for the menu form to add a 'Add all menu menu items to
+  // cart' button.
+  if (isset($entity_types['menu'])) {
+    $entity_types['menu']->setFormClass('edit', 'Drupal\delivery\DeliveryMenuForm');
+  }
+}
+
 /**
  * Implements hook_ENTITY_TYPE_view_alter() for deliveries.
  */
