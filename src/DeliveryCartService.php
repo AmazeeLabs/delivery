@@ -81,6 +81,13 @@ class DeliveryCartService {
   }
 
   /**
+   * Removes all items from the cart.
+   */
+  public function emptyCart() {
+    $this->userPrivateStore->delete('delivery_cart');
+  }
+
+  /**
    * Checks if an entity exists in the cart.
    */
   public function entityExistsInCart(EntityInterface $entity) {

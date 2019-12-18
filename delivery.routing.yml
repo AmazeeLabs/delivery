@@ -154,5 +154,15 @@ delivery.cart:
   options:
     _admin_route: TRUE
 
+delivery.empty_cart:
+  path: '/delivery/cart/empty'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryEmptyCartConfirmForm'
+    _title: 'Empty cart'
+  requirements:
+    _permission: 'add any entity to the delivery cart'
+  options:
+    _admin_route: TRUE
+
 route_callbacks:
   - '\Drupal\delivery\Routing\DeliveryRoutes::routes'
