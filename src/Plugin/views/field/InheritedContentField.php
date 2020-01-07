@@ -72,7 +72,7 @@ class InheritedContentField extends FieldPluginBase implements ContainerFactoryP
    * @{inheritdoc}
    */
   public function render(ResultRow $values) {
-    $entity = $values->_entity;
+    $entity = $values->_entity ?? $values->_object->getEntity();
 
     if ($this->deliveryService->getEntityInheritedFlag($entity)) {
       return $this->t('Own content');
