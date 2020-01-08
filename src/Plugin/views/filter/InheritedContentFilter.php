@@ -49,7 +49,7 @@ class InheritedContentFilter extends InOperator {
     $values = $this->value;
     $aliases = array_keys($this->query->tables[$query_base_table]);
     $alias = end($aliases);
-    $field = ($is_search_api_index) ? 'workspace' : $alias . '.workspace';
+    $field = ($is_search_api_index) ? 'source_workspace' : $alias . '.workspace';
 
     foreach ($values as $value) {
       $negate_condition = (substr($value, 0, 1) == '!');
