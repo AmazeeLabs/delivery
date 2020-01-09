@@ -82,3 +82,10 @@ services:
       - '@user.private_tempstore'
       - '@workspaces.manager'
       - '@entity_type.manager'
+
+  delivery.assigned_workspace_access_checker:
+    class: Drupal\delivery\Access\AssignedWorkspaceAccess
+    arguments:
+      - '@delivery.workspace_assignment'
+    tags:
+      - { name: access_check, applies_to: _assigned_workspace_check }

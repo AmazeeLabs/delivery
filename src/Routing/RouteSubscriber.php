@@ -66,6 +66,11 @@ class RouteSubscriber extends RouteSubscriberBase {
         );
       }
     }
+
+    // Alter the workspace activate route to add some more access checks.
+    if ($route = $collection->get('entity.workspace.activate_form')) {
+      $route->addRequirements(['_assigned_workspace_check' => 'TRUE']);
+    }
   }
 
   /**
