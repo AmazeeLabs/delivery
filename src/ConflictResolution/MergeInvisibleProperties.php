@@ -40,6 +40,15 @@ class MergeInvisibleProperties extends MergeStrategyBase {
       }
     }
 
+    // For now, the layout builder conflicts will be removed by default, so the
+    // 'left' version will be used.
+    if (in_array('layout_builder__layout', $automerge)) {
+      $event->removeConflict('layout_builder__layout');
+      $automerge = array_filter($automerge, function ($conflict) {
+        return $conflict !== 'layout_builder__layout';
+      });
+    }
+
     // If the current language is in the list of languages supported by the
     // target workspace, remove these fields from the automerge list. Else
     // just merge from left to right.
