@@ -9,6 +9,7 @@ use Drupal\Core\Url;
 use Drupal\delivery\WorkspaceAssigment;
 use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
 use Drupal\workspaces\WorkspaceManagerInterface;
+use Drupal\workspaces\WorkspaceRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,11 +26,12 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
     EntityTypeInterface $entity_type,
     EntityStorageInterface $storage,
     WorkspaceManagerInterface $workspace_manager,
+    WorkspaceRepositoryInterface $workspace_repository,
     RendererInterface $renderer,
     WorkspaceAssigment $smartUserService
   ) {
     $this->smartUserService = $smartUserService;
-    parent::__construct($entity_type, $storage, $workspace_manager, $renderer);
+    parent::__construct($entity_type, $storage, $workspace_manager, $workspace_repository, $renderer);
   }
 
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
