@@ -419,6 +419,10 @@ function delivery_entity_load(array $entities, $entity_type_id) {
   if ($workspaceManager->isEntityTypeSupported($entityType)) {
     /** @var \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssociation */
     $workspaceAssociation = \Drupal::service('workspaces.association');
+    $activeWorkspace = $workspaceManager->getActiveWorkspace();
+    if (empty($activeWorkspace)) {
+      return;
+    }
     $tracking = $workspaceAssociation->getTrackedEntities($workspaceManager->getActiveWorkspace()->id(), $entity_type_id, array_keys($entities));
     if (empty($tracking)) {
       return;
