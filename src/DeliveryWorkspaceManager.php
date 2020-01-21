@@ -10,18 +10,22 @@ class DeliveryWorkspaceManager extends WorkspaceManager {
   /**
    * {@inheritDoc}
    */
-  protected function doSwitchWorkspace(WorkspaceInterface $workspace, $safe = FALSE) {
+  protected function doSwitchWorkspace($workspace, $safe = FALSE) {
     // If we are switching the workspace for a safe operation then we dont' need
     // to check the access to the target workspace. Otherwise, we just fallback
     // to the parent implementation.
     if ($safe) {
-      $this->activeWorkspace = $workspace;
+      $this->activeWorkspace = $workspace ?: FALSE;
 
       // Clear the static entity cache for the supported entity types.
       $cache_tags_to_invalidate = array_map(function ($entity_type_id) {
         return 'entity.memory_cache:' . $entity_type_id;
       }, array_keys($this->getSupportedEntityTypes()));
       $this->entityMemoryCache->invalidateTags($cache_tags_to_invalidate);
+
+      // Clear the static cache for path aliases. We can't inject the path alias
+      // manager service because it would create a circular dependency.
+      \Drupal::service('path_alias.manager')->cacheClear();
     }
     else {
       parent::doSwitchWorkspace($workspace);
