@@ -73,6 +73,12 @@ class DeliveryMenuForm extends MenuForm {
       $uuid = str_replace('menu_link_content:', '', $link['id']);
       $entities = $storage->loadByProperties(['uuid' => $uuid]);
       $entity = reset($entities);
+      // If no menu link could be loaded, this is most probably a menu coming
+      // from a module.
+      // @todo: should we log it maybe?
+      if (empty($entity)) {
+        continue;
+      }
       $this->deliveryCart->addToCart($entity);
     }
     $this->messenger()->addStatus($this->t('The menu items have been added to the delivery <a href=":cart_link">cart</a>.', [':cart_link' => Url::fromRoute('delivery.cart')->toString()]));
