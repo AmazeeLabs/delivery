@@ -92,6 +92,12 @@ class DeliveryCart extends ControllerBase {
       foreach ($cart as $entity_type_id => $entity_ids) {
         $entityStorage = $this->entityTypeManager()->getStorage($entity_type_id);
         foreach ($entity_ids as $entity_id_data) {
+          // @todo: Temporary fix for avoiding a timeout when having a lot of
+          // entries in the cart, until we get a proper pagination.
+          if (count($items) >= 100) {
+            $items[] = $this->t('... and more');
+            break 2;
+          }
           $sourceWorkspace = Workspace::load($entity_id_data['workspace_id']);
           $entity = $entityStorage->loadRevision($entity_id_data['revision_id']);
 
