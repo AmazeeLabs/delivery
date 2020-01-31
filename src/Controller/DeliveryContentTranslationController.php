@@ -2,7 +2,6 @@
 
 namespace Drupal\delivery\Controller;
 
-use Drupal;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -301,18 +300,4 @@ class DeliveryContentTranslationController extends ContentTranslationController 
     }
     return $this->latestRevisionIds[$entity_id][$langcode];
   }
-
-  /**
-   * Returns the language manager service.
-   *
-   * @return \Drupal\Core\Language\LanguageManagerInterface
-   *   The language manager.
-   */
-  protected function languageManager() {
-    if (!$this->languageManager) {
-      $this->languageManager = Drupal::service('delivery.filtered_language_manager');
-    }
-    return $this->languageManager;
-  }
-
 }

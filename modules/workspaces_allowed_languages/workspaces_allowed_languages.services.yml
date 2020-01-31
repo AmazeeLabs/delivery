@@ -4,3 +4,11 @@ services:
     arguments: ['@workspaces.manager', '@language_manager',  '@module_handler', '@current_user']
     tags:
       - { name: event_subscriber }
+  workspaces_allowed_languages.content_translation.route_subscriber:
+    class: Drupal\workspaces_allowed_languages\Routing\ContentTranslationRouteSubscriber
+    arguments: ['@content_translation.manager']
+    tags:
+      - { name: event_subscriber }
+  workspaces_allowed_languages.filtered_language_manager:
+    class: Drupal\workspaces_allowed_languages\FilteredLanguageManager
+    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']

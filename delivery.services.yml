@@ -42,10 +42,6 @@ services:
       - '@workspaces.association'
       - '@cache_tags.invalidator'
 
-  delivery.filtered_language_manager:
-    class: Drupal\delivery\FilteredLanguageManager
-    arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
-
   delivery.content_translation.route_subscriber:
     class: Drupal\delivery\Routing\DeliveryContentTranslationRouteSubscriber
     arguments: ['@content_translation.manager']

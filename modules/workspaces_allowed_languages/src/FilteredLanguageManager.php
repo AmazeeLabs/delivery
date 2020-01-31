@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\delivery;
+namespace Drupal\workspaces_allowed_languages;
 
 use Drupal;
 use Drupal\Core\Language\LanguageInterface;
@@ -21,11 +21,13 @@ class FilteredLanguageManager extends ConfigurableLanguageManager {
     return Drupal::service('workspaces.manager');
   }
 
-  public function getLanguages($flags = LanguageInterface::STATE_CONFIGURABLE) {
-    return parent::getLanguages($flags);
-
-    // @todo: this uses a field from the workspaces_allowed_languages module, it
-    // should be refactored (primary language).
+  /**
+   * {@inheritDoc}
+   */
+  public function getLanguages($flags = LanguageInterface::STATE_CONFIGURABLE, $ignore_allowed_languages = FALSE) {
+    if (!empty($ignore_allowed_languages)) {
+      return parent::getLanguages($flags);
+    }
     $workspace = $this->getWorkspaceManager()->getActiveWorkspace();
 
     if ($workspace->primary_language->count() === 0) {
@@ -42,6 +44,13 @@ class FilteredLanguageManager extends ConfigurableLanguageManager {
       return in_array($lang->getId(), $languages);
     });
     return $result;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isMultilingual() {
+    return count($this->getLanguages(LanguageInterface::STATE_CONFIGURABLE, TRUE)) > 1;
   }
 
 }
