@@ -31,7 +31,7 @@ use Drupal\Core\Form\FormStateInterface;
  * Implements hook_module_implements_alter().
  */
 function delivery_module_implements_alter(&$implementations, $hook) {
-  if (in_array($hook, ['entity_bundle_info_alter', 'entity_base_field_info_alter', 'entity_type_build'])) {
+  if (in_array($hook, ['entity_bundle_info_alter', 'entity_base_field_info_alter', 'entity_type_build', 'field_info_alter'])) {
     $group = $implementations['delivery'];
     unset($implementations['delivery']);
     $implementations['delivery'] = $group;
@@ -275,6 +275,17 @@ function delivery_entity_base_field_info_alter(&$fields, EntityTypeInterface $en
     foreach ($revisionableFields as $revisionableField) {
       $fields[$revisionableField]->setRevisionable(TRUE);
     }
+  }
+}
+
+/**
+ * Implements hook_field_info_alter().
+ */
+function delivery_field_info_alter(&$definitions) {
+  // This is needed for entities which are embedded with inline entity forms,
+  // like the ones added by the scheduled_updates module.
+  if (isset($definitions['entity_reference']['constraints']['EntityReferenceSupportedNewEntities'])) {
+    unset($definitions['entity_reference']['constraints']['EntityReferenceSupportedNewEntities']);
   }
 }
 
