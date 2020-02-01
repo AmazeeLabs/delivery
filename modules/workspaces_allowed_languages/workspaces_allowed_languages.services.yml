@@ -12,3 +12,8 @@ services:
   workspaces_allowed_languages.filtered_language_manager:
     class: Drupal\workspaces_allowed_languages\FilteredLanguageManager
     arguments: ['@language.default', '@config.factory', '@module_handler', '@language.config_factory_override', '@request_stack']
+  workspaces_allowed_languages.event_subscriber:
+    class: Drupal\workspaces_allowed_languages\EventSubscriber\WorkspacesAllowedLanguagesAdminRequestSubscriber
+    arguments: ['@workspaces.manager', '@language_manager', '@messenger', '@config.factory']
+    tags:
+      - { name: event_subscriber }
