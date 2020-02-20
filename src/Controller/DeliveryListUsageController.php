@@ -38,12 +38,14 @@ class DeliveryListUsageController extends LocalTaskUsageController {
       $this->t('Status'),
     ];
 
-    $total = count($all_rows);
-    $page = pager_default_initialize($total, $this->itemsPerPage);
-    $page_rows = $this->getPageRows($page, $this->itemsPerPage, $entity_type, $entity_id);
+    // The rows are already paginated, so we don't need to get a specific page
+    // anymore. That is why in the table we directly show all the rows.
+    //$total = count($all_rows);
+    //$page = pager_default_initialize($total, $this->itemsPerPage);
+    //$page_rows = $this->getPageRows($page, $this->itemsPerPage, $entity_type, $entity_id);
     $build[] = [
       '#theme' => 'table',
-      '#rows' => $page_rows,
+      '#rows' => $all_rows,
       '#header' => $header,
     ];
 
