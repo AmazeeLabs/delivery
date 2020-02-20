@@ -1,4 +1,11 @@
 services:
+  delivery.menu.default_tree_manipulators:
+    decorates: menu.default_tree_manipulators
+    class: Drupal\delivery\DeliveryDefaultMenuLinkTreeManipulators
+    arguments:
+      - '@delivery.menu.default_tree_manipulators.inner'
+      - '@entity.repository'
+
   delivery.workspace_assignment:
     class: Drupal\delivery\WorkspaceAssigment
     arguments: ['@entity_type.manager']
