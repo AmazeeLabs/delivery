@@ -1,4 +1,10 @@
 services:
+  delivery.conflict.discovery.default:
+    decorates: conflict.discovery.default
+    class: Drupal\delivery\ConflictDiscovery\DeliveryDefaultConflictDiscovery
+    arguments:
+      - '@delivery.conflict.discovery.default.inner'
+
   delivery.workspace_assignment:
     class: Drupal\delivery\WorkspaceAssigment
     arguments: ['@entity_type.manager']

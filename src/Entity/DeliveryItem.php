@@ -311,6 +311,7 @@ class DeliveryItem extends ContentEntityBase implements DeliveryItemInterface {
 
           $context = new ParameterBag();
           $context->set('supported_languages', $targetLanguages);
+          $context->set('status_check', TRUE);
 
           $conflicts = $conflictResolver->resolveConflicts(
             $targetTranslation,

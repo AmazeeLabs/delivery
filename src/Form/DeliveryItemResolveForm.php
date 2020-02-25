@@ -238,6 +238,8 @@ class DeliveryItemResolveForm extends FormBase {
 
         $context = new ParameterBag();
         $context->set('supported_languages', $targetLanguages);
+        $delivery_item_status = $this->deliveryItem->getStatus();
+        $context->set('delivery_item_status', $delivery_item_status['status']);
 
         $conflicts = $this->conflictResolverManager->resolveConflicts(
           $targetTranslation,
@@ -336,6 +338,12 @@ class DeliveryItemResolveForm extends FormBase {
                 ]
               ];
             }
+            // If the status of the delivery item is 'New', then disable the
+            // target option, because there's nothing to choose from.
+            if ($delivery_item_status['status'] === DeliveryItem::STATUS_NEW && !empty($form[$languageId][$property]['selection']['#options']['__target__'])) {
+              $form[$languageId][$property]['selection']['__target__']['#disabled'] = TRUE;
+            }
+
           }
         }
         else {
