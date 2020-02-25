@@ -140,9 +140,15 @@ class DeliveryItemResolveForm extends FormBase {
 //    return $this->sourceEntity->access('edit', $account, TRUE);
   }
 
-  public function title($delivery_item) {
-    // TODO: Implement a proper title.
-    return $this->t('Resolve conflict');
+  public function title(DeliveryItem $delivery_item) {
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    $storage = $this->entityTypeManager->getStorage($delivery_item->getTargetType());
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $this->sourceEntity */
+    $sourceEntity = $storage->loadRevision($delivery_item->getSourceRevision());
+    return $this->t('Resolve conflict. <a href="@href" target="_blank">@label</a>', [
+      '@href' => $sourceEntity->toUrl()->toString(),
+      '@label' => $sourceEntity->label(),
+    ]);
   }
 
   /**
