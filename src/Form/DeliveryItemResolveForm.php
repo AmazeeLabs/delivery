@@ -240,6 +240,7 @@ class DeliveryItemResolveForm extends FormBase {
         $context->set('supported_languages', $targetLanguages);
         $delivery_item_status = $this->deliveryItem->getStatus();
         $context->set('delivery_item_status', $delivery_item_status['status']);
+        $context->set('resolution_ui', TRUE);
 
         $conflicts = $this->conflictResolverManager->resolveConflicts(
           $targetTranslation,

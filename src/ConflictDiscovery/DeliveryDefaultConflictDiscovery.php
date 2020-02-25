@@ -27,10 +27,9 @@ class DeliveryDefaultConflictDiscovery extends ConflictDiscoveryBase {
    */
   public function discoverConflictsContentEntity(EntityConflictDiscoveryEvent $event) {
     $this->conflictDiscoveryInner->discoverConflictsContentEntity($event);
-    $status_check = $event->getContextParameter('status_check', FALSE);
-    // If we only do a status check of a delivery item, then we don't want to
-    // alter the conflicts.
-    if ($status_check) {
+    $resolution_ui = $event->getContextParameter('resolution_ui', FALSE);
+    // We only alter the conflicts if we want to display them in the UI.
+    if (!$resolution_ui) {
       return;
     }
 
