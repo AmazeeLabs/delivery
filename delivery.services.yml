@@ -1,10 +1,4 @@
 services:
-  delivery.conflict.discovery.default:
-    decorates: conflict.discovery.default
-    class: Drupal\delivery\ConflictDiscovery\DeliveryDefaultConflictDiscovery
-    arguments:
-      - '@delivery.conflict.discovery.default.inner'
-
   delivery.workspace_assignment:
     class: Drupal\delivery\WorkspaceAssigment
     arguments: ['@entity_type.manager']
@@ -34,6 +28,12 @@ services:
     class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields
     tags:
       - { name: event_subscriber }
+
+  delivery.conflict.discovery.default:
+    decorates: conflict.discovery.default
+    class: Drupal\delivery\ConflictDiscovery\DeliveryDefaultConflictDiscovery
+    arguments:
+      - '@delivery.conflict.discovery.default.inner'
 
   conflict_discovery.blacklisted:
     class: Drupal\delivery\MergeStrategy\BlacklistedFieldsStrategy
