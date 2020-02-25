@@ -5,6 +5,7 @@ namespace Drupal\delivery;
 
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\entity_usage\Controller\ListUsageController;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\workspaces\WorkspaceInterface;
 
@@ -63,7 +64,8 @@ class DeliveryEntityUsage extends EntityUsage {
         'method',
         'field_name',
         'count',
-      ]);
+      ])
+      ->extend('Drupal\Core\Database\Query\PagerSelectExtender');
 
     $query
       ->condition($target_id_column, $target_entity->id())
@@ -72,7 +74,8 @@ class DeliveryEntityUsage extends EntityUsage {
       ->orderBy('source_type')
       ->orderBy('source_id', 'DESC')
       ->orderBy('source_vid', 'DESC')
-      ->orderBy('source_langcode');
+      ->orderBy('source_langcode')
+      ->limit($this->config->get('usage_controller_items_per_page') ?: ListUsageController::ITEMS_PER_PAGE_DEFAULT);
 
     $affectedWorkspaces = $this->getCurrentWorkspaceIdWithDescendentIds();
     $current_workspace_id = \Drupal::service('workspaces.manager')->getActiveWorkspace()->id();

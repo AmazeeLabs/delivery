@@ -3,6 +3,7 @@
 namespace Drupal\delivery\Controller;
 
 use Drupal\Core\Entity\RevisionableInterface;
+use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\entity_usage\Controller\LocalTaskUsageController;
@@ -37,12 +38,14 @@ class DeliveryListUsageController extends LocalTaskUsageController {
       $this->t('Status'),
     ];
 
-    $total = count($all_rows);
-    $page = pager_default_initialize($total, $this->itemsPerPage);
-    $page_rows = $this->getPageRows($page, $this->itemsPerPage, $entity_type, $entity_id);
+    // The rows are already paginated, so we don't need to get a specific page
+    // anymore. That is why in the table we directly show all the rows.
+    //$total = count($all_rows);
+    //$page = pager_default_initialize($total, $this->itemsPerPage);
+    //$page_rows = $this->getPageRows($page, $this->itemsPerPage, $entity_type, $entity_id);
     $build[] = [
       '#theme' => 'table',
-      '#rows' => $page_rows,
+      '#rows' => $all_rows,
       '#header' => $header,
     ];
 
@@ -79,8 +82,13 @@ class DeliveryListUsageController extends LocalTaskUsageController {
           // If for some reason this record is broken, just skip it.
           continue;
         }
-        $field_definitions = $this->entityFieldManager->getFieldDefinitions($source_type, $source_entity->bundle());
         $default_langcode = $source_entity->language()->getId();
+        if ($source_entity instanceof TranslatableInterface && $default_langcode !== $record['source_langcode'] && $source_entity->hasTranslation($record['source_langcode'])) {
+          $source_entity = $source_entity->getTranslation($record['source_langcode']);
+        }
+
+        $field_definitions = $this->entityFieldManager->getFieldDefinitions($source_type, $source_entity->bundle());
+        $source_langcode = $source_entity->language()->getId();
         $link = $this->getSourceEntityLink($source_entity);
         // If the label is empty it means this usage shouldn't be shown
         // on the UI, just skip this row.
@@ -93,7 +101,7 @@ class DeliveryListUsageController extends LocalTaskUsageController {
           $link,
           $workspaceStorage->load($record['workspace'])->label(),
           $entity_types[$source_type]->getLabel(),
-          $languages[$default_langcode]->getName(),
+          $languages[$source_langcode]->getName(),
           $published,
         ];
       }
