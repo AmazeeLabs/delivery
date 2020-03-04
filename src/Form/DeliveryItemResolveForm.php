@@ -331,7 +331,10 @@ class DeliveryItemResolveForm extends FormBase {
                 if (!is_numeric($key)) {
                   continue;
                 }
-                $formElement['widget'][$key]['html']['#attributes'] = ['data-lang' => $languageId];
+                if (empty($formElement['widget'][$key]['html']['#attributes'])) {
+                  $formElement['widget'][$key]['html']['#attributes'] = [];
+                }
+                $formElement['widget'][$key]['html']['#attributes']['data-lang'] = $languageId;
               }
               $form[$languageId][$property]['selection']['#type'] = 'value';
               $form[$languageId][$property]['selection']['#value'] = '__custom__';
