@@ -25,12 +25,12 @@ class DeliveryItemUrl extends FieldPluginBase implements ContainerFactoryPluginI
   protected $entityTypeManager;
 
   /**
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\workspaces\WorkspaceManagerInterface 
    */
   protected $workspaceManager;
 
   /**
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\workspaces\WorkspaceAssociationInterface 
    */
   protected $workspaceAssociation;
 
