@@ -54,5 +54,5 @@ script:
   - ./vendor/bin/drush serve -q &
   # Run Drupal Unit tests in this module.
   - ./vendor/bin/phpunit -c core/phpunit.xml.dist modules/delivery
-  # Enable the cypress module
+  # Enable the Delivery module
   - ./vendor/bin/drush en delivery
