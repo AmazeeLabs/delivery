@@ -2,8 +2,8 @@
 
 namespace Drupal\delivery\MergeStrategy;
 
-use Drupal\Core\Conflict\ConflictResolution\MergeStrategyBase;
-use Drupal\Core\Conflict\Event\EntityConflictResolutionEvent;
+use Drupal\conflict\ConflictResolution\MergeStrategyBase;
+use Drupal\conflict\Event\EntityConflictResolutionEvent;
 
 /**
  * Blacklisted fields discovery.
