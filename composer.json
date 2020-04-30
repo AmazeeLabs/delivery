@@ -4,11 +4,15 @@
   "description": "Content delivery based on workspaces",
   "license": "GPL-2.0-or-later",
   "minimum-stability": "dev",
+  "require": {
+    "drupal/conflict": "^2.0-alpha2",
+    "drupal/revision_tree": "1.*"
+  },
   "extra": {
     "patches": {
-        "drupal/core": {
-            "#3065207 Allow modules to prevent deletion of an entity.": "https://www.drupal.org/files/issues/2019-07-02/3065207-5.patch"
-        }
+      "drupal/core": {
+        "#3065207 Allow modules to prevent deletion of an entity.": "https://www.drupal.org/files/issues/2019-07-02/3065207-5.patch"
+      }
     }
   }
 }
