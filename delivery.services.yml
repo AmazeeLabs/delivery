@@ -15,7 +15,7 @@ services:
     - '@entity_type.manager'
     - '@workspaces.manager'
     - '@entity.repository'
-    - '@conflict.resolver.manager'
+    - '@conflict_resolver.manager'
     - '@workspaces.association'
 
   delivery.route_subscriber:
