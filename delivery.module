@@ -378,9 +378,9 @@ function delivery_entity_update(EntityInterface $entity) {
     $result->{$revisionParentField}->target_revision_id = array_pop($parentRevisions);
     $result->workspace = $parentWorkspace;
     $result->setSyncing(TRUE);
-    $workspaceManager->executeInWorkspace($parentWorkspace->id(), function () use ($result) {
+    $workspaceManager->unsafeExecuteInWorkspace($parentWorkspace->id(), function () use ($result) {
       $result->save();
-    }, TRUE);
+    });
   }
 }
 
