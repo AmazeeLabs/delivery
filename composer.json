@@ -6,6 +6,7 @@
   "minimum-stability": "dev",
   "require": {
     "drupal/conflict": "^2.0-alpha2",
+    "drupal/entity_usage": "^2.0-beta3",
     "drupal/revision_tree": "1.*"
   },
   "extra": {
