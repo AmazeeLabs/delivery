@@ -8,7 +8,7 @@ use Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper;
 class PathPrefixHelperTest extends UnitTestCase {
 
   /**
-   * @covers \Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper::findBestPathPrefixFit()
+   * @covers \Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper::findBestPathPrefixFit
    *
    * @dataProvider findBestPathPrefixFitProvider
    */
@@ -145,7 +145,7 @@ class PathPrefixHelperTest extends UnitTestCase {
   }
 
   /**
-   * @covers \Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper::pathPrefixMatch()
+   * @covers \Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper::pathPrefixMatch
    * @dataProvider pathPrefixMatchProvider
    */
   public function testPathPrefixMatch($path, $prefix, $expected) {
