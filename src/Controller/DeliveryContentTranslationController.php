@@ -8,6 +8,7 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\content_translation\ContentTranslationManager;
 use Drupal\content_translation\Controller\ContentTranslationController;
+use Drupal\Core\Url;
 
 class DeliveryContentTranslationController extends ContentTranslationController {
 
