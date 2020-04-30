@@ -9,3 +9,4 @@ dependencies:
   - revision_tree
   - content_moderation
   - entity_usage
+  - conflict

@@ -26,6 +26,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     'delivery',
     'revision_tree',
     'language',
+    'conflict',
     'content_translation',
     'user',
     'system',
@@ -42,6 +43,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
 
     $this->installSchema('system', ['key_value_expire', 'sequences']);
 
+    $this->installEntitySchema('conflict');
     $this->installEntitySchema('workspace');
     $this->installEntitySchema('entity_test');
     $this->installEntitySchema('entity_test_rev');
@@ -51,6 +53,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $this->initializeWorkspacesModule();
 
     $this->installConfig(['system']);
+    $this->installConfig(['conflict']);
 
     $field_storage = FieldStorageConfig::create([
       'entity_type' => 'entity_test_rev',
