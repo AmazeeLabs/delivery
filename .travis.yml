@@ -30,7 +30,6 @@ cache:
     - $HOME/.cache/Delivery
 
 before_install:
-  - git fetch --unshallow
   - git checkout -qf $TRAVIS_BRANCH
   # Disable xdebug.
   - phpenv config-rm xdebug.ini
