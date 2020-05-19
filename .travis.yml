@@ -67,8 +67,7 @@ script:
   - ./vendor/bin/phpstan analyse $TRAVIS_BUILD_DIR || true
   # Run Drupal Unit tests in this module.
   - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml
-  - ls -la $LOGS_DIR
 
 after_success:
   - cd $TRAVIS_BUILD_DIR
-  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls
+  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls -vvv
