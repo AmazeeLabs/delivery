@@ -21,6 +21,7 @@ env:
     - DRUPAL_BUILD_DIR=$TRAVIS_BUILD_DIR/../drupal-$DRUPAL_VERSION
     - PATH=$PATH:$DRUPAL_BUILD_DIR/vendor/bin
     - MODULE_NAME=delivery
+    - LOGS_DIR=$HOME/build/logs
 
 # Cache composer downloads.
 cache:
@@ -54,6 +55,8 @@ install:
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require php-coveralls/php-coveralls
 
 script:
+  # Logs.
+  - mkdir -p $LOGS_DIR
   # Get the module.
   - COMPOSER_MEMORY_LIMIT=-1 composer require "drupal/$MODULE_NAME"
   # Do a minimal Drupal installation. Required for Drush.
@@ -63,8 +66,7 @@ script:
   # Analyse code
   - ./vendor/bin/phpstan analyse $TRAVIS_BUILD_DIR || true
   # Run Drupal Unit tests in this module.
-  - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover $TRAVIS_BUILD_DIR/build/logs/clover.xml
+  - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml
 
 after_success:
-  - cd $TRAVIS_BUILD_DIR
-  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls
+  - travis_retry php ./vendor/bin/php-coveralls
