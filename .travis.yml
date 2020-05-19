@@ -21,7 +21,7 @@ env:
     - DRUPAL_BUILD_DIR=$TRAVIS_BUILD_DIR/../drupal-$DRUPAL_VERSION
     - PATH=$PATH:$DRUPAL_BUILD_DIR/vendor/bin
     - MODULE_NAME=delivery
-    - LOGS_DIR=$TRAVIS_BUILD_DIR/build/logs
+    - LOGS_DIR=$DRUPAL_BUILD_DIR/build/logs
 
 # Cache composer downloads.
 cache:
