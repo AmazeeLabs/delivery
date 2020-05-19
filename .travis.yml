@@ -66,4 +66,5 @@ script:
   - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover build/logs/clover.xml
 
 after_success:
-  - travis_retry php ./vendor/bin/php-coveralls
+  - cd $TRAVIS_BUILD_DIR
+  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls
