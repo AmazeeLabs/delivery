@@ -10,9 +10,13 @@
     "drupal/revision_tree": "1.x-dev"
   },
   "extra": {
+    "enable-patching": true,
     "patches": {
       "drupal/core": {
         "#3065207 Allow modules to prevent deletion of an entity.": "https://www.drupal.org/files/issues/2019-07-02/3065207-5.patch"
+      },
+      "drupal/revision_tree": {
+        "#3137840 Update revision tree to support D8.8": "https://www.drupal.org/files/issues/2020-05-19/revision_tree-fix_d8_8_issues-3137840-3.patch"
       }
     }
   }
