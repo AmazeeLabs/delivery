@@ -17,6 +17,7 @@ env:
     - DRUPAL_VERSION=8.8.5
     - DRUPAL_BUILD_DIR=$TRAVIS_BUILD_DIR/../drupal-$DRUPAL_VERSION
     - PATH=$PATH:$DRUPAL_BUILD_DIR/vendor/bin
+    - TRAVIS_BUILD_DIR_REAL=$(realpath $TRAVIS_BUILD_DIR)
     - MODULE_NAME=delivery
 
 # Cache composer downloads.
@@ -38,7 +39,7 @@ before_install:
 install:
   - cd $DRUPAL_BUILD_DIR
   # Force Composer to use our version of the module.
-  - php -r "\$json = json_decode(file_get_contents('composer.json'), TRUE); \$json['repositories'][] = ['type' => 'path', 'url' => '$TRAVIS_BUILD_DIR' ]; \$json['extra']['enable-patching'] = TRUE; file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT));"
+  - php -r "\$json = json_decode(file_get_contents('composer.json'), TRUE); \$json['repositories'][] = ['type' => 'path', 'url' => '$TRAVIS_BUILD_DIR_REAL' ]; \$json['extra']['enable-patching'] = TRUE; file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT));"
   # Install Composer Patches.
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require cweagans/composer-patches
   # Install Drupal development dependencies.
