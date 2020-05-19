@@ -258,7 +258,7 @@ class DeliveryContentTranslationController extends ContentTranslationController 
    * {@inheritdoc}
    */
   public function getLatestRevisionId($entity_id, $entity_type) {
-    if (!$this->entityType->isRevisionable()) {
+    if (!$entity_type->isRevisionable()) {
       return NULL;
     }
 
