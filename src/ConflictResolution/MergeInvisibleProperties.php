@@ -44,7 +44,8 @@ class MergeInvisibleProperties extends MergeStrategyBase {
     // target workspace, remove these fields from the automerge list. Else
     // just merge from left to right.
     $supportedLanguages = $event->getContextParameter('supported_languages');
-    if (is_array($supportedLanguages) && in_array($result_entity->language()->getId(), $supportedLanguages) && $local_entity instanceof FieldableEntityInterface) {
+    if (is_array($supportedLanguages) && in_array($result_entity->language()
+        ->getId(), $supportedLanguages) && $local_entity instanceof FieldableEntityInterface) {
       $viewDisplay = EntityViewDisplay::collectRenderDisplay($local_entity, 'merge');
       $formDisplay = EntityFormDisplay::collectRenderDisplay($local_entity, 'merge');
       $resolvable = array_merge(array_keys($viewDisplay->getComponents()), array_keys($formDisplay->getComponents()));
@@ -52,7 +53,8 @@ class MergeInvisibleProperties extends MergeStrategyBase {
     }
 
     foreach ($automerge as $property) {
-      $result_entity->set($property, $remote_entity->get($property)->getValue());
+      $result_entity->set($property, $remote_entity->get($property)
+        ->getValue());
       $event->removeConflict($property);
     }
 
@@ -60,12 +62,14 @@ class MergeInvisibleProperties extends MergeStrategyBase {
       $custom = $event->getContextParameter('resolution_custom_values');
       foreach ($input as $property => $selection) {
         if ($selection === '__source__') {
-          $result_entity->set($property, $remote_entity->get($property)->getValue());
+          $result_entity->set($property, $remote_entity->get($property)
+            ->getValue());
           $event->removeConflict($property);
         }
 
         if ($selection === '__target__') {
-          $result_entity->set($property, $local_entity->get($property)->getValue());
+          $result_entity->set($property, $local_entity->get($property)
+            ->getValue());
           $event->removeConflict($property);
         }
 
