@@ -63,7 +63,7 @@ script:
   # Analyse code
   - ./vendor/bin/phpstan analyse $TRAVIS_BUILD_DIR || true
   # Run Drupal Unit tests in this module.
-  - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover build/logs/clover.xml
+  - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover $TRAVIS_BUILD_DIR/build/logs/clover.xml
 
 after_success:
   - cd $TRAVIS_BUILD_DIR
