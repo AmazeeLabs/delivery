@@ -29,7 +29,7 @@ services:
   conflict_resolution.merge_invisible_fields:
     class: Drupal\delivery\ConflictResolution\MergeInvisibleProperties
     tags:
-      - { name: event_subscriber }
+      - { name: event_subscriber, priority: -1 }
 
   conflict_resolution.merge_blacklisted_fields:
     class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields

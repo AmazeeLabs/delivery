@@ -3,6 +3,7 @@
 namespace Drupal\delivery\ConflictResolution;
 
 use Drupal\conflict\ConflictResolution\MergeStrategyBase;
+use Drupal\conflict\Event\EntityConflictEvents;
 use Drupal\conflict\Event\EntityConflictResolutionEvent;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
@@ -79,6 +80,18 @@ class MergeInvisibleProperties extends MergeStrategyBase {
         }
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getSubscribedEvents() {
+    // This should run after all other strategies with default priority.
+    $events[EntityConflictEvents::ENTITY_CONFLICT_RESOLVE][] = [
+      'resolveConflicts',
+      -1,
+    ];
+    return $events;
   }
 
 }
