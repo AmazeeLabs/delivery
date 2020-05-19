@@ -4,7 +4,7 @@ dist: bionic
 
 php:
   - 7.2
-# Use a recent version of npm. Local dependencies don't work Travis default.
+# Use a recent version of npm. Local dependencies don't work on the Travis default npm.
 node_js:
   - 11
 
@@ -26,8 +26,8 @@ env:
 cache:
   directories:
     - $HOME/.composer
-    - $DRUPAL_BUILD_DIR/drupal-delivery-environment/node_modules
-    - $HOME/.cache/Delivery
+    - $DRUPAL_BUILD_DIR/drupal-$MODULE_NAME-environment/node_modules
+    - $HOME/.cache/$MODULE_NAME
 
 before_install:
   # Travis does a checkout on a specific commit that prevents using local repos.
@@ -64,5 +64,5 @@ script:
   - ./vendor/bin/drush serve -q &
   # Analyse code
   - ./vendor/bin/phpstan analyse $TRAVIS_BUILD_DIR
-  # Run Drupal Unit tests in this module.
+  # Run Drupal Unit tests in this module.MergeBlacklistedFieldsTest
   - ./vendor/bin/phpunit -c core/phpunit.xml.dist $TRAVIS_BUILD_DIR
