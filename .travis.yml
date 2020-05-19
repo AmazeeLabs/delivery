@@ -1,11 +1,11 @@
 language: php
-sudo: false
+os: linux
 dist: bionic
 
 php:
   - 7.2
 # Use a recent version of npm. Local dependencies don't work Travis default.
-node:
+node_js:
   - 11
 
 env:
