@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\delivery\Tests\Kernel;
+namespace Drupal\Tests\delivery\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
