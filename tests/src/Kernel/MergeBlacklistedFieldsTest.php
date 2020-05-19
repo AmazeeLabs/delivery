@@ -1,20 +1,26 @@
 <?php
 
-namespace Drupal\Tests\delivery\Kernel;
+namespace Drupal\delivery\Tests\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\Tests\workspaces\Kernel\WorkspaceTestTrait;
 use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\Tests\node\Traits\NodeCreationTrait;
-
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\field\Entity\FieldConfig;
 
 /**
+ * Class MergeBlacklistedFieldsTest
+ *
  * Blacklisted fields merging test.
+ *
+ * @package Drupal\Tests\delivery\Kernel
+ * @group delivery
  */
 class MergeBlacklistedFieldsTest extends KernelTestBase {
+
   use WorkspaceTestTrait;
   use UserCreationTrait;
   use ContentTypeCreationTrait;
@@ -33,7 +39,16 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     'filter',
     'text',
     'field',
+    'menu_link_content',
+    'link',
   ];
+
+  protected $entityTypeManager;
+
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+    $container->removeDefinition('conflict_resolution.merge_invisible_fields');
+  }
 
   /**
    * {@inheritdoc}
@@ -43,11 +58,11 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
 
     $this->installSchema('system', ['key_value_expire', 'sequences']);
 
-    $this->installEntitySchema('conflict');
     $this->installEntitySchema('workspace');
     $this->installEntitySchema('entity_test');
-    $this->installEntitySchema('entity_test_rev');
+    $this->installEntitySchema('entity_test_revpub');
     $this->installEntitySchema('entity_test_mulrevpub');
+    $this->installEntitySchema('menu_link_content');
     $this->installEntitySchema('user');
 
     $this->initializeWorkspacesModule();
@@ -56,7 +71,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $this->installConfig(['conflict']);
 
     $field_storage = FieldStorageConfig::create([
-      'entity_type' => 'entity_test_rev',
+      'entity_type' => 'entity_test_revpub',
       'field_name' => 'field_test',
       'type' => 'text',
       'settings' => [],
@@ -65,9 +80,9 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $field_storage->save();
 
     $field = FieldConfig::create([
-      'entity_type' => 'entity_test_rev',
+      'entity_type' => 'entity_test_revpub',
       'field_name' => 'field_test',
-      'bundle' => 'entity_test_rev',
+      'bundle' => 'entity_test_revpub',
       'settings' => [],
       'third_party_settings' => [
         'delivery' => [
@@ -78,7 +93,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $field->save();
 
     $field_storage = FieldStorageConfig::create([
-      'entity_type' => 'entity_test_rev',
+      'entity_type' => 'entity_test_revpub',
       'field_name' => 'field_test_blacklisted',
       'type' => 'text',
       'settings' => [],
@@ -87,9 +102,9 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $field_storage->save();
 
     $field = FieldConfig::create([
-      'entity_type' => 'entity_test_rev',
+      'entity_type' => 'entity_test_revpub',
       'field_name' => 'field_test_blacklisted',
-      'bundle' => 'entity_test_rev',
+      'bundle' => 'entity_test_revpub',
       'settings' => [],
       'third_party_settings' => [
         'delivery' => [
@@ -99,7 +114,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     ]);
     $field->save();
 
-    $this->entityManager = $this->container->get('entity.manager');
+    $this->entityTypeManager = $this->container->get('entity_type.manager');
   }
 
   /**
@@ -107,10 +122,10 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
    */
   public function testBlacklistFieldsMerge() {
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
-    $storage = $this->entityManager->getStorage('entity_test_rev');
+    $storage = $this->entityTypeManager->getStorage('entity_test_revpub');
 
-    /** @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManager $conflictManager */
-    $conflictManager = $this->container->get('conflict.resolver.manager');
+    /** @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictManager */
+    $conflictManager = $this->container->get('conflict_resolver.manager');
 
     $this->switchToWorkspace('live');
 
@@ -140,7 +155,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $d->field_test_blacklisted = 'test live value changed';
     $d->save();
 
-    $conflicts = $conflictManager->getConflicts($c, $d, $a);
+    $conflicts = $conflictManager->resolveConflicts($c, $d, $a);
     $this->assertEqual($conflicts, ['field_test' => 'conflict_local_remote']);
   }
 
