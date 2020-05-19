@@ -30,6 +30,7 @@ cache:
     - $HOME/.cache/Delivery
 
 before_install:
+  # Travis does a checkout on a specific commit that prevents using local repos.
   - git checkout -qf $TRAVIS_BRANCH
   # Disable xdebug.
   - phpenv config-rm xdebug.ini
