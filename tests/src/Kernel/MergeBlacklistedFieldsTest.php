@@ -43,10 +43,18 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     'link',
   ];
 
+  /**
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected $entityTypeManager;
 
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
+    // Remove this merge strategy because if we don't, it'll merge any remaining
+    // conflicts and we need to see what's left to assert in our test.
     $container->removeDefinition('conflict_resolution.merge_invisible_fields');
   }
 
