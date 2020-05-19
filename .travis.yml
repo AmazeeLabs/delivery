@@ -18,7 +18,7 @@ env:
     - DRUPAL_TEST_BASE_URL=http://localhost:8888
     - TRAVIS=true
     - DRUPAL_VERSION=8.8.5
-    - DRUPAL_BUILD_DIR=$TRAVIS_BUILD_DIR/../drupal-$DRUPAL_VERSION
+    - DRUPAL_BUILD_DIR=$(realpath $TRAVIS_BUILD_DIR/../drupal-$DRUPAL_VERSION)
     - PATH=$PATH:$DRUPAL_BUILD_DIR/vendor/bin
     - MODULE_NAME=delivery
     - LOGS_DIR=$DRUPAL_BUILD_DIR/build/logs
