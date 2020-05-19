@@ -33,6 +33,8 @@ services:
 
   conflict_resolution.merge_blacklisted_fields:
     class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields
+    arguments:
+      - '@entity_type.manager'
     tags:
       - { name: event_subscriber }
 
