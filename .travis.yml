@@ -46,8 +46,6 @@ install:
   - php -r "\$json = json_decode(file_get_contents('composer.json'), TRUE); \$json['repositories'][] = ['type' => 'vcs', 'url' => '$TRAVIS_BUILD_DIR' ]; \$json['extra']['enable-patching'] = TRUE; file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT));"
   # Install Composer Patches.
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require cweagans/composer-patches
-  # Install Drupal development dependencies.
-  - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR install
   # Install Drush.
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require drush/drush:^10 alchemy/zippy
   # Upgrade phpunit to work with PHP 7.
