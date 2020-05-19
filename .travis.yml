@@ -8,6 +8,9 @@ php:
 node_js:
   - 11
 
+git:
+  depth: false
+
 env:
   global:
     - DRUPAL_TEST_DB_URL=sqlite://localhost/sites/default/files/test.sqlite
@@ -39,7 +42,6 @@ install:
   - cd $DRUPAL_BUILD_DIR
   # Force Composer to use our version of the module.
   - php -r "\$json = json_decode(file_get_contents('composer.json'), TRUE); \$json['repositories'][] = ['type' => 'path', 'url' => '$TRAVIS_BUILD_DIR' ]; \$json['extra']['enable-patching'] = TRUE; file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT));"
-  - cat composer.json
   # Install Composer Patches.
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require cweagans/composer-patches
   # Install Drupal development dependencies.
