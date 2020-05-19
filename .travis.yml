@@ -70,4 +70,4 @@ script:
 
 after_success:
   - cd $TRAVIS_BUILD_DIR
-  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls -vvv
+  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls -vvv --root_dir $TRAVIS_BUILD_DIR
