@@ -68,6 +68,9 @@ script:
   # Copy our custom PHPUnit config file to ensure paths are correct.
   - cp $TRAVIS_BUILD_DIR/phpunit.xml.dist $DRUPAL_BUILD_DIR/core/phpunit.xml
   # Run Drupal Unit tests in this module.
+  - ls -la $HOME
+  - ls -la $TRAVIS_BUILD_DIR
+  - ls -la $DRUPAL_BUILD_DIR
   - ./vendor/bin/phpunit -c core/phpunit.xml $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml --whitelist $TRAVIS_BUILD_DIR
 
 after_success:
