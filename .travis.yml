@@ -65,8 +65,10 @@ script:
   - ./vendor/bin/drush serve -q &
   # Analyse code
   - ./vendor/bin/phpstan analyse $TRAVIS_BUILD_DIR || true
+  # Copy our custom PHPUnit config file to ensure paths are correct.
+  - cp $TRAVIS_BUILD_DIR/phpunit.xml.dist $DRUPAL_BUILD_DIR/core/phpunit.xml
   # Run Drupal Unit tests in this module.
-  - ./vendor/bin/phpunit -c $TRAVIS_BUILD_DIR/phpunit.xml.dist $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml --whitelist $TRAVIS_BUILD_DIR
+  - ./vendor/bin/phpunit -c core/phpunit.xml $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml --whitelist $TRAVIS_BUILD_DIR
 
 after_success:
   - cd $TRAVIS_BUILD_DIR
