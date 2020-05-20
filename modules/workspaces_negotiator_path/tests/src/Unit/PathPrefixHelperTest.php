@@ -5,6 +5,12 @@ namespace Drupal\Tests\workspaces_negotiator_path\Unit;
 use Drupal\Tests\UnitTestCase;
 use Drupal\workspaces_negotiator_path\Utils\PathPrefixHelper;
 
+/**
+ * Class PathPrefixHelperTest
+ *
+ * @package Drupal\Tests\workspaces_negotiator_path\Unit
+ * @group delivery
+ */
 class PathPrefixHelperTest extends UnitTestCase {
 
   /**
