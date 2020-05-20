@@ -57,8 +57,6 @@ install:
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require phpunit/phpunit:^7 symfony/phpunit-bridge phpspec/prophecy sebastian/global-state:^2 sebastian/environment:^3.1 phpunit/php-code-coverage:^6 mikey179/vfsstream
   # Install static analysis tools.
   - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require phpstan/phpstan phpstan/extension-installer mglaman/phpstan-drupal phpstan/phpstan-deprecation-rules
-  # Install Coveralls integration.
-  - COMPOSER_MEMORY_LIMIT=-1 composer --working-dir=$DRUPAL_BUILD_DIR require php-coveralls/php-coveralls
 
 script:
   # Logs.
@@ -77,6 +75,7 @@ script:
   - ./vendor/bin/phpunit -c core/phpunit.xml $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml --whitelist $TRAVIS_BUILD_DIR
 
 after_success:
-  # Send coverage data to coveralls.
-  - cd $TRAVIS_BUILD_DIR
-  - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls -vvv --root_dir $DRUPAL_BUILD_DIR
+  # Send coverage data to Codecov.
+  - bash <(curl -s https://codecov.io/bash)
+
+
