@@ -63,7 +63,7 @@ script:
   - php core/scripts/drupal install -q minimal
   # Run a simple HTTP server on port 8888.
   - ./vendor/bin/drush serve -q &
-  # Analyse code
+  # Analyse code.
   - ./vendor/bin/phpstan analyse $TRAVIS_BUILD_DIR || true
   # Copy our custom PHPUnit config file to ensure paths are correct.
   - cp $TRAVIS_BUILD_DIR/phpunit.xml.dist $DRUPAL_BUILD_DIR/core/phpunit.xml
@@ -71,5 +71,6 @@ script:
   - ./vendor/bin/phpunit -c core/phpunit.xml $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml --whitelist $TRAVIS_BUILD_DIR
 
 after_success:
+  # Send coverage data to coveralls.
   - cd $TRAVIS_BUILD_DIR
   - travis_retry php $DRUPAL_BUILD_DIR/vendor/bin/php-coveralls -vvv --root_dir $DRUPAL_BUILD_DIR
