@@ -4,6 +4,9 @@ dist: bionic
 
 php:
   - 7.2
+  - 7.3
+  - 7.4
+
 # Use a recent version of npm. Local dependencies don't work on the Travis default npm.
 node_js:
   - 11
@@ -32,6 +35,7 @@ cache:
     - $HOME/.cache/$MODULE_NAME
 
 before_install:
+  # If this is a PR, we want to check out the PR branch.
   - if [ ! "$TRAVIS_PULL_REQUEST" = "false" ]; then REPO_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH; fi
   # Travis does a checkout on a specific commit that prevents using local repos.
   - git checkout -qf $REPO_BRANCH
@@ -70,9 +74,6 @@ script:
   # Copy our custom PHPUnit config file to ensure paths are correct.
   - cp $TRAVIS_BUILD_DIR/phpunit.xml.dist $DRUPAL_BUILD_DIR/core/phpunit.xml
   # Run Drupal Unit tests in this module.
-  - ls -la $HOME
-  - ls -la $TRAVIS_BUILD_DIR
-  - ls -la $DRUPAL_BUILD_DIR
   - ./vendor/bin/phpunit -c core/phpunit.xml $TRAVIS_BUILD_DIR --coverage-clover $LOGS_DIR/clover.xml --whitelist $TRAVIS_BUILD_DIR
 
 after_success:
