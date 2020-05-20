@@ -22,6 +22,7 @@ env:
     - PATH=$PATH:$DRUPAL_BUILD_DIR/vendor/bin
     - MODULE_NAME=delivery
     - LOGS_DIR=$DRUPAL_BUILD_DIR/build/logs
+    - REPO_BRANCH=$TRAVIS_BRANCH
 
 # Cache composer downloads.
 cache:
@@ -31,8 +32,9 @@ cache:
     - $HOME/.cache/$MODULE_NAME
 
 before_install:
+  - if [ ! "$TRAVIS_PULL_REQUEST" = "false" ]; then REPO_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH; fi
   # Travis does a checkout on a specific commit that prevents using local repos.
-  - git checkout -qf $TRAVIS_BRANCH
+  - git checkout -qf $REPO_BRANCH
   # Composer setup.
   - COMPOSER_MEMORY_LIMIT=-1 composer self-update
   # Download and unpack Drupal.
