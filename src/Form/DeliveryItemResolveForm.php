@@ -339,6 +339,16 @@ class DeliveryItemResolveForm extends FormBase {
             else if ($formDisplay->getComponent($property)) {
               $formElement = $customForm[$property];
               $formElement['widget']['#parents'] = ['custom', $languageId, $property];
+              // Add a language attribute to each editor widget.
+              foreach ($formElement['widget'] as $key => $widget) {
+                if (!is_numeric($key)) {
+                  continue;
+                }
+                if (empty($formElement['widget'][$key]['html']['#attributes'])) {
+                  $formElement['widget'][$key]['html']['#attributes'] = [];
+                }
+                $formElement['widget'][$key]['html']['#attributes']['data-lang'] = $languageId;
+              }
               $form[$languageId][$property]['selection']['#type'] = 'value';
               $form[$languageId][$property]['selection']['#value'] = '__custom__';
               $form[$languageId][$property]['preview'] = [
