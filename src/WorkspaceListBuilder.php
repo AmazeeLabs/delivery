@@ -6,32 +6,48 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
-use Drupal\delivery\WorkspaceAssigment;
 use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
 use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Local override of workspaces entity list builder to replace the deploy button.
+ * Class WorkspaceListBuilder
+ *
+ * Local override of workspaces entity list builder to replace the deploy
+ * button.
+ *
+ * @package Drupal\delivery
  */
 class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
 
   /**
    * @var \Drupal\delivery\WorkspaceAssigment
    */
-  protected $smartUserService;
+  protected $workspaceAssigment;
 
+  /**
+   * WorkspaceListBuilder constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
+   * @param \Drupal\workspaces\WorkspaceManagerInterface $workspace_manager
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   * @param \Drupal\delivery\WorkspaceAssigment $workspace_assigment
+   */
   public function __construct(
     EntityTypeInterface $entity_type,
     EntityStorageInterface $storage,
     WorkspaceManagerInterface $workspace_manager,
     RendererInterface $renderer,
-    WorkspaceAssigment $smartUserService
+    WorkspaceAssigment $workspace_assigment
   ) {
-    $this->smartUserService = $smartUserService;
+    $this->workspaceAssigment = $workspace_assigment;
     parent::__construct($entity_type, $storage, $workspace_manager, $renderer);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     return new static(
       $entity_type,
@@ -42,12 +58,14 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
     );
   }
 
-
   /**
-   * Loads entity IDs using a pager sorted by the entity id.
+   * Loads entity IDs using a pager sorted by the entity ID.
    *
    * @return array
    *   An array of entity IDs.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   protected function getEntityIds() {
     $query = $this->getStorage()->getQuery()
@@ -72,8 +90,16 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
     return $this->storage->loadMultiple($entity_ids);
   }
 
+  /**
+   * @param $permission
+   *
+   * @return bool
+   *
+   * @todo Make this dynamic.
+   */
   protected function hasPermission($permission) {
-    return \Drupal::currentUser()->hasPermission('add delivery to assigned workspaces');
+    return \Drupal::currentUser()
+      ->hasPermission('add delivery to assigned workspaces');
   }
 
   /**
@@ -101,16 +127,21 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
         '#url' => Url::fromRoute('delivery.workspace_delivery_controller', ['workspace' => $active_workspace->id()]),
         '#attributes' => [
           'class' => ['button', 'active-workspace__button'],
-        ]
+        ],
       ];
     }
   }
 
   /**
    * Return workpsaces ids.
+   *
+   * @return array
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   protected function getUserWorkspaces() {
     $account = \Drupal::currentUser();
-    return $this->smartUserService->getUserWorkspaces($account);
+    return $this->workspaceAssigment->getUserWorkspaces($account);
   }
+
 }
