@@ -20,6 +20,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\delivery\Entity\DeliveryItem;
 use Drupal\delivery\Entity\MenuLinkContent;
 use Drupal\delivery\Form\MenuPushForm;
@@ -82,7 +83,7 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
       $trackingWorkspaces[$key] = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
     }
     $activeWorkspace = $workspacesManager->getActiveWorkspace();
-    if (!in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
+    if ($activeWorkspace && !in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
       return AccessResult::forbidden();
     }
   }
@@ -200,25 +201,60 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
       /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
       $workspaceManager = \Drupal::service('workspaces.manager');
       $workspace = $workspaceManager->getActiveWorkspace();
-      if ($defaultLanguage = $workspace->primary_language->value) {
+      if (!empty($workspace->primary_language) && $defaultLanguage = $workspace->primary_language->value) {
         $form['langcode']['widget'][0]['value']['#default_value'] = $defaultLanguage;
       }
-      if (!$workspace->secondary_languages->value) {
+      if (!empty($workspace->secondary_languages) && !$workspace->secondary_languages->value) {
         $form['langcode']['#access'] = FALSE;
       }
     }
   }
 }
 
-function delivery_form_menu_edit_form_alter(&$form, FormStateInterface $formState) {
-  $menuId = $formState->getFormObject()->getEntity()->id();
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function delivery_form_menu_edit_form_alter(&$form, FormStateInterface $form_state) {
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $manager */
+  $workspacesManager = \Drupal::service('workspaces.manager');
+  /** @var \Drupal\system\Entity\Menu $menu */
+  $menu = $form_state->getFormObject()->getEntity();
+  $currentUser = \Drupal::currentUser();
+  $activeWorkspace = $workspacesManager->getActiveWorkspace();
+
+  if (!$activeWorkspace->isDefaultWorkspace()) {
+    $form['actions']['publish'] = [
+      '#type' => 'link',
+      '#title' => new TranslatableMarkup('Publish'),
+      '#access' => $currentUser->hasPermission('deliver items'),
+      '#attributes' => [
+        'class' => ['button', 'button--primary'],
+      ],
+      '#weight' => 6,
+      '#url' => Url::fromRoute(
+        'delivery.workspace_delivery_controller',
+        [
+          'workspace' => $activeWorkspace->id(),
+        ],
+        [
+          'query' => [
+            'entity_type' => 'menu_link_content',
+            'bundle' => $menu->id(),
+            'hide_options_elements' => 1,
+          ],
+        ]
+      ),
+    ];
+  }
+
+  $menuId = $menu->id();
   $messenger = \Drupal::messenger();
   $differences = MenuPushForm::differences($menuId);
   if ($differences !== FALSE) {
     if ($differences) {
       $messenger->addWarning(t('There are @count unpublished menu changes. <a href=":link">Publish them?</a>', [
         '@count' => count($differences),
-        ':link' => \Drupal\Core\Url::fromRoute('delivery.menu_push', [
+        ':link' => Url::fromRoute('delivery.menu_push', [
           'menu' => $menuId,
         ])->toString(),
       ]));
@@ -390,9 +426,9 @@ function delivery_entity_update(EntityInterface $entity) {
     $result->{$revisionParentField}->target_revision_id = array_pop($parentRevisions);
     $result->workspace = $parentWorkspace;
     $result->setSyncing(TRUE);
-    $workspaceManager->executeInWorkspace($parentWorkspace->id(), function () use ($result) {
+    $workspaceManager->unsafeExecuteInWorkspace($parentWorkspace->id(), function () use ($result) {
       $result->save();
-    }, TRUE);
+    });
   }
 }
 
@@ -406,7 +442,11 @@ function delivery_entity_load(array $entities, $entity_type_id) {
   if ($workspaceManager->isEntityTypeSupported($entityType)) {
     /** @var \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssociation */
     $workspaceAssociation = \Drupal::service('workspaces.association');
-    $tracking = $workspaceAssociation->getTrackedEntities($workspaceManager->getActiveWorkspace()->id(), $entity_type_id, array_keys($entities));
+    $active_workspace = $workspaceManager->getActiveWorkspace();
+    if (!$active_workspace) {
+      return;
+    }
+    $tracking = $workspaceAssociation->getTrackedEntities($active_workspace->id(), $entity_type_id, array_keys($entities));
     if (empty($tracking)) {
       return;
     }
