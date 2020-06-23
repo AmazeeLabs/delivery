@@ -3,7 +3,7 @@
 namespace Drupal\delivery\Form;
 
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface;
+use Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
@@ -26,6 +26,11 @@ use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
+/**
+ * Class DeliveryItemResolveForm
+ *
+ * @package Drupal\delivery\Form
+ */
 class DeliveryItemResolveForm extends FormBase {
 
   /**
@@ -57,7 +62,7 @@ class DeliveryItemResolveForm extends FormBase {
   protected $renderer;
 
   /**
-   * @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface
+   * @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface
    */
   protected $conflictResolverManager;
 
@@ -104,7 +109,7 @@ class DeliveryItemResolveForm extends FormBase {
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
    * @param \Drupal\delivery\DeliveryService $deliveryService
    * @param \Drupal\Core\Render\RendererInterface $renderer
-   * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
+   * @param \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
    * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
    */
@@ -155,7 +160,7 @@ class DeliveryItemResolveForm extends FormBase {
       $container->get('entity.repository'),
       $container->get('delivery.service'),
       $container->get('renderer'),
-      $container->get('conflict.resolver.manager'),
+      $container->get('conflict_resolver.manager'),
       $container->get('workspaces.manager'),
       $container->get('language_manager')
     );
@@ -212,10 +217,12 @@ class DeliveryItemResolveForm extends FormBase {
     $sourceWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($delivery_item->getSourceWorkspace());
 
-    $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: $this->languageManager->getDefaultLanguage()->getId();
+    $targetPrimaryLanguage = (!empty($targetWorkspace->primary_language) && $targetWorkspace->primary_language->value) ?: $this->languageManager->getDefaultLanguage()->getId();
     $targetLanguages = [$targetPrimaryLanguage];
-    foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
-      $targetLanguages[] = $secondaryLanguage->value;
+    if (!empty($targetWorkspace->secondary_languages)) {
+      foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+        $targetLanguages[] = $secondaryLanguage->value;
+      }
     }
 
     $viewDisplay = EntityViewDisplay::collectRenderDisplay($this->sourceEntity, 'merge');
@@ -398,10 +405,15 @@ class DeliveryItemResolveForm extends FormBase {
     $targetWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($this->deliveryItem->getTargetWorkspace());
 
-    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
-    $targetLanguages = [$targetPrimaryLanguage];
-    foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
-      $targetLanguages[] = $secondaryLanguage->value;
+    $targetLanguages = [];
+    if (!empty($targetWorkspace->primary_language)) {
+      $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
+      $targetLanguages = [$targetPrimaryLanguage];
+    }
+    if (!empty($targetWorkspace->secondary_languages)) {
+      foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+        $targetLanguages[] = $secondaryLanguage->value;
+      }
     }
 
     // Copy resolutions of non-translatable fields from primary language to

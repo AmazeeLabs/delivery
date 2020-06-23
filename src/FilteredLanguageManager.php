@@ -24,13 +24,18 @@ class FilteredLanguageManager extends ConfigurableLanguageManager {
   public function getLanguages($flags = LanguageInterface::STATE_CONFIGURABLE) {
     $workspace = $this->getWorkspaceManager()->getActiveWorkspace();
 
-    if ($workspace->primary_language->count() === 0) {
+    if (!empty($workspace->primary_language) && $workspace->primary_language->count() === 0) {
       return parent::getLanguages($flags);
     }
 
-    $languages = [$workspace->primary_language->value];
-    foreach ($workspace->secondary_languages as $item) {
-      $languages[] = $item->value;
+    $languages = [];
+    if (!empty($workspace->primary_language)) {
+      $languages = [$workspace->primary_language->value];
+    }
+    if (!empty($workspace->secondary_languages)) {
+      foreach ($workspace->secondary_languages as $item) {
+        $languages[] = $item->value;
+      }
     }
 
     $l = parent::getLanguages($flags);

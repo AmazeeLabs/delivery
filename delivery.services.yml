@@ -15,7 +15,7 @@ services:
     - '@entity_type.manager'
     - '@workspaces.manager'
     - '@entity.repository'
-    - '@conflict.resolver.manager'
+    - '@conflict_resolver.manager'
     - '@workspaces.association'
 
   delivery.route_subscriber:
@@ -29,17 +29,14 @@ services:
   conflict_resolution.merge_invisible_fields:
     class: Drupal\delivery\ConflictResolution\MergeInvisibleProperties
     tags:
-      - { name: event_subscriber }
+      - { name: event_subscriber, priority: -1 }
 
   conflict_resolution.merge_blacklisted_fields:
     class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields
+    arguments:
+      - '@entity_type.manager'
     tags:
       - { name: event_subscriber }
-
-  conflict_discovery.blacklisted:
-    class: Drupal\delivery\MergeStrategy\BlacklistedFieldsStrategy
-    tags:
-      - { name: event_subscriber, priority: 999 }
 
   Drupal\workspaces\EntityOperations:
     class: Drupal\delivery\DeliveryEntityOperations
