@@ -32,6 +32,15 @@ class DeliveryItemViewsData extends EntityViewsData {
         'id' => 'delivery_item_label',
       ),
     );
+    $data['delivery_item']['delivery_item_url'] = array(
+      'title' => t('Delivery item URL'),
+      'field' => array(
+        'title' => t('Delivery item URL'),
+        'help' => t('The URL to the delivery item.'),
+        'field' => 'source_revision',
+        'id' => 'delivery_item_url',
+      ),
+    );
     $data['delivery_item']['relevant_delivery_items'] = array(
       'title' => t('Relevant delivery items'),
       'filter' => array(
