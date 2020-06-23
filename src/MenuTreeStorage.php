@@ -11,6 +11,7 @@ use Drupal\Core\Menu\MenuTreeParameters;
 use Drupal\Core\Menu\MenuTreeStorage as CoreMenuTreeStorage;
 use Drupal\menu_link_content\Entity\MenuLinkContent;
 use Drupal\workspaces\WorkspaceAssociationInterface;
+use Drupal\workspaces\WorkspaceInterface;
 use Drupal\workspaces\WorkspaceManagerInterface;
 
 /**
@@ -82,8 +83,8 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
   public function loadTreeData($menu_name, MenuTreeParameters $parameters) {
     // Add any non-default workspace as a menu tree condition parameter so it is
     // included in the cache ID.
-    $active_workspace = $this->workspaceManager->getActiveWorkspace();
-    if (!$active_workspace->isDefaultWorkspace()) {
+    if ($active_workspace = $this->workspaceManager->hasActiveWorkspace()) {
+      $active_workspace = $this->workspaceManager->getActiveWorkspace();
       $parameters->conditions['workspace'] = $active_workspace->id();
     }
     return parent::loadTreeData($menu_name, $parameters);
