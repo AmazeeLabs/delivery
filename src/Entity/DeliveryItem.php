@@ -285,8 +285,8 @@ class DeliveryItem extends ContentEntityBase implements DeliveryItemInterface {
         $targetLanguages[] = $secondaryLanguage->value;
       }
       $hadConflicts = FALSE;
-      /** @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolver */
-      $conflictResolver = \Drupal::service('conflict.resolver.manager');
+      /** @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolver */
+      $conflictResolver = \Drupal::service('conflict_resolver.manager');
 
       if ($sourceRevision->isTranslatable()) {
         foreach ($currentTargetRevision->getTranslationLanguages() as $language) {

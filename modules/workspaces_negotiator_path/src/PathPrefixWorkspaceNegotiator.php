@@ -141,6 +141,13 @@ class PathPrefixWorkspaceNegotiator implements WorkspaceNegotiatorInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function unsetActiveWorkspace() {
+      $this->deleteRedirectPrefix();
+  }
+
+  /**
    * Returns an array with all the workspaces which should be checked by the
    * path prefix negotiator.
    */
