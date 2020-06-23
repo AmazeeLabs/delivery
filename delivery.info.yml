@@ -1,10 +1,12 @@
 name: 'Delivery'
 type: module
 description: 'Deliver content changes between workspaces.'
-core: 8.x
+core_version_requirement: ^8.8 || ^9
 configure:
 dependencies:
   - language
   - workspaces
   - revision_tree
   - content_moderation
+  - entity_usage
+  - conflict

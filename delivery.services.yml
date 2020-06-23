@@ -1,32 +1,42 @@
 services:
+  delivery.menu.default_tree_manipulators:
+    decorates: menu.default_tree_manipulators
+    class: Drupal\delivery\DeliveryDefaultMenuLinkTreeManipulators
+    arguments:
+      - '@delivery.menu.default_tree_manipulators.inner'
+      - '@entity.repository'
+
+  delivery.workspace_assignment:
+    class: Drupal\delivery\WorkspaceAssigment
+    arguments: ['@entity_type.manager']
   delivery.service:
     class: Drupal\delivery\DeliveryService
     arguments:
     - '@entity_type.manager'
     - '@workspaces.manager'
     - '@entity.repository'
-    - '@conflict.resolver.manager'
+    - '@conflict_resolver.manager'
     - '@workspaces.association'
 
   delivery.route_subscriber:
     class: Drupal\delivery\Routing\RouteSubscriber
+    arguments:
+      - '@entity_type.manager'
+      - '@config.factory'
     tags:
     - { name: event_subscriber }
 
   conflict_resolution.merge_invisible_fields:
     class: Drupal\delivery\ConflictResolution\MergeInvisibleProperties
     tags:
-      - { name: event_subscriber }
+      - { name: event_subscriber, priority: -1 }
 
   conflict_resolution.merge_blacklisted_fields:
     class: Drupal\delivery\ConflictResolution\MergeBlacklistedFields
+    arguments:
+      - '@entity_type.manager'
     tags:
       - { name: event_subscriber }
-
-  conflict_discovery.blacklisted:
-    class: Drupal\delivery\MergeStrategy\BlacklistedFieldsStrategy
-    tags:
-      - { name: event_subscriber, priority: 999 }
 
   Drupal\workspaces\EntityOperations:
     class: Drupal\delivery\DeliveryEntityOperations

@@ -51,6 +51,16 @@ function delivery_views_data_alter(array &$data) {
       'filter' => ['id' => 'current_workspace_filter'],
     ];
 
+    $data[$entity_table]['delivery_workspace_revision'] = [
+      'title' => t('Workspace revision'),
+      'help' => t('Relate to the current revision of the same entity in another workspace.'),
+      'relationship' => [
+        'id' => 'delivery_workspace_revision',
+        'label' => t('Workspace revision'),
+        'base' => $entity_revision_table,
+      ],
+    ];
+
     $data[$entity_revision_table]['entity_delivery_status'] = [
       'title' => t('Delivery status for @entity_type', $t_args),
       'help' => t('Operate on the current delivery status of @entity_type entities.', $t_args),
@@ -61,6 +71,20 @@ function delivery_views_data_alter(array &$data) {
       'filter' => [
         'id' => 'entity_delivery_status',
         'label' => t('Delivery status filter'),
+      ],
+    ];
+
+    // Add filter for inherited/own version content
+    $data[$entity_table]['inherited_content_filter'] = [
+      'title' => t('Inherited'),
+      'help' => t('Operate on whether the revision is inherited from another workspace.'),
+      'field' => [
+        'id' => 'inherited_content_field',
+        'label' => t('Inherited'),
+      ],
+      'filter' => [
+        'id' => 'inherited_content_filter',
+        'label' => t('Inherited'),
       ],
     ];
   }

@@ -3,7 +3,7 @@
 namespace Drupal\delivery\Form;
 
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface;
+use Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
@@ -13,6 +13,7 @@ use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -25,6 +26,11 @@ use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
+/**
+ * Class DeliveryItemResolveForm
+ *
+ * @package Drupal\delivery\Form
+ */
 class DeliveryItemResolveForm extends FormBase {
 
   /**
@@ -56,7 +62,7 @@ class DeliveryItemResolveForm extends FormBase {
   protected $renderer;
 
   /**
-   * @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface
+   * @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface
    */
   protected $conflictResolverManager;
 
@@ -91,6 +97,11 @@ class DeliveryItemResolveForm extends FormBase {
   protected $resultEntity;
 
   /**
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
    * DeliveryPushConfirmFom constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -98,8 +109,9 @@ class DeliveryItemResolveForm extends FormBase {
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
    * @param \Drupal\delivery\DeliveryService $deliveryService
    * @param \Drupal\Core\Render\RendererInterface $renderer
-   * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
+   * @param \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -108,7 +120,8 @@ class DeliveryItemResolveForm extends FormBase {
     DeliveryService $deliveryService,
     RendererInterface $renderer,
     ConflictResolverManagerInterface $conflictResolverManager,
-    WorkspaceManagerInterface $workspaceManager
+    WorkspaceManagerInterface $workspaceManager,
+    LanguageManagerInterface $languageManager
   ) {
     $this->deliveryService = $deliveryService;
     $this->entityTypeManager = $entity_type_manager;
@@ -117,10 +130,11 @@ class DeliveryItemResolveForm extends FormBase {
     $this->renderer = $renderer;
     $this->conflictResolverManager = $conflictResolverManager;
     $this->workspaceManager = $workspaceManager;
+    $this->languageManager = $languageManager;
   }
 
-  public function access(AccountInterface $account, Delivery $delivery, DeliveryItem $delivery_item) {
-    if (isset($delivery->resolution->value)) {
+  public function access(AccountInterface $account, DeliveryItem $delivery_item) {
+    if (isset($delivery_item->resolution->value)) {
       return AccessResult::forbidden();
     }
     // TODO: Restrict access to conflict resolution based on target permnissions.
@@ -131,7 +145,7 @@ class DeliveryItemResolveForm extends FormBase {
 //    return $this->sourceEntity->access('edit', $account, TRUE);
   }
 
-  public function title($delivery, $delivery_item) {
+  public function title($delivery_item) {
     // TODO: Implement a proper title.
     return $this->t('Resolve conflict');
   }
@@ -146,8 +160,9 @@ class DeliveryItemResolveForm extends FormBase {
       $container->get('entity.repository'),
       $container->get('delivery.service'),
       $container->get('renderer'),
-      $container->get('conflict.resolver.manager'),
-      $container->get('workspaces.manager')
+      $container->get('conflict_resolver.manager'),
+      $container->get('workspaces.manager'),
+      $container->get('language_manager')
     );
   }
 
@@ -167,7 +182,7 @@ class DeliveryItemResolveForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DeliveryInterface $delivery = NULL, DeliveryItem $delivery_item = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, DeliveryItem $delivery_item = NULL) {
     $form['#attached']['library'][] = 'delivery/conflict-resolution';
     $this->deliveryItem = $delivery_item;
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
@@ -178,7 +193,7 @@ class DeliveryItemResolveForm extends FormBase {
     /** @var \Drupal\Core\Entity\ContentEntityInterface $this->targetEntity */
     $this->targetEntity = $storage->loadRevision($this->deliveryService->getActiveRevision($delivery_item));
 
-    $this->resultEntity = $storage->createRevision($this->targetEntity);
+    $this->resultEntity = $storage->createRevision($this->sourceEntity);
 
     $entityType = $this->entityTypeManager->getDefinition($this->deliveryItem->getTargetType());
     $revisionParentField = $entityType->getRevisionMetadataKey('revision_parent');
@@ -202,7 +217,7 @@ class DeliveryItemResolveForm extends FormBase {
     $sourceWorkspace = $this->entityTypeManager->getStorage('workspace')
       ->load($delivery_item->getSourceWorkspace());
 
-    $targetPrimaryLanguage = $targetWorkspace->primary_language->value;
+    $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: $this->languageManager->getDefaultLanguage()->getId();
     $targetLanguages = [$targetPrimaryLanguage];
     foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
       $targetLanguages[] = $secondaryLanguage->value;
@@ -334,15 +349,40 @@ class DeliveryItemResolveForm extends FormBase {
       }
     }
 
+    $args = [
+      ':source' => $sourceWorkspace->label(),
+      ':target' => $targetWorkspace->label(),
+      ':title' => $parentEntity->label(),
+    ];
+
+    $buttons = [
+      DeliveryItem::STATUS_NEW => $this->t('Add to :target', $args),
+      DeliveryItem::STATUS_MODIFIED_BY_SOURCE => $this->t('Apply changes to :target', $args),
+      DeliveryItem::STATUS_CONFLICT => $this->t('Conflict'),
+      DeliveryItem::STATUS_CONFLICT_AUTO => $this->t('Apply changes to :target', $args),
+      DeliveryItem::STATUS_DELETED => $this->t('Mark as resolved'),
+      DeliveryItem::STATUS_DELETED_BY_SOURCE => $this->t('Delete from :target', $args),
+      DeliveryItem::STATUS_RESTORED_BY_SOURCE => $this->t('Restore to :target', $args),
+    ];
+
+    $messages = [
+      DeliveryItem::STATUS_NEW => $this->t(':source added ":title". Also add it to :target?', $args),
+      DeliveryItem::STATUS_MODIFIED_BY_SOURCE => $this->t('":title" was modified in :source. Apply changes to :target?', $args),
+      DeliveryItem::STATUS_CONFLICT_AUTO => $this->t('The conflict in ":title" could be resolved automatically. Apply changes to :target?', $args),
+      DeliveryItem::STATUS_DELETED => $this->t('":title" has been deleted from both :source and :target. Mark this as resolved?', $args),
+      DeliveryItem::STATUS_DELETED_BY_SOURCE => $this->t('":title" was deleted from :source. Also delete it from :target?', $args),
+      DeliveryItem::STATUS_RESTORED_BY_SOURCE => $this->t(':source has restored ":title". Also restore it to :target?', $args),
+    ];
+
     if (!$hadConflicts) {
       $form['message'] = [
-        '#markup' => '<p><em>' . $this->t('All conflicts could be solved automatically. Do you want to proceed?') . "</em></p>",
+        '#markup' => '<p><em>' . $messages[$delivery_item->getStatus()['status']] . "</em></p>",
       ];
     }
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $hadConflicts ? $this->t('Resolve conflicts') : $this->t('Deliver content'),
+      '#value' => $hadConflicts ? $this->t('Resolve conflicts') : $buttons[$delivery_item->getStatus()['status']],
       '#button_type' => 'primary',
     ];
 

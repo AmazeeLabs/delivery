@@ -83,32 +83,39 @@ delivery.delivery_push:
   requirements:
     _permission: 'push changes to workspaces'
 
-delivery_item.push:
-  path: '/delivery/{delivery}/push/{delivery_item}'
+delivery.menu_push:
+  path: '/delivery/menu/{menu}/push'
   defaults:
-    _form: '\Drupal\delivery\Form\DeliveryItemPushForm'
+    _form: '\Drupal\delivery\Form\MenuPushForm'
   options:
     parameters:
-      delivery:
-        type: entity:delivery
-      delivery_item:
-        type: entity:delivery_item
+      menu:
+        type: entity:menu
   requirements:
-    _custom_access: '\Drupal\delivery\Form\DeliveryItemPushForm::access'
+    _permission: 'publish menus'
 
 delivery_item.resolve:
-  path: '/delivery/{delivery}/resolve/{delivery_item}'
+  path: '/delivery/resolve/{delivery_item}'
   defaults:
     _form: '\Drupal\delivery\Form\DeliveryItemResolveForm'
     _title_callback: '\Drupal\delivery\Form\DeliveryItemResolveForm::title'
   options:
     parameters:
-      delivery:
-        type: entity:delivery
       delivery_item:
         type: entity:delivery_item
   requirements:
     _custom_access: '\Drupal\delivery\Form\DeliveryItemResolveForm::access'
+
+delivery_item.status:
+  path: '/delivery/item-status/{delivery_item}'
+  defaults:
+    _controller: '\Drupal\delivery\Controller\DeliveryItemStatusController::getStatus'
+  options:
+    parameters:
+      delivery_item:
+        type: entity:delivery_item
+  requirements:
+    _entity_access: 'delivery_item.view'
 
 delivery.delivery_status_controller:
   path: '/delivery/status/{workspace}/{delivery}'

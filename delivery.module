@@ -7,18 +7,23 @@
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Database\Query\Select;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\delivery\Entity\DeliveryItem;
 use Drupal\delivery\Entity\MenuLinkContent;
+use Drupal\delivery\Form\MenuPushForm;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
 use Drupal\Core\Form\FormStateInterface;
@@ -41,13 +46,17 @@ function delivery_module_implements_alter(&$implementations, $hook) {
  */
 function delivery_query_workspace_sensitive_alter(AlterableInterface $query) {
   if (
-    $entity_type_id = $query->getMetaData('entity_type') &&
+    $query instanceof Select &&
+    $query->getMetaData('entity_type') &&
     $active_workspace_id = $query->getMetaData('active_workspace_id') &&
     !$query->getMetaData('all_revisions')
   ) {
+    $entity_type_id = $query->getMetaData('entity_type');
     $tables = &$query->getTables();
     if (array_key_exists('workspace_association', $tables)) {
       $tables['workspace_association']['join type'] = 'INNER';
+      $entityType = \Drupal::entityTypeManager()->getDefinition($entity_type_id);
+      $query->innerJoin($entityType->getRevisionTable(), 'revision_table', 'workspace_association.target_entity_revision_id = revision_table.' . $entityType->getKey('revision')  . ' AND revision_table.deleted = 0');
     }
   }
 }
@@ -67,10 +76,25 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
     return AccessResult::forbidden();
   }
   if ($workspacesManager->isEntityTypeSupported($entity->getEntityType())) {
+    // Statically cache results in an array keyed by $account->id().
+    $trackingWorkspaces = &drupal_static(__FUNCTION__);
+    $key = $entity->getEntityTypeId() . ':' . $entity->id();
+    if (!isset($trackingWorkspaces[$key])) {
+      $trackingWorkspaces[$key] = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
+    }
     $activeWorkspace = $workspacesManager->getActiveWorkspace();
-    $trackingWorkspaces = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
-    if (!in_array($activeWorkspace->id(), $trackingWorkspaces)) {
+    if (!in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
       return AccessResult::forbidden();
+    }
+  }
+  if ($entity instanceof DeliveryItem) {
+    $storage = \Drupal::entityTypeManager()
+      ->getStorage('delivery');
+    $deliveries = $storage
+      ->getQuery()
+      ->condition('items', $entity->id())->execute();
+    if ($delivery = $storage->load(array_pop($deliveries))) {
+      return $delivery->access($operation, $account, TRUE);
     }
   }
 }
@@ -81,6 +105,8 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
  * @param \Drupal\Core\Entity\EntityTypeInterface[] $entity_types
  */
 function delivery_entity_type_build(array &$entity_types) {
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspacesManager */
+  $workspacesManager = \Drupal::service('workspaces.manager');
   $entity_types['menu_link_content']->setHandlerClass('storage', MenuLinkContentStorage::class);
   $entity_types['menu_link_content']->setClass(MenuLinkContent::class);
   // Override the list builder so we can inject our own deploy button.
@@ -104,7 +130,15 @@ function delivery_entity_type_build(array &$entity_types) {
     ) {
       unset($constraints['EntityUntranslatableFields']);
     }
+
     $entityType->setConstraints($constraints);
+
+    if ($workspacesManager->isEntityTypeSupported($entityType)) {
+      // Add the required entity key.
+      $entity_keys = $entityType->get('revision_metadata_keys');
+      $entity_keys['deleted'] = 'deleted';
+      $entityType->set('revision_metadata_keys', $entity_keys);
+    }
   }
 }
 
@@ -195,10 +229,27 @@ function delivery_form_menu_edit_form_alter(&$form, FormStateInterface $form_sta
             'entity_type' => 'menu_link_content',
             'bundle' => $menu->id(),
             'hide_options_elements' => 1,
-          ]
+          ],
         ]
       ),
     ];
+  }
+
+  $menuId = $menu->id();
+  $messenger = \Drupal::messenger();
+  $differences = MenuPushForm::differences($menuId);
+  if ($differences !== FALSE) {
+    if ($differences) {
+      $messenger->addWarning(t('There are @count unpublished menu changes. <a href=":link">Publish them?</a>', [
+        '@count' => count($differences),
+        ':link' => Url::fromRoute('delivery.menu_push', [
+          'menu' => $menuId,
+        ])->toString(),
+      ]));
+    }
+    else {
+      $messenger->addMessage(t('This menu is fully published.'));
+    }
   }
 }
 
@@ -222,6 +273,7 @@ function delivery_entity_base_field_info_alter(&$fields, EntityTypeInterface $en
   if (isset($fields['status'])) {
     $fields['status']->setTranslatable(FALSE);
   }
+
   // Set menu tree related fields revisionable.
   if ($entity_type->id() === 'menu_link_content') {
     $revisionableFields = [
@@ -287,6 +339,18 @@ function delivery_entity_base_field_info(EntityTypeInterface $entity_type) {
       ->setDisplayConfigurable('form', TRUE);
   }
 
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  // Attach a revisionable "deleted" field.
+  if ($workspaceManager->isEntityTypeSupported($entity_type)) {
+    $fields['deleted'] = BaseFieldDefinition::create('timestamp')
+      ->setLabel(t('Deleted'))
+      ->setDescription(t('Time when the item got deleted'))
+      ->setInternal(TRUE)
+      ->setTranslatable(FALSE)
+      ->setRevisionable(TRUE)
+      ->setDefaultValue(0);
+  }
   return $fields;
 }
 
@@ -350,7 +414,7 @@ function delivery_entity_update(EntityInterface $entity) {
     $result->{$revisionParentField}->target_revision_id = array_pop($parentRevisions);
     $result->workspace = $parentWorkspace;
     $result->setSyncing(TRUE);
-    $workspaceManager->executeInWorkspace($parentWorkspace->id(), function () use ($result) {
+    $workspaceManager->unsafeExecuteInWorkspace($parentWorkspace->id(), function () use ($result) {
       $result->save();
     });
   }
@@ -377,4 +441,19 @@ function delivery_entity_load(array $entities, $entity_type_id) {
   }
 }
 
-
+/**
+ * Implements hook_entity_predelete().
+ */
+function delivery_entity_predelete(EntityInterface $entity) {
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  $entityType = $entity->getEntityType();
+  if ($workspaceManager->isEntityTypeSupported($entityType) && $entity instanceof RevisionableInterface) {
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    $storage = \Drupal::entityTypeManager()->getStorage($entityType->id());
+    $deleted = $storage->createRevision($entity);
+    $deleted->deleted = \Drupal::time()->getRequestTime();
+    $deleted->save();
+    return EntityStorageInterface::ENTITY_SOFT_DELETE;
+  }
+}
