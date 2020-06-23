@@ -13,5 +13,6 @@ use Drupal\views\ViewExecutable;
  * Allow replacement of current user ID so we can cache these queries.
  */
 function delivery_views_query_substitutions(ViewExecutable $view) {
-  return ['***CURRENT_WORKSPACE***' => \Drupal::getContainer()->get('workspaces.manager')->getActiveWorkspace()->id()];
+  $active_workspace = \Drupal::getContainer()->get('workspaces.manager')->getActiveWorkspace();
+  return $active_workspace ? ['***CURRENT_WORKSPACE***' => $active_workspace->id()] : [];
 }

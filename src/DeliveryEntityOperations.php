@@ -119,7 +119,7 @@ class DeliveryEntityOperations extends EntityOperations {
       $entity->{$field_name}->target_id = $this->workspaceManager->getActiveWorkspace()->id();
     }
 
-    // When a new published entity is inswerted in a non-default workspace, we
+    // When a new published entity is inserted in a non-default workspace, we
     // actually want two revisions to be saved:
     // - An unpublished default revision in the default ('live') workspace.
     // - A published pending revision in the current workspace.

@@ -64,7 +64,7 @@ class DeliveryPullForm extends ConfirmFormBase {
     $workspace = $this->deliveryService->getActiveWorkspace();
     $canForward = FALSE;
     foreach($delivery->workspaces as $item) {
-      $canForward = $canForward || $item->target_id === $workspace->id();
+      $canForward = $canForward || ($workspace && $item->target_id === $workspace->id());
     }
     $result = AccessResult::allowedIf($canForward);
     $result->addCacheableDependency($delivery);
