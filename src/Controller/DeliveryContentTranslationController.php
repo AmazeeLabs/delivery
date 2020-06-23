@@ -8,6 +8,7 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\content_translation\ContentTranslationManager;
 use Drupal\content_translation\Controller\ContentTranslationController;
+use Drupal\Core\Url;
 
 class DeliveryContentTranslationController extends ContentTranslationController {
 
@@ -257,7 +258,7 @@ class DeliveryContentTranslationController extends ContentTranslationController 
    * {@inheritdoc}
    */
   public function getLatestRevisionId($entity_id, $entity_type) {
-    if (!$this->entityType->isRevisionable()) {
+    if (!$entity_type->isRevisionable()) {
       return NULL;
     }
 
