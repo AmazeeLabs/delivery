@@ -30,11 +30,15 @@ class DeliveryContentTranslationOverviewAccess extends ContentTranslationOvervie
       return AccessResult::forbidden()->addCacheableDependency($entity)->addCacheContexts(['workspace']);
     }
 
-    $access = AccessResult::forbiddenIf((
-      $currentWorkspace->secondary_languages->count() === 0 && $currentWorkspace->primary_language->count() > 0
-    ), 'Current workspace does not allow multiple languages.');
-    $access->addCacheContexts(['workspace']);
-    $result = parent::access($route_match, $account, $entity_type_id)->orIf($access);
+    $result = parent::access($route_match, $account, $entity_type_id);
+    if (!empty($currentWorkspace->secondary_languages) && !empty($currentWorkspace->primary_language)) {
+      $access = AccessResult::forbiddenIf((
+        $currentWorkspace->secondary_languages->count() === 0 && $currentWorkspace->primary_language->count() > 0
+      ), 'Current workspace does not allow multiple languages.');
+      $access->addCacheContexts(['workspace']);
+      $result = $result->orIf($access);
+    }
+
     return $result;
   }
 

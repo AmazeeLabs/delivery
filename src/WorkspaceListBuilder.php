@@ -8,6 +8,7 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
 use Drupal\workspaces\WorkspaceListBuilder as OriginalWorkspaceListBuilder;
 use Drupal\workspaces\WorkspaceManagerInterface;
+use Drupal\workspaces\WorkspaceRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,6 +27,13 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
   protected $workspaceAssigment;
 
   /**
+   * The workspace repository service.
+   *
+   * @var \Drupal\workspaces\WorkspaceRepositoryInterface
+   */
+  protected $workspaceRepository;
+
+  /**
    * WorkspaceListBuilder constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
@@ -33,16 +41,19 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspace_manager
    * @param \Drupal\Core\Render\RendererInterface $renderer
    * @param \Drupal\delivery\WorkspaceAssigment $workspace_assigment
+   * @param \Drupal\workspaces\WorkspaceRepositoryInterface $workspace_repository
    */
   public function __construct(
     EntityTypeInterface $entity_type,
     EntityStorageInterface $storage,
     WorkspaceManagerInterface $workspace_manager,
     RendererInterface $renderer,
-    WorkspaceAssigment $workspace_assigment
+    WorkspaceAssigment $workspace_assigment,
+    WorkspaceRepositoryInterface $workspace_repository
   ) {
     $this->workspaceAssigment = $workspace_assigment;
-    parent::__construct($entity_type, $storage, $workspace_manager, $renderer);
+    $this->workspaceRepository = $workspace_repository;
+    parent::__construct($entity_type, $storage, $workspace_manager, $workspace_repository, $renderer);
   }
 
   /**
@@ -54,7 +65,8 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
       $container->get('entity_type.manager')->getStorage($entity_type->id()),
       $container->get('workspaces.manager'),
       $container->get('renderer'),
-      $container->get('delivery.workspace_assignment')
+      $container->get('delivery.workspace_assignment'),
+      $container->get('workspaces.repository')
     );
   }
 

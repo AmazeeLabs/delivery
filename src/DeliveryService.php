@@ -2,7 +2,7 @@
 
 namespace Drupal\delivery;
 
-use Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface;
+use Drupal\conflict\ConflictResolver\ConflictResolverManager;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -38,7 +38,7 @@ class DeliveryService {
   protected $entityRepository;
 
   /**
-   * @var \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface
+   * @var \Drupal\conflict\ConflictResolver\ConflictResolverManager
    */
   protected $conflictResolverManager;
 
@@ -53,14 +53,14 @@ class DeliveryService {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    * @param \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
-   * @param \Drupal\Core\Conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolverManager
+   * @param \Drupal\conflict\ConflictResolver\ConflictResolverManager $conflictResolverManager
    * @param \Drupal\workspaces\WorkspaceAssociationInterface $workspaceAssociation
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     WorkspaceManagerInterface $workspaceManager,
     EntityRepositoryInterface $entityRepository,
-    ConflictResolverManagerInterface $conflictResolverManager,
+    ConflictResolverManager $conflictResolverManager,
     WorkspaceAssociationInterface $workspaceAssociation
   ) {
     $this->entityTypeManager = $entity_type_manager;
