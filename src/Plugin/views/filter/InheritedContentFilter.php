@@ -36,19 +36,27 @@ class InheritedContentFilter extends InOperator {
    * workspace, instead of just current and !current
    */
   public function query() {
-    $this->traitQuery();
-    $query_base_table = $this->relationship ?: $this->view->storage->get('base_table');
+    $view_base_table = $this->view->storage->get('base_table');
+    $is_search_api_index = strpos($view_base_table, 'search_api_') !== FALSE;
 
+    if (!$is_search_api_index) {
+      // This creates the necessary joins for normal node views,
+      // but we don't need those if it's a search_api_index.
+      $this->traitQuery();
+    }
+
+    $query_base_table = $this->relationship ?: $view_base_table;
     $values = $this->value;
     $aliases = array_keys($this->query->tables[$query_base_table]);
     $alias = end($aliases);
+    $field = ($is_search_api_index) ? 'source_workspace' : $alias . '.workspace';
 
     foreach ($values as $value) {
       $negate_condition = (substr($value, 0, 1) == '!');
       $operator = ($negate_condition) ? '!=' : '=';
       $condition = ($negate_condition) ? substr($value, 1) : $value;
 
-      $this->query->addWhere('AND', $alias . '.workspace', $condition, $operator);
+      $this->query->addWhere('AND', $field, $condition, $operator);
     }
   }
 
