@@ -116,9 +116,6 @@ class DeliveryPushForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $batch = [
-      'operations' => [
-        [[$this, 'pushChangesBatch'], [['entity_type' => 'media', 'field_name' => 'media']]],
-      ],
       'finished' => [$this, 'finishPushChanges'],
       'title' => $this->t('Push changes'),
       'progress_message' => $this->t('Pushing changes @current of @total.'),
