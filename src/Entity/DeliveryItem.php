@@ -279,13 +279,17 @@ class DeliveryItem extends ContentEntityBase implements DeliveryItemInterface {
         /** @var \Drupal\Core\Entity\ContentEntityInterface $parentRevision */
       $parentRevision = $storage->loadRevision($parentEntityRevision);
 
-      $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: \Drupal::languageManager()->getDefaultLanguage()->getId();
-      $targetLanguages = [$targetPrimaryLanguage];
-      foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
-        $targetLanguages[] = $secondaryLanguage->value;
+      if (!empty($targetWorkspace->primary_language)) {
+        $targetPrimaryLanguage = $targetWorkspace->primary_language->value ?: \Drupal::languageManager()->getDefaultLanguage()->getId();
+        $targetLanguages = [$targetPrimaryLanguage];
+      }
+      if (!empty($targetWorkspace->secondary_languages)) {
+        foreach ($targetWorkspace->secondary_languages as $secondaryLanguage) {
+          $targetLanguages[] = $secondaryLanguage->value;
+        }
       }
       $hadConflicts = FALSE;
-      /** @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictResolver */
+      /** @var \Drupal\conflict\ConflictResolver\ConflictResolverManager $conflictResolver */
       $conflictResolver = \Drupal::service('conflict_resolver.manager');
 
       if ($sourceRevision->isTranslatable()) {
