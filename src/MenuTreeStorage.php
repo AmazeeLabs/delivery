@@ -81,7 +81,7 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
    * {@inheritdoc}
    */
   public function loadTreeData($menu_name, MenuTreeParameters $parameters) {
-    // Add any non-default workspace as a menu tree condition parameter so it is
+    // Add workspace ID to the menu tree condition parameter so it is
     // included in the cache ID.
     if ($active_workspace = $this->workspaceManager->hasActiveWorkspace()) {
       $active_workspace = $this->workspaceManager->getActiveWorkspace();
