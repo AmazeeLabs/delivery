@@ -64,7 +64,7 @@ script:
   # Get the module.
   - echo $TRAVIS_BRANCH
   - COMPOSER_MEMORY_LIMIT=-1 composer require "drupal/$MODULE_NAME"
-  - COMPOSER_MEMORY_LIMIT=-1 composer require "drupal/$MODULE_NAME":"dev-REPO_BRANCH"
+  - COMPOSER_MEMORY_LIMIT=-1 composer require "drupal/$MODULE_NAME":"dev-$REPO_BRANCH"
   # Do a minimal Drupal installation. Required for Drush.
   - php core/scripts/drupal install -q minimal
   # Run a simple HTTP server on port 8888.
