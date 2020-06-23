@@ -83,7 +83,7 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
     // Add any non-default workspace as a menu tree condition parameter so it is
     // included in the cache ID.
     $active_workspace = $this->workspaceManager->getActiveWorkspace();
-    if (!$active_workspace->isDefaultWorkspace()) {
+    if ($active_workspace && !$active_workspace->isDefaultWorkspace()) {
       $parameters->conditions['workspace'] = $active_workspace->id();
     }
     return parent::loadTreeData($menu_name, $parameters);
@@ -101,7 +101,7 @@ class MenuTreeStorage extends CoreMenuTreeStorage {
 
     // Replace the menu link plugin definitions with workspace-specific ones.
     $active_workspace = $this->workspaceManager->getActiveWorkspace();
-    if (!$active_workspace->isDefaultWorkspace()) {
+    if ($active_workspace && !$active_workspace->isDefaultWorkspace()) {
       $tracked_revisions = $this->workspaceAssociation->getTrackedEntities($active_workspace->id(), 'menu_link_content');
       $this->currentWorkspace = $active_workspace->id();
       $localLinks = parent::loadLinks($menu_name, $parameters);
