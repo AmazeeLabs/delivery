@@ -8,6 +8,7 @@
   - revision_tree
   - content_moderation
   - entity_usage
+  - conflict
 
 # Installation
 - on pre-install: for all the entity types with workspaces support, the _deleted_ field is added to _revision_metadata_keys_.
