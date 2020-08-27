@@ -52,26 +52,30 @@ class MergeInvisibleProperties extends MergeStrategyBase {
     }
 
     foreach ($automerge as $property) {
-      $result_entity->set($property, $remote_entity->get($property)->getValue());
-      $event->removeConflict($property);
+      if ($result_entity->get($property)->getFieldDefinition()->isTranslatable() || $result_entity->language()->isDefault()) {
+        $result_entity->set($property, $remote_entity->get($property)->getValue());
+        $event->removeConflict($property);
+      }
     }
 
     if ($input = $event->getContextParameter('resolution_form_result')) {
       $custom = $event->getContextParameter('resolution_custom_values');
       foreach ($input as $property => $selection) {
-        if ($selection === '__source__') {
-          $result_entity->set($property, $remote_entity->get($property)->getValue());
-          $event->removeConflict($property);
-        }
+        if ($result_entity->get($property)->getFieldDefinition()->isTranslatable() || $result_entity->language()->isDefault()) {
+          if ($selection === '__source__') {
+            $result_entity->set($property, $remote_entity->get($property)->getValue());
+            $event->removeConflict($property);
+          }
 
-        if ($selection === '__target__') {
-          $result_entity->set($property, $local_entity->get($property)->getValue());
-          $event->removeConflict($property);
-        }
+          if ($selection === '__target__') {
+            $result_entity->set($property, $local_entity->get($property)->getValue());
+            $event->removeConflict($property);
+          }
 
-        if ($selection === '__custom__' && isset($custom[$property])) {
-          $result_entity->set($property, $custom[$property]);
-          $event->removeConflict($property);
+          if ($selection === '__custom__' && isset($custom[$property])) {
+            $result_entity->set($property, $custom[$property]);
+            $event->removeConflict($property);
+          }
         }
       }
     }
