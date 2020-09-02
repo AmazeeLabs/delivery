@@ -38,6 +38,17 @@ services:
     tags:
       - { name: event_subscriber }
 
+  delivery.conflict.discovery.default:
+    decorates: conflict.discovery.default
+    class: Drupal\delivery\ConflictDiscovery\DeliveryDefaultConflictDiscovery
+    arguments:
+      - '@delivery.conflict.discovery.default.inner'
+
+  conflict_discovery.blacklisted:
+    class: Drupal\delivery\MergeStrategy\BlacklistedFieldsStrategy
+    tags:
+      - { name: event_subscriber, priority: 999 }
+
   Drupal\workspaces\EntityOperations:
     class: Drupal\delivery\DeliveryEntityOperations
     arguments:
