@@ -10,6 +10,7 @@ use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 use Drupal\Tests\node\Traits\NodeCreationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\field\Entity\FieldConfig;
+use Symfony\Component\DependencyInjection\Definition;
 
 /**
  * Class MergeBlacklistedFieldsTest
@@ -55,6 +56,8 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     parent::register($container);
     // Remove this merge strategy because if we don't, it'll merge any remaining
     // conflicts and we need to see what's left to assert in our test.
+    $crm = new Definition('\Drupal\Core\Conflict\ConflictResolver\ConflictResolverManager', ['@event_dispatcher']);
+    $container->addDefinitions(['conflict.resolver.manager' => $crm]);
     $container->removeDefinition('conflict_resolution.merge_invisible_fields');
   }
 
