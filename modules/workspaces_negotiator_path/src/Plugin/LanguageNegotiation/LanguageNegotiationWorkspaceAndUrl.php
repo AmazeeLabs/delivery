@@ -87,7 +87,7 @@ class LanguageNegotiationWorkspaceAndUrl extends LanguageNegotiationUrl implemen
             watchdog_exception('workspace_language_negotiation', $e);
             return parent::getLangcode($request);
           }
-          $path_prefix = $current_workspace->get('path_prefix')->getValue();
+          $path_prefix = $current_workspace ? $current_workspace->get('path_prefix')->getValue() : [];
           $request_path = urldecode($request->getPathInfo());
           if (!empty($path_prefix[0]['value']) && $path_prefix[0]['value'] != '/') {
             // Check first if the path prefix of the workspace is really a
