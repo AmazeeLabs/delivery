@@ -133,7 +133,7 @@ class MergeBlacklistedFieldsTest extends KernelTestBase {
     $storage = $this->entityTypeManager->getStorage('entity_test_revpub');
 
     /** @var \Drupal\conflict\ConflictResolver\ConflictResolverManagerInterface $conflictManager */
-    $conflictManager = $this->container->get('conflict_resolver.manager');
+    $conflictManager = $this->container->get('conflict.resolver.manager');
 
     $this->switchToWorkspace('live');
 

@@ -166,7 +166,7 @@ class DeliveryItemResolveForm extends FormBase {
       $container->get('entity.repository'),
       $container->get('delivery.service'),
       $container->get('renderer'),
-      $container->get('conflict_resolver.manager'),
+      $container->get('conflict.resolver.manager'),
       $container->get('workspaces.manager'),
       $container->get('language_manager')
     );
