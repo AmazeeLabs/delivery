@@ -365,7 +365,7 @@ function delivery_entity_update(EntityInterface $entity) {
     }
 
     $activeWorkspace = $workspaceManager->getActiveWorkspace();
-    if (!$activeWorkspace->auto_push->value || !$activeWorkspace->parent->entity) {
+    if (!$activeWorkspace || !$activeWorkspace->auto_push->value || !$activeWorkspace->parent->entity) {
       return;
     }
 
