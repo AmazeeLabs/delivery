@@ -32,7 +32,11 @@ use Drupal\Core\Form\FormStateInterface;
  * Implements hook_module_implements_alter().
  */
 function delivery_module_implements_alter(&$implementations, $hook) {
-  if (in_array($hook, ['entity_bundle_info_alter', 'entity_base_field_info_alter', 'entity_type_build'])) {
+  if (in_array($hook, [
+    'entity_bundle_info_alter',
+    'entity_base_field_info_alter',
+    'entity_type_build',
+  ])) {
     $group = $implementations['delivery'];
     unset($implementations['delivery']);
     $implementations['delivery'] = $group;
@@ -49,14 +53,15 @@ function delivery_query_workspace_sensitive_alter(AlterableInterface $query) {
     $query instanceof Select &&
     $query->getMetaData('entity_type') &&
     $active_workspace_id = $query->getMetaData('active_workspace_id') &&
-    !$query->getMetaData('all_revisions')
+      !$query->getMetaData('all_revisions')
   ) {
     $entity_type_id = $query->getMetaData('entity_type');
     $tables = &$query->getTables();
     if (array_key_exists('workspace_association', $tables)) {
       $tables['workspace_association']['join type'] = 'INNER';
-      $entityType = \Drupal::entityTypeManager()->getDefinition($entity_type_id);
-      $query->innerJoin($entityType->getRevisionTable(), 'revision_table', 'workspace_association.target_entity_revision_id = revision_table.' . $entityType->getKey('revision')  . ' AND revision_table.deleted = 0');
+      $entityType = \Drupal::entityTypeManager()
+        ->getDefinition($entity_type_id);
+      $query->innerJoin($entityType->getRevisionTable(), 'revision_table', 'workspace_association.target_entity_revision_id = revision_table.' . $entityType->getKey('revision') . ' AND revision_table.deleted = 0');
     }
   }
 }
@@ -175,6 +180,11 @@ function delivery_form_field_config_edit_form_alter(&$form, FormStateInterface $
 function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
   // Ensure the revision revert confirmation form works in all workspaces.
   $formState->set('workspace_safe', TRUE);
+  /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
+  $workspaceManager = \Drupal::service('workspaces.manager');
+  if (!$workspace = $workspaceManager->getActiveWorkspace()) {
+    return;
+  }
   $formObject = $formState->getFormObject();
 
   // Set the default language to the current workspace primary language.
@@ -186,9 +196,6 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
   ) {
     $form['langcode']['#access'] = $formObject->getEntity()->isNew();
     if ($formObject->getEntity()->isNew()) {
-      /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
-      $workspaceManager = \Drupal::service('workspaces.manager');
-      $workspace = $workspaceManager->getActiveWorkspace();
       if (!empty($workspace->primary_language) && $defaultLanguage = $workspace->primary_language->value) {
         $form['langcode']['widget'][0]['value']['#default_value'] = $defaultLanguage;
       }
@@ -205,10 +212,12 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
 function delivery_form_menu_edit_form_alter(&$form, FormStateInterface $form_state) {
   /** @var \Drupal\workspaces\WorkspaceManagerInterface $manager */
   $workspacesManager = \Drupal::service('workspaces.manager');
+  if (!$activeWorkspace = $workspacesManager->getActiveWorkspace()) {
+    return;
+  }
   /** @var \Drupal\system\Entity\Menu $menu */
   $menu = $form_state->getFormObject()->getEntity();
   $currentUser = \Drupal::currentUser();
-  $activeWorkspace = $workspacesManager->getActiveWorkspace();
 
   if (!$activeWorkspace->isDefaultWorkspace()) {
     $form['actions']['publish'] = [
@@ -303,21 +312,21 @@ function delivery_entity_base_field_info(EntityTypeInterface $entity_type) {
       ->setSetting('target_type', 'workspace')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'settings' => array(
+        'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => 60,
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ),
+        ],
         'weight' => -3,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
   }
@@ -372,11 +381,13 @@ function delivery_entity_update(EntityInterface $entity) {
     /** @var \Drupal\content_moderation\ModerationInformationInterface $content_moderation_info */
     $content_moderation_info = \Drupal::service('content_moderation.moderation_information');
     $workflow = $content_moderation_info->getWorkflowForEntity($entity);
-    if (!($workflow && $workflow->getTypePlugin()->hasState($entity->moderation_state->value))) {
+    if (!($workflow && $workflow->getTypePlugin()
+        ->hasState($entity->moderation_state->value))) {
       return;
     }
 
-    $current_state = $workflow->getTypePlugin()->getState($entity->moderation_state->value);
+    $current_state = $workflow->getTypePlugin()
+      ->getState($entity->moderation_state->value);
     if (!$current_state->isDefaultRevisionState()) {
       return;
     }
@@ -386,7 +397,8 @@ function delivery_entity_update(EntityInterface $entity) {
     /** @var \Drupal\workspaces\WorkspaceInterface $parentWorkspace */
     $parentWorkspace = $activeWorkspace->parent->entity;
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
-    $storage = \Drupal::entityTypeManager()->getStorage($entity->getEntityTypeId());
+    $storage = \Drupal::entityTypeManager()
+      ->getStorage($entity->getEntityTypeId());
 
     $parentRevisions = $workspaceAssiociaton->getTrackedEntities(
       $parentWorkspace->id(),
@@ -451,6 +463,10 @@ function delivery_entity_load(array $entities, $entity_type_id) {
 function delivery_entity_predelete(EntityInterface $entity) {
   /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
   $workspaceManager = \Drupal::service('workspaces.manager');
+  $active_workspace = $workspaceManager->getActiveWorkspace();
+  if (!$active_workspace) {
+    return;
+  }
   $entityType = $entity->getEntityType();
   if ($workspaceManager->isEntityTypeSupported($entityType) && $entity instanceof RevisionableInterface) {
     /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
