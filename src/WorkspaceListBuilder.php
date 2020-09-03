@@ -80,6 +80,9 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   protected function getEntityIds() {
+    if (!$this->workspaceManager->getActiveWorkspace()) {
+      return parent::getEntityIds();
+    }
     $query = $this->getStorage()->getQuery()
       ->sort($this->entityType->getKey('id'));
 
@@ -119,7 +122,9 @@ class WorkspaceListBuilder extends OriginalWorkspaceListBuilder {
    */
   protected function offCanvasRender(array &$build) {
     parent::offCanvasRender($build);
-    $active_workspace = $this->workspaceManager->getActiveWorkspace();
+    if (!$active_workspace = $this->workspaceManager->getActiveWorkspace()) {
+      return;
+    }
     if ($active_workspace->id() == 'live') {
       return;
     }
