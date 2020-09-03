@@ -37,7 +37,7 @@ views.filter.delivery_workspaces_list:
           label: 'Reduce'
 
 views.filter.entity_delivery_status:
-  type: views.filter
+  type: views_filter
   label: 'Entity delivery status filter'
   mapping:
     source_workspace:
@@ -54,7 +54,7 @@ views.filter.entity_delivery_status:
       label: 'Views argument to retrieve the target workspace from.'
 
 views.filter.node_revision_workspace_filter:
-  type: views.filter
+  type: views_filter
   label: 'Node Revision workspace filter'
   mapping:
     current_workspace:
@@ -62,5 +62,5 @@ views.filter.node_revision_workspace_filter:
       label: 'Workspace ID'
 
 views.filter.delivery_active_workspace_filter:
-  type: views.filter
+  type: views_filter
   label: 'Delivery active workspace filter'
