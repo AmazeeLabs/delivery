@@ -65,6 +65,10 @@ trait CurrentWorkspaceViewsFilterTrait {
    * {@inheritdoc}
    */
   public function query() {
+    // Ensure we actually have an active workspace.
+    if (!$this->workspaceManager->getActiveWorkspace()) {
+      return;
+    }
     /** @var \Drupal\views\Plugin\views\query\Sql $query */
     $query = $this->query;
     $query_base_table = $this->relationship ?: $this->view->storage->get('base_table');
