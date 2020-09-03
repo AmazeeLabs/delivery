@@ -76,7 +76,10 @@ class RedirectListener implements EventSubscriberInterface {
     if ($this->currentUser->hasPermission('bypass workspaces language restrictions')) {
       return;
     }
-    $current_workspace = $this->workspaceManger->getActiveWorkspace();
+    // We may not be in a workspace.
+    if (!$current_workspace = $this->workspaceManger->getActiveWorkspace()) {
+      return;
+    }
     $current_language = $this->languageManager->getCurrentLanguage();
 
     // If the workspace has any language restrictions, make sure that we are on
