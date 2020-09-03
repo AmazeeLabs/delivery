@@ -2,7 +2,9 @@
 
 namespace Drupal\delivery\ParamConverter;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\ParamConverter\EntityConverter;
+use Drupal\workspaces\WorkspaceInterface;
 
 /**
  * Customized entity converter.
@@ -25,21 +27,29 @@ class DeliveryEntityConverter extends EntityConverter {
 
     /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspacesManager */
     $workspacesManager = \Drupal::service('workspaces.manager');
-    /** @var \Drupal\Core\Entity\EntityInterface $result */
-    $result = parent::convert($value, $definition, $name, $defaults);
-
-   if (
-      $result &&
-      $workspacesManager->isEntityTypeSupported($result->getEntityType()) &&
-      (
-        !($result->workspace && $result->workspace->target_id)
-        || $result->deleted->value !== '0'
-      )
-    ) {
+    /** @var \Drupal\Core\Entity\EntityInterface $entity */
+    $entity = parent::convert($value, $definition, $name, $defaults);
+    // Return early if we don't have an entity.
+    if (!$entity instanceof EntityInterface) {
       return NULL;
     }
-
-    return $result;
+    // Return the plain old entity if we don't actually have a workspace.
+    if (!$workspacesManager->getActiveWorkspace() instanceof WorkspaceInterface) {
+      return $entity;
+    }
+    // Can this entity belong in this workspace?
+    if (!$workspacesManager->isEntityTypeSupported($entity->getEntityType())) {
+      return NULL;
+    }
+    // Does the entity have a workspace?
+    if (!($entity->workspace && $entity->workspace->target_id)) {
+      return NULL;
+    }
+    // Has this entity been deleted?
+    if ($entity->deleted->value !== '0') {
+      return NULL;
+    }
+    return $entity;
   }
 
 }
