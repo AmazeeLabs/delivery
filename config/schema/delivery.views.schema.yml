@@ -18,6 +18,24 @@ views.field.delivery_delivery_status:
       type: integer
       label: 'Link to the conflict resolver.'
 
+views.filter.delivery_workspaces_list:
+  type: views_filter
+  label: 'Delivery active workspace filter'
+  mapping:
+    value:
+      type: sequence
+      label: 'Values'
+      sequence:
+        type: string
+        label: 'Value'
+    expose:
+      type: mapping
+      label: 'Expose'
+      mapping:
+        reduce:
+          type: boolean
+          label: 'Reduce'
+
 views.filter.entity_delivery_status:
   type: views.filter
   label: 'Entity delivery status filter'
