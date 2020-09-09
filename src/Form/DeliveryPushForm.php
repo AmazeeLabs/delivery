@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class DeliveryPushForm extends ConfirmFormBase {
 
-  public static $BATCH_THRESHOLD = 2;
+  public static $BATCH_THRESHOLD = 1;
 
   /**
    * @var \Drupal\delivery\DeliveryInterface
