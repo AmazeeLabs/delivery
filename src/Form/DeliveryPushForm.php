@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class DeliveryPushForm extends ConfirmFormBase {
 
-  public static $BATCH_THRESHOLD = 10;
+  public static $BATCH_THRESHOLD = 2;
 
   /**
    * @var \Drupal\delivery\DeliveryInterface
@@ -116,20 +116,21 @@ class DeliveryPushForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $batch = [
-      'operations' => [
-        [[$this, 'pushChangesBatch'], [['entity_type' => 'media', 'field_name' => 'media']]],
-      ],
+      'operations' => [],
       'finished' => [$this, 'finishPushChanges'],
       'title' => $this->t('Push changes'),
       'progress_message' => $this->t('Pushing changes @current of @total.'),
       'error_message' => $this->t('Error pushing changes.'),
     ];
 
+    $item_ids = [];
     foreach ($this->delivery->items as $item) {
-      $batch['operations'][] = [
-        [$this, 'pushDeliveryItem'], [$item->target_id]
-      ];
+      $item_ids[] = $item->target_id;
     }
+
+    $batch['operations'][] = [
+      [$this, 'pushDeliveryItem'], [$item_ids]
+    ];
 
     $form_state->setRedirectUrl($this->getCancelUrl());
     batch_set($batch);
@@ -138,12 +139,31 @@ class DeliveryPushForm extends ConfirmFormBase {
   /**
    *
    */
-  public function pushDeliveryItem($item_id, &$context) {
-    $deliveryItem = DeliveryItem::load($item_id);
-    if (isset($deliveryItem->resolution->value)) {
-      return;
+  public function pushDeliveryItem($item_ids, &$context) {
+    if (empty($context['sandbox']['progress'])) {
+      $context['sandbox']['progress'] = 0;
     }
-    $this->deliveryService->acceptDeliveryItem($deliveryItem, 'published');
+    $items = array_slice($item_ids, $context['sandbox']['progress'], self::$BATCH_THRESHOLD);
+    if (!empty($items)) {
+      foreach ($items as $item_id) {
+        $deliveryItem = DeliveryItem::load($item_id);
+        if (isset($deliveryItem->resolution->value)) {
+          $context['sandbox']['progress']++;
+          continue;
+        }
+        $this->deliveryService->acceptDeliveryItem($deliveryItem, 'published');
+        $context['sandbox']['progress']++;
+      }
+    } else {
+      $context['finished'] = 1;
+    }
+
+    if ($context['sandbox']['progress'] < count($item_ids)) {
+      $context['finished'] = $context['sandbox']['progress'] / count($item_ids);
+    }
+    else {
+      $context['finished'] = 1;
+    }
   }
 
   /**
