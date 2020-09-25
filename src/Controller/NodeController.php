@@ -8,6 +8,7 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\node\Controller\NodeController as OriginalNodeController;
 use Drupal\node\NodeInterface;
 use Drupal\node\NodeStorageInterface;
+use Drupal\workspaces\WorkspaceManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -23,11 +24,19 @@ class NodeController extends OriginalNodeController {
   protected $database;
 
   /**
+   * The workspace manager service.
+   *
+   * @var \Drupal\workspaces\WorkspaceManagerInterface
+   */
+  protected $workspaceManager;
+
+  /**
    * {@inheritdoc}
    */
-  public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer, Connection $database) {
+  public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer, Connection $database, WorkspaceManagerInterface $workspace_manager) {
     parent::__construct($date_formatter, $renderer);
     $this->database = $database;
+    $this->workspaceManager = $workspace_manager;
   }
 
   /**
@@ -37,7 +46,8 @@ class NodeController extends OriginalNodeController {
     return new static(
       $container->get('date.formatter'),
       $container->get('renderer'),
-      $container->get('database')
+      $container->get('database'),
+      $container->get('workspaces.manager')
     );
   }
 
@@ -45,6 +55,10 @@ class NodeController extends OriginalNodeController {
    * {@inheritdoc}
    */
   protected function getRevisionIds(NodeInterface $node, NodeStorageInterface $node_storage) {
+    // If we have no workspaces, default to the parent method.
+    if (!$this->workspaceManager->getActiveWorkspace()) {
+      return parent::getRevisionIds($node, $node_storage);
+    }
     // We change the logic of the parent method so that we only return the
     // ancestors of the revision, not all the revisions. This is used on the
     // revision overview page.

@@ -290,7 +290,7 @@ class DeliveryItem extends ContentEntityBase implements DeliveryItemInterface {
       }
       $hadConflicts = FALSE;
       /** @var \Drupal\conflict\ConflictResolver\ConflictResolverManager $conflictResolver */
-      $conflictResolver = \Drupal::service('conflict_resolver.manager');
+      $conflictResolver = \Drupal::service('conflict.resolver.manager');
 
       if ($sourceRevision->isTranslatable()) {
         foreach ($currentTargetRevision->getTranslationLanguages() as $language) {

@@ -115,7 +115,10 @@ function workspaces_allowed_languages_element_info_alter(array &$info) {
 function workspaces_allowed_languages_process_language_select($element) {
   /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
   $workspaceManager = \Drupal::service('workspaces.manager');
-  $workspace = $workspaceManager->getActiveWorkspace();
+  // Ensure we have a workspace.
+  if (!$workspace = $workspaceManager->getActiveWorkspace()) {
+    return $element;
+  }
 
   // Don't restrict languages if the workspace doesn't have any assigned.
   if ($workspace->primary_language->count() === 0 && $workspace->secondary_languages->count() === 0) {

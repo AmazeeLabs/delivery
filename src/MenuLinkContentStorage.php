@@ -13,6 +13,11 @@ class MenuLinkContentStorage extends OriginalMenuLinkContentStorage {
    * @return array|int[]
    */
   public function getMenuLinkIdsWithPendingRevisions() {
+    /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspace_manager */
+    $workspace_manager = \Drupal::service('workspaces.manager');
+    if (!$workspace_manager->getActiveWorkspace()) {
+      return parent::getMenuLinkIdsWithPendingRevisions();
+    }
     return [];
   }
 

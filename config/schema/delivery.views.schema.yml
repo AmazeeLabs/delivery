@@ -1,25 +1,43 @@
-views.field.entity_delivery_status:
-  type: views.field.field
+views.field.delivery_delivery_status:
+  type: views_field
   label: 'Entity delivery status field'
   mapping:
     source_workspace:
       type: string
       label: 'The source workspace'
     source_workspace_arg:
-      type: number
+      type: string
       label: 'Views argument to retrieve the source workspace from.'
     target_workspace:
       type: string
       label: 'The target workspace'
     target_workspace_arg:
-      type: number
+      type: string
       label: 'Views argument to retrieve the target workspace from.'
     link_to_resolver:
-      type: number
+      type: integer
       label: 'Link to the conflict resolver.'
 
+views.filter.delivery_workspaces_list:
+  type: views_filter
+  label: 'Delivery active workspace filter'
+  mapping:
+    value:
+      type: sequence
+      label: 'Values'
+      sequence:
+        type: string
+        label: 'Value'
+    expose:
+      type: mapping
+      label: 'Expose'
+      mapping:
+        reduce:
+          type: boolean
+          label: 'Reduce'
+
 views.filter.entity_delivery_status:
-  type: views.filter
+  type: views_filter
   label: 'Entity delivery status filter'
   mapping:
     source_workspace:
@@ -36,7 +54,7 @@ views.filter.entity_delivery_status:
       label: 'Views argument to retrieve the target workspace from.'
 
 views.filter.node_revision_workspace_filter:
-  type: views.filter
+  type: views_filter
   label: 'Node Revision workspace filter'
   mapping:
     current_workspace:
@@ -44,5 +62,5 @@ views.filter.node_revision_workspace_filter:
       label: 'Workspace ID'
 
 views.filter.delivery_active_workspace_filter:
-  type: views.filter
+  type: views_filter
   label: 'Delivery active workspace filter'

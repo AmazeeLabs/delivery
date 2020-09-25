@@ -2,8 +2,8 @@
 
 namespace Drupal\delivery\ConflictResolution;
 
-use Drupal\conflict\ConflictResolution\MergeStrategyBase;
-use Drupal\conflict\Event\EntityConflictResolutionEvent;
+use Drupal\Core\Conflict\ConflictResolution\MergeStrategyBase;
+use Drupal\Core\Conflict\Event\EntityConflictResolutionEvent;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 

@@ -2,7 +2,9 @@
 
 namespace Drupal\delivery\ParamConverter;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\ParamConverter\EntityConverter;
+use Drupal\workspaces\WorkspaceInterface;
 
 /**
  * Customized entity converter.
@@ -25,21 +27,23 @@ class DeliveryEntityConverter extends EntityConverter {
 
     /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspacesManager */
     $workspacesManager = \Drupal::service('workspaces.manager');
-    /** @var \Drupal\Core\Entity\EntityInterface $result */
-    $result = parent::convert($value, $definition, $name, $defaults);
-
-   if (
-      $result &&
-      $workspacesManager->isEntityTypeSupported($result->getEntityType()) &&
+    /** @var \Drupal\Core\Entity\EntityInterface $entity */
+    $entity = parent::convert($value, $definition, $name, $defaults);
+    // Return early if we don't have an entity.
+    if (!$entity instanceof EntityInterface) {
+      return NULL;
+    }
+    if (
+      $entity &&
+      $workspacesManager->isEntityTypeSupported($entity->getEntityType()) &&
       (
-        !($result->workspace && $result->workspace->target_id)
-        || $result->deleted->value !== '0'
+        !($entity->workspace && $entity->workspace->target_id)
+        || $entity->deleted->value !== '0'
       )
     ) {
       return NULL;
     }
-
-    return $result;
+    return $entity;
   }
 
 }
