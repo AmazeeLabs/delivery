@@ -33,20 +33,14 @@ class DeliveryEntityConverter extends EntityConverter {
     if (!$entity instanceof EntityInterface) {
       return NULL;
     }
-    // Return the plain old entity if we don't actually have a workspace.
-    if (!$workspacesManager->getActiveWorkspace() instanceof WorkspaceInterface) {
-      return $entity;
-    }
-    // Can this entity belong in this workspace?
-    if (!$workspacesManager->isEntityTypeSupported($entity->getEntityType())) {
-      return NULL;
-    }
-    // Does the entity have a workspace?
-    if (!($entity->workspace && $entity->workspace->target_id)) {
-      return NULL;
-    }
-    // Has this entity been deleted?
-    if ($entity->deleted->value !== '0') {
+    if (
+      $entity &&
+      $workspacesManager->isEntityTypeSupported($entity->getEntityType()) &&
+      (
+        !($entity->workspace && $entity->workspace->target_id)
+        || $entity->deleted->value !== '0'
+      )
+    ) {
       return NULL;
     }
     return $entity;
