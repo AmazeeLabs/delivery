@@ -82,7 +82,7 @@ function delivery_entity_access(EntityInterface $entity, $operation, AccountInte
       $trackingWorkspaces[$key] = $workspaceAssociation->getEntityTrackingWorkspaceIds($entity);
     }
     $activeWorkspace = $workspacesManager->getActiveWorkspace();
-    if (!in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
+    if ($activeWorkspace && !in_array($activeWorkspace->id(), $trackingWorkspaces[$key])) {
       return AccessResult::forbidden();
     }
     // Also, if the user does not have the permission to access entities in all
@@ -213,10 +213,10 @@ function delivery_form_alter(&$form, FormStateInterface $formState, $formId) {
       /** @var \Drupal\workspaces\WorkspaceManagerInterface $workspaceManager */
       $workspaceManager = \Drupal::service('workspaces.manager');
       $workspace = $workspaceManager->getActiveWorkspace();
-      if ($defaultLanguage = $workspace->primary_language->value) {
+      if (!empty($workspace->primary_language) && $defaultLanguage = $workspace->primary_language->value) {
         $form['langcode']['widget'][0]['value']['#default_value'] = $defaultLanguage;
       }
-      if (!$workspace->secondary_languages->value) {
+      if (!empty($workspace->secondary_languages) && !$workspace->secondary_languages->value) {
         $form['langcode']['#access'] = FALSE;
       }
     }
@@ -434,8 +434,11 @@ function delivery_entity_load(array $entities, $entity_type_id) {
     if (empty($activeWorkspace)) {
       return;
     }
-    $tracking = $workspaceAssociation->getTrackedEntities($workspaceManager->getActiveWorkspace()->id(), $entity_type_id, array_keys($entities));
-    if (empty($tracking)) {
+    $active_workspace = $workspaceManager->getActiveWorkspace();
+    if (!$active_workspace) {
+      return;
+    }
+    $tracking = $workspaceAssociation->getTrackedEntities($active_workspace->id(), $entity_type_id, array_keys($entities));    if (empty($tracking)) {
       return;
     }
     foreach ($entities as $entity) {
