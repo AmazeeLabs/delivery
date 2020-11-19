@@ -13,6 +13,8 @@ entity.delivery.canonical:
     _title: 'Delivery status'
   requirements:
     _entity_access: 'delivery.view'
+  options:
+    _admin_route: TRUE
 
 entity.delivery.collection:
   path: '/admin/content/deliveries'
@@ -30,6 +32,8 @@ delivery.delivery_add:
     _title: 'Add Delivery'
   requirements:
     _entity_create_access: 'delivery'
+  options:
+    _admin_route: TRUE
 
 entity.delivery.edit_form:
   path: '/delivery/{delivery}/edit'
@@ -38,6 +42,8 @@ entity.delivery.edit_form:
     _title: 'Edit Delivery'
   requirements:
     _entity_access: 'delivery.edit'
+  options:
+    _admin_route: TRUE
 
 
 delivery.workspace_delivery_controller:
@@ -137,3 +143,26 @@ delivery.update_revisions_index:
     _title: 'Update revision tree index'
   requirements:
     _permission: 'administer delivery entities'
+
+delivery.cart:
+  path: '/delivery/cart'
+  defaults:
+    _controller: '\Drupal\delivery\Controller\DeliveryCart::overview'
+    _title: 'Cart'
+  requirements:
+    _permission: 'add any entity to the delivery cart'
+  options:
+    _admin_route: TRUE
+
+delivery.empty_cart:
+  path: '/delivery/cart/empty'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryEmptyCartConfirmForm'
+    _title: 'Empty cart'
+  requirements:
+    _permission: 'add any entity to the delivery cart'
+  options:
+    _admin_route: TRUE
+
+route_callbacks:
+  - '\Drupal\delivery\Routing\DeliveryRoutes::routes'

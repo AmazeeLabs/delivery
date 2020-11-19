@@ -5,6 +5,13 @@ delivery.delivery_add:
     - entity.delivery.collection
     - view.deliveries.page_incoming
     - view.deliveries.page_outcoming
+    - delivery.cart
+
+delivery.empty_cart:
+  route_name: delivery.empty_cart
+  title: 'Empty cart'
+  appears_on:
+    - delivery.cart
 
 delivery.delivery_forward:
   route_name: delivery.delivery_forward

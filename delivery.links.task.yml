@@ -31,3 +31,13 @@ entity.delivery.collection.outgoing:
   route_name: view.deliveries.page_outgoing
   parent_id: entity.delivery.collection
   weight: 3
+
+delivery.cart:
+  title: 'Delivery cart'
+  route_name: delivery.cart
+  parent_id: entity.delivery.collection
+  weight: 5
+
+delivery.local_tasks:
+  deriver: 'Drupal\delivery\Plugin\Derivative\DeliveryCartLocalTasks'
+  weight: 100

@@ -79,3 +79,10 @@ services:
     decoration_priority: 50
     tags:
       - { name: backend_overridable }
+
+  delivery.cart:
+    class: Drupal\delivery\DeliveryCartService
+    arguments:
+      - '@user.private_tempstore'
+      - '@workspaces.manager'
+      - '@entity_type.manager'
