@@ -71,8 +71,13 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
       return $this->t('Nothing has been found in that cart.');
     }
 
+    $limit = 100;
     $items = [];
     foreach ($this->cart as $entity){
+      if (count($items) >= $limit) {
+        $items[] = $this->t('... and more');
+        break;
+      }
       $items[] = $this->t('@entity_type: %entity_label (Workspace: @workspace)', [
         '@entity_type' => $entity['entity_type'],
         '%entity_label' => $entity['entity_label'],
