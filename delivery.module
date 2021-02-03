@@ -468,6 +468,17 @@ function delivery_entity_predelete(EntityInterface $entity) {
  */
 function delivery_delivery_cart_add_item(EntityInterface $entity) {
   if($entity->getEntityTypeId() === "node") {
-    DeliveryCartReferencedContent::addMenuItems($entity);
+    $references = [
+      'Menu item(s)' => DeliveryCartReferencedContent::addMenuItems($entity),
+      'Block(s)' => DeliveryCartReferencedContent::addBlocksFromLayoutBuilder($entity)
+    ];
+
+    foreach ($references as $type => $count) {
+      if($count && $count > 0) {
+        \Drupal::messenger()->addStatus(t('@count @type added to the delivery cart as it is referenced in @title',
+          ['@count' => $count, '@type' => $type, '@title' => $entity->label()]
+        ));
+      }
+    }
   }
 }
