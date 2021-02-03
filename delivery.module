@@ -25,7 +25,6 @@ use Drupal\delivery\Entity\MenuLinkContent;
 use Drupal\delivery\Form\MenuPushForm;
 use Drupal\delivery\MenuLinkContentStorage;
 use Drupal\delivery\WorkspaceListBuilder;
-use Drupal\delivery\DeliveryCartReferencedContent;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -460,26 +459,5 @@ function delivery_entity_predelete(EntityInterface $entity) {
     $deleted->deleted = \Drupal::time()->getRequestTime();
     $deleted->save();
     return EntityStorageInterface::ENTITY_SOFT_DELETE;
-  }
-}
-
-/**
- * Implements hook_delivery_cart_add_item().
- */
-function delivery_delivery_cart_add_item(EntityInterface $entity) {
-  if($entity->getEntityTypeId() === "node") {
-    $references = [
-      'Menu item(s)' => DeliveryCartReferencedContent::addMenuItems($entity),
-      'Block(s)' => DeliveryCartReferencedContent::addBlocksFromLayoutBuilder($entity),
-      'Media item(s)' => DeliveryCartReferencedContent::addMediaItems($entity)
-    ];
-
-    foreach ($references as $type => $count) {
-      if($count && $count > 0) {
-        \Drupal::messenger()->addStatus(t('@count @type added to the delivery cart as they are referenced in "@title"',
-          ['@count' => $count, '@type' => $type, '@title' => $entity->label()]
-        ));
-      }
-    }
   }
 }
