@@ -3,6 +3,8 @@
 
 namespace Drupal\delivery;
 
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\delivery\Entity\MenuLinkContent;
 use Drupal\Core\Entity\EntityInterface;
 
@@ -44,10 +46,59 @@ class DeliveryCartReferencedContent {
     return self::$count;
   }
 
+  /**
+   * Looks for any referenced media in the body and adds them to the cart.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *
+   * @return false|int
+   */
   public static function addMediaItems(EntityInterface $entity) {
+    if(!self::isNode($entity)) {
+      return FALSE;
+    }
 
+    if(!self::hasField($entity,'body')) {
+      return FALSE;
+    }
+
+    $bodies = $entity->get('body')->getValue();
+
+    foreach ($bodies as $body) {
+
+      if(!isset($body['json'])){
+        break;
+      }
+
+      $json = $body['json'];
+      // extract the media uuid from the json
+      preg_match_all('("data-media-uuid":"(.*?)",)', $json, $mediaUuids);
+      if(!empty($mediaUuids) && isset($mediaUuids[1])){
+        foreach ($mediaUuids[1] as $uuid){
+          try {
+            $mediaByUuid = \Drupal::entityTypeManager()
+              ->getStorage('media')
+              ->loadByProperties(['uuid' => $uuid]);
+          } catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
+            break;
+          }
+          $mediaEntity = reset($mediaByUuid);
+          \Drupal::service('delivery.cart')->addToCart($mediaEntity);
+          self::$count++;
+        }
+      }
+    }
+
+    return self::$count;
   }
 
+  /**
+   * Looks for any referenced blocks in layout builder and adds them to the cart.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *
+   * @return false|int
+   */
   public static function addBlocksFromLayoutBuilder(EntityInterface $entity) {
     if(!self::isNode($entity)) {
       return FALSE;
@@ -89,6 +140,14 @@ class DeliveryCartReferencedContent {
     return $entity->getEntityTypeId() === "node";
   }
 
+  /**
+   * Check if entity has a field.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param string $field
+   *
+   * @return mixed
+   */
   protected static function hasField(EntityInterface $entity, string $field){
     return $entity->hasField($field);
   }
