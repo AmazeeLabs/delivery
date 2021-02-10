@@ -65,45 +65,12 @@ class DeliveryCartReferencedContent {
   }
 
   /**
-   * Looks for any referenced media in the body and adds them to the cart.
+   * Invokes the reference content hook.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
-   *
-   * @return false|int
    */
-  public static function addMediaItems(EntityInterface $entity) {
-    if(!self::hasField($entity,'body')) {
-      return FALSE;
-    }
-
-    $bodies = $entity->get('body')->getValue();
-
-    foreach ($bodies as $body) {
-
-      if(!isset($body['json'])){
-        break;
-      }
-
-      $json = $body['json'];
-      // extract the media uuid from the json
-      preg_match_all('("data-media-uuid":"(.*?)",)', $json, $mediaUuids);
-      if(!empty($mediaUuids) && isset($mediaUuids[1])){
-        foreach ($mediaUuids[1] as $uuid){
-          try {
-            $mediaByUuid = \Drupal::entityTypeManager()
-              ->getStorage('media')
-              ->loadByProperties(['uuid' => $uuid]);
-          } catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
-            break;
-          }
-          $mediaEntity = reset($mediaByUuid);
-          \Drupal::service('delivery.cart')->addToCart($mediaEntity);
-          self::$count++;
-        }
-      }
-    }
-
-    return self::$count;
+  public static function referenceContentHook(EntityInterface $entity){
+    \Drupal::moduleHandler()->invokeAll('delivery_cart_referenced_content', [$entity]);
   }
 
   /**

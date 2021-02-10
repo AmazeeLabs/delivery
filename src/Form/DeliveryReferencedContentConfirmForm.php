@@ -170,7 +170,7 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
   public function findReferencedContent($entity, &$context) {
     DeliveryCartReferencedContent::addMenuItems($entity);
     DeliveryCartReferencedContent::addBlocksFromLayoutBuilder($entity);
-    DeliveryCartReferencedContent::addMediaItems($entity);
+    DeliveryCartReferencedContent::referenceContentHook($entity);
   }
 
 }
