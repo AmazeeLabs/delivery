@@ -16,31 +16,49 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
 
   protected $cart = [];
 
-  protected $cartEntities = [];
-
   /**
    * DeliveryEmptyCartConfirmForm constructor.
    *
    * @param DeliveryCartService $delivery_cart
    */
   public function __construct(DeliveryCartService $delivery_cart) {
-    $type = 'node';
     $this->deliveryCart = $delivery_cart;
-    if($cartItems = $this->deliveryCart->getCart()) {
-      $entityIds = $cartItems[$type] ?? [];
-      $entityStorage = \Drupal::entityTypeManager()->getStorage($type);
-      foreach ($entityIds as $entityIdData) {
-        $sourceWorkspace = Workspace::load($entityIdData['workspace_id']);
-        $entity = $entityStorage->loadRevision($entityIdData['revision_id']);
-        $data = [
-          'entity_type' => $entityStorage->getEntityType()->getLabel(),
-          'entity_label' => $entity->label(),
-          'workspace' => $sourceWorkspace->label(),
-          'entity' => $entity
-        ];
-        $this->cart[] = $data;
+    $this->cart = $this->getCartItems(100);
+  }
+
+  /**
+   * Helper method to get x amount of items out of the cart
+   *
+   * @param int $limit
+   *
+   * @return array
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  protected function getCartItems(int $limit = 0) {
+    $cart = [];
+
+    if ($cartItems = $this->deliveryCart->getCart()) {
+      foreach ($cartItems as $entity_type_id => $entityIds) {
+        $entityStorage = \Drupal::entityTypeManager()->getStorage($entity_type_id);
+        foreach ($entityIds as $entityIdData) {
+          if ($limit > 0 && count($cart) >= $limit) {
+            break 2;
+          }
+          $sourceWorkspace = Workspace::load($entityIdData['workspace_id']);
+          $entity = $entityStorage->loadRevision($entityIdData['revision_id']);
+          $data = [
+            'entity_type' => $entityStorage->getEntityType()->getLabel(),
+            'entity_label' => $entity->label(),
+            'workspace' => $sourceWorkspace->label(),
+            'entity' => $entity,
+          ];
+          $cart[] = $data;
+        }
       }
     }
+
+    return $cart;
   }
 
   public static function create(ContainerInterface $container) {
@@ -67,21 +85,17 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getDescription() {
-    if(!$this->cart){
+    if(!$this->deliveryCart){
       return $this->t('Nothing has been found in that cart.');
     }
 
-    $limit = 100;
     $items = [];
     foreach ($this->cart as $entity){
-      if (count($items) >= $limit) {
-        $items[] = $this->t('... and more');
-        break;
-      }
       $items[] = $this->t('@entity_type: %entity_label (Workspace: @workspace)', [
         '@entity_type' => $entity['entity_type'],
         '%entity_label' => $entity['entity_label'],
-        '@workspace' => $entity['workspace'],]);
+        '@workspace' => $entity['workspace'],
+      ]);
     }
 
     return $this->t('Will be searching the following to find any referenced content:') . '<br/><br/>'. implode("<br/>", $items);
@@ -135,7 +149,10 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
       'error_message' => $this->t('Error Finding referenced content.'),
     ];
 
-    foreach ($this->cart as $item) {
+    // gets all the cart items
+    $cart = $this->getCartItems();
+
+    foreach ($cart as $item) {
       $batch['operations'][] = [
         [$this, 'findReferencedContent'], [$item['entity']]
       ];
