@@ -34,12 +34,34 @@ class DeliveryCartReferencedContent {
           if($linkEntity){
             \Drupal::service('delivery.cart')->addToCart($linkEntity);
             self::$count++;
+            self::addMenuParents($linkEntity);
           }
         }
       }
     }
 
     return self::$count;
+  }
+
+  /**
+   * Looks for menu parents to also add them to the cart.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   */
+  public static function addMenuParents(EntityInterface $entity){
+    $parents = $entity->get('parent')->getValue();
+    if(!empty($parents)){
+      foreach ($parents as $parent){
+        $parentId = $parent['value'] ? $parent['value'] : '';
+        $parentId = str_replace('menu_link_content:','', $parentId);
+        $entity = \Drupal::service('entity.repository')->loadEntityByUuid('menu_link_content', $parentId);
+        if($entity) {
+          \Drupal::service('delivery.cart')->addToCart($entity);
+          self::$count++;
+          self::addMenuParents($entity);
+        }
+      }
+    }
   }
 
   /**
