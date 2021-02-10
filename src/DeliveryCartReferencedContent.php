@@ -21,10 +21,6 @@ class DeliveryCartReferencedContent {
    * @return false|int
    */
   public static function addMenuItems(EntityInterface $entity){
-    if(!self::isNode($entity)) {
-      return FALSE;
-    }
-
     $node_id = $entity->id();
     $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
     $routes = $menu_link_manager->loadLinksByRoute('entity.node.canonical', ['node' => $node_id]);
@@ -54,10 +50,6 @@ class DeliveryCartReferencedContent {
    * @return false|int
    */
   public static function addMediaItems(EntityInterface $entity) {
-    if(!self::isNode($entity)) {
-      return FALSE;
-    }
-
     if(!self::hasField($entity,'body')) {
       return FALSE;
     }
@@ -100,10 +92,6 @@ class DeliveryCartReferencedContent {
    * @return false|int
    */
   public static function addBlocksFromLayoutBuilder(EntityInterface $entity) {
-    if(!self::isNode($entity)) {
-      return FALSE;
-    }
-
     if(!self::hasField($entity,'layout_builder__layout')) {
       return FALSE;
     }
@@ -127,17 +115,6 @@ class DeliveryCartReferencedContent {
     }
 
     return self::$count;
-  }
-
-  /**
-   * Confirm if entity is of type node.
-   *
-   * @param $entity
-   *
-   * @return bool
-   */
-  protected static function isNode(EntityInterface $entity) {
-    return $entity->getEntityTypeId() === "node";
   }
 
   /**
