@@ -40,7 +40,8 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
 
     if ($cartItems = $this->deliveryCart->getCart()) {
       foreach ($cartItems as $entity_type_id => $entityIds) {
-        $entityStorage = \Drupal::entityTypeManager()->getStorage($entity_type_id);
+        $entityStorage = \Drupal::entityTypeManager()
+          ->getStorage($entity_type_id);
         foreach ($entityIds as $entityIdData) {
           if ($limit > 0 && count($cart) >= $limit) {
             break 2;
@@ -85,12 +86,12 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getDescription() {
-    if(!$this->deliveryCart){
+    if (!$this->deliveryCart) {
       return $this->t('Nothing has been found in that cart.');
     }
 
     $items = [];
-    foreach ($this->cart as $entity){
+    foreach ($this->cart as $entity) {
       $items[] = $this->t('@entity_type: %entity_label (Workspace: @workspace)', [
         '@entity_type' => $entity['entity_type'],
         '%entity_label' => $entity['entity_label'],
@@ -98,7 +99,7 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
       ]);
     }
 
-    return $this->t('Will be searching the following to find any referenced content:') . '<br/><br/>'. implode("<br/>", $items);
+    return $this->t('Will be searching the following to find any referenced content:') . '<br/><br/>' . implode("<br/>", $items);
   }
 
   /**
@@ -111,7 +112,7 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
   /**
    * {@inheritDoc}
    */
-  public function getCancelUrl(){
+  public function getCancelUrl() {
     return Url::fromRoute('delivery.cart');
   }
 
@@ -128,7 +129,7 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
 
-    if(!$this->cart){
+    if (!$this->cart) {
       unset($form['actions']['submit']);
     }
 
@@ -154,7 +155,8 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
 
     foreach ($cart as $item) {
       $batch['operations'][] = [
-        [$this, 'findReferencedContent'], [$item['entity']]
+        [$this, 'findReferencedContent'],
+        [$item['entity']],
       ];
     }
     $form_state->setRedirect('delivery.cart');
@@ -168,9 +170,7 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
    * @param $context
    */
   public function findReferencedContent($entity, &$context) {
-    DeliveryCartReferencedContent::addMenuItems($entity);
-    DeliveryCartReferencedContent::addBlocksFromLayoutBuilder($entity);
-    DeliveryCartReferencedContent::referenceContentHook($entity);
+    DeliveryCartReferencedContent::findAllRelatedContent($entity);
   }
 
 }

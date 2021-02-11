@@ -20,18 +20,18 @@ class DeliveryCartReferencedContent {
    *
    * @return false|int
    */
-  public static function addMenuItems(EntityInterface $entity){
+  public static function addMenuItems(EntityInterface $entity) {
     $node_id = $entity->id();
     $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
     $routes = $menu_link_manager->loadLinksByRoute('entity.node.canonical', ['node' => $node_id]);
 
-    if(!empty($routes)) {
-      foreach ($routes as $menuLink){
+    if (!empty($routes)) {
+      foreach ($routes as $menuLink) {
         $plugin = $menuLink->getPluginDefinition();
-        if(isset($plugin) && isset($plugin['metadata']) && isset($plugin['metadata']['entity_id'])){
+        if (isset($plugin) && isset($plugin['metadata']) && isset($plugin['metadata']['entity_id'])) {
           $id = $plugin['metadata']['entity_id'];
           $linkEntity = MenuLinkContent::load($id);
-          if($linkEntity){
+          if ($linkEntity) {
             \Drupal::service('delivery.cart')->addToCart($linkEntity);
             self::$count++;
             self::addMenuParents($linkEntity);
@@ -48,14 +48,15 @@ class DeliveryCartReferencedContent {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    */
-  public static function addMenuParents(EntityInterface $entity){
+  public static function addMenuParents(EntityInterface $entity) {
     $parents = $entity->get('parent')->getValue();
-    if(!empty($parents)){
-      foreach ($parents as $parent){
+    if (!empty($parents)) {
+      foreach ($parents as $parent) {
         $parentId = $parent['value'] ? $parent['value'] : '';
-        $parentId = str_replace('menu_link_content:','', $parentId);
-        $entity = \Drupal::service('entity.repository')->loadEntityByUuid('menu_link_content', $parentId);
-        if($entity) {
+        $parentId = str_replace('menu_link_content:', '', $parentId);
+        $entity = \Drupal::service('entity.repository')
+          ->loadEntityByUuid('menu_link_content', $parentId);
+        if ($entity) {
           \Drupal::service('delivery.cart')->addToCart($entity);
           self::$count++;
           self::addMenuParents($entity);
@@ -69,27 +70,29 @@ class DeliveryCartReferencedContent {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    */
-  public static function referenceContentHook(EntityInterface $entity){
-    \Drupal::moduleHandler()->invokeAll('delivery_cart_referenced_content', [$entity]);
+  public static function referenceContentHook(EntityInterface $entity) {
+    \Drupal::moduleHandler()
+      ->invokeAll('delivery_cart_referenced_content', [$entity]);
   }
 
   /**
-   * Looks for any referenced blocks in layout builder and adds them to the cart.
+   * Looks for any referenced blocks in layout builder and adds them to the
+   * cart.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *
    * @return false|int
    */
   public static function addBlocksFromLayoutBuilder(EntityInterface $entity) {
-    if(!self::hasField($entity,'layout_builder__layout')) {
+    if (!self::hasField($entity, 'layout_builder__layout')) {
       return FALSE;
     }
 
     $sections = $entity->get('layout_builder__layout')->getSections();
 
-    foreach ($sections as $section){
+    foreach ($sections as $section) {
       $components = $section->getComponents();
-      foreach ($components as $component){
+      foreach ($components as $component) {
         $renderedArray = $component->toRenderArray();
         $theme = $renderedArray['#theme'] ? $renderedArray['#theme'] : '';
         if ($theme === "block") {
@@ -107,6 +110,71 @@ class DeliveryCartReferencedContent {
   }
 
   /**
+   * Adds referenced nodes.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   */
+  public static function addReferencedNodes(EntityInterface $entity) {
+    if ($entity->getEntityTypeId() === "node") {
+      // Extract all fields and look for the ones using sections.
+      $fieldsWithReferences = [];
+      $fields = $entity->getFieldDefinitions();
+      if (!empty($fields)) {
+        foreach ($fields as $field) {
+          $type = $field->getType();
+          if ($type === "entity_reference" && $field instanceof \Drupal\field\Entity\FieldConfig) {
+            $entityTarget = $field->getTargetEntityTypeId();
+            if ($entityTarget === "node") {
+              $fieldsWithReferences[$field->getName()] = [
+                'field' => $field->getName(),
+                'entityTarget' => $entityTarget,
+              ];
+            }
+          }
+        }
+      }
+
+      if (!empty($fieldsWithReferences)) {
+        foreach ($fieldsWithReferences as $data) {
+          $name = $data['field'];
+          $entityTarget = $data['entityTarget'];
+          if ($entity->hasField($name)) {
+            $values = $entity->get($name)->getValue();
+            if (!empty($values)) {
+
+              foreach ($values as $value) {
+                $targetId = $value['target_id'];
+                $loadEntity = \Drupal::entityTypeManager()
+                  ->getStorage($entityTarget)
+                  ->load($targetId);
+
+                if ($loadEntity) {
+                  \Drupal::service('delivery.cart')->addToCart($loadEntity);
+                  self::$count++;
+                  self::findAllRelatedContent($loadEntity);
+                }
+
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Kicks off looking for all related content.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   */
+  public static function findAllRelatedContent(EntityInterface $entity) {
+    self::addMenuItems($entity);
+    self::addBlocksFromLayoutBuilder($entity);
+    self::addReferencedNodes($entity);
+    self::referenceContentHook($entity);
+  }
+
+  /**
    * Check if entity has a field.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
@@ -114,7 +182,7 @@ class DeliveryCartReferencedContent {
    *
    * @return mixed
    */
-  protected static function hasField(EntityInterface $entity, string $field){
+  protected static function hasField(EntityInterface $entity, string $field) {
     return $entity->hasField($field);
   }
 
