@@ -114,34 +114,19 @@ class DeliveryCartReferencedContent {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    */
-  public static function addReferencedNodes(EntityInterface $entity) {
-    if ($entity->getEntityTypeId() === "node") {
-      // Extract all fields and look for the ones using sections.
-      $fieldsWithReferences = [];
-      $fields = $entity->getFieldDefinitions();
-      if (!empty($fields)) {
-        foreach ($fields as $field) {
-          $type = $field->getType();
-          if ($type === "entity_reference" && $field instanceof \Drupal\field\Entity\FieldConfig) {
-            $entityTarget = $field->getTargetEntityTypeId();
-            if ($entityTarget === "node") {
-              $fieldsWithReferences[$field->getName()] = [
-                'field' => $field->getName(),
-                'entityTarget' => $entityTarget,
-              ];
-            }
-          }
-        }
-      }
+  public static function addReferencedEntities(EntityInterface $entity) {
+    $fields = $entity->getFieldDefinitions();
+    if (!empty($fields)) {
+      foreach ($fields as $field) {
+        $type = $field->getType();
+        if ($type === "entity_reference" && $field instanceof \Drupal\field\Entity\FieldConfig) {
+          $entityTarget = $field->getTargetEntityTypeId();
+          $name = $field->getName();
 
-      if (!empty($fieldsWithReferences)) {
-        foreach ($fieldsWithReferences as $data) {
-          $name = $data['field'];
-          $entityTarget = $data['entityTarget'];
+          // if found extract what we need and add to cart
           if ($entity->hasField($name)) {
             $values = $entity->get($name)->getValue();
             if (!empty($values)) {
-
               foreach ($values as $value) {
                 $targetId = $value['target_id'];
                 $loadEntity = \Drupal::entityTypeManager()
@@ -153,10 +138,10 @@ class DeliveryCartReferencedContent {
                   self::$count++;
                   self::findAllRelatedContent($loadEntity);
                 }
-
               }
             }
           }
+
         }
       }
     }
@@ -170,7 +155,7 @@ class DeliveryCartReferencedContent {
   public static function findAllRelatedContent(EntityInterface $entity) {
     self::addMenuItems($entity);
     self::addBlocksFromLayoutBuilder($entity);
-    self::addReferencedNodes($entity);
+    self::addReferencedEntities($entity);
     self::referenceContentHook($entity);
   }
 
