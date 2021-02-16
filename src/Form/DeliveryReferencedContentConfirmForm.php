@@ -19,10 +19,10 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
   /**
    * DeliveryEmptyCartConfirmForm constructor.
    *
-   * @param DeliveryCartService $delivery_cart
+   * @param DeliveryCartService $deliveryCart
    */
-  public function __construct(DeliveryCartService $delivery_cart) {
-    $this->deliveryCart = $delivery_cart;
+  public function __construct(DeliveryCartService $deliveryCart) {
+    $this->deliveryCart = $deliveryCart;
     $this->cart = $this->getCartItems(100);
   }
 
@@ -39,22 +39,21 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
     $cart = [];
 
     if ($cartItems = $this->deliveryCart->getCart()) {
-      foreach ($cartItems as $entity_type_id => $entityIds) {
+      foreach ($cartItems as $entityTypeId => $entityIds) {
         $entityStorage = \Drupal::entityTypeManager()
-          ->getStorage($entity_type_id);
+          ->getStorage($entityTypeId);
         foreach ($entityIds as $entityIdData) {
           if ($limit > 0 && count($cart) >= $limit) {
             break 2;
           }
           $sourceWorkspace = Workspace::load($entityIdData['workspace_id']);
           $entity = $entityStorage->loadRevision($entityIdData['revision_id']);
-          $data = [
+          $cart[] = [
             'entity_type' => $entityStorage->getEntityType()->getLabel(),
             'entity_label' => $entity->label(),
             'workspace' => $sourceWorkspace->label(),
             'entity' => $entity,
           ];
-          $cart[] = $data;
         }
       }
     }
@@ -151,13 +150,16 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
     ];
 
     // gets all the cart items
-    $cart = $this->getCartItems();
+    $cartItems = $this->deliveryCart->getCart();
 
-    foreach ($cart as $item) {
-      $batch['operations'][] = [
-        [$this, 'findReferencedContent'],
-        [$item['entity']],
-      ];
+    foreach ($cartItems as $entityTypeId => $entityIds) {
+      $entityStorage = \Drupal::entityTypeManager()->getStorage($entityTypeId);
+      foreach ($entityIds as $entityIdData) {
+        $batch['operations'][] = [
+          [$this, 'findReferencedContent'],
+          [$entityStorage, $entityIdData],
+        ];
+      }
     }
     $form_state->setRedirect('delivery.cart');
     batch_set($batch);
@@ -166,10 +168,12 @@ class DeliveryReferencedContentConfirmForm extends ConfirmFormBase {
   /**
    * Batch runner.
    *
-   * @param $entity
+   * @param $entityStorage
+   * @param $entityIdData
    * @param $context
    */
-  public function findReferencedContent($entity, &$context) {
+  public function findReferencedContent($entityStorage, $entityIdData, &$context) {
+    $entity = $entityStorage->loadRevision($entityIdData['revision_id']);
     DeliveryCartReferencedContent::findAllRelatedContent($entity);
   }
 
