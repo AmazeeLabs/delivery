@@ -12,6 +12,13 @@ delivery.empty_cart:
   title: 'Empty cart'
   appears_on:
     - delivery.cart
+  weight: 99
+
+delivery.find_referenced_content:
+  route_name: delivery.find_referenced_content
+  title: 'Find referenced content'
+  appears_on:
+    - delivery.cart
 
 delivery.delivery_forward:
   route_name: delivery.delivery_forward

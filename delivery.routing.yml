@@ -167,5 +167,15 @@ delivery.empty_cart:
   options:
     _admin_route: TRUE
 
+delivery.find_referenced_content:
+  path: '/delivery/cart/find-referenced'
+  defaults:
+    _form: '\Drupal\delivery\Form\DeliveryReferencedContentConfirmForm'
+    _title: 'Find referenced content'
+  requirements:
+    _permission: 'add any entity to the delivery cart'
+  options:
+    _admin_route: TRUE
+
 route_callbacks:
   - '\Drupal\delivery\Routing\DeliveryRoutes::routes'
