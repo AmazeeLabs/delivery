@@ -136,7 +136,6 @@ class DeliveryCartReferencedContent {
                 if ($loadEntity) {
                   \Drupal::service('delivery.cart')->addToCart($loadEntity);
                   self::$count++;
-                  self::findAllRelatedContent($loadEntity);
                 }
               }
             }
