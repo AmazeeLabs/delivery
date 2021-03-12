@@ -2,13 +2,13 @@
 
 namespace Drupal\delivery\Controller;
 
-use Drupal;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 use Drupal\content_translation\ContentTranslationManager;
 use Drupal\content_translation\Controller\ContentTranslationController;
-use Drupal\Core\Url;
 
 class DeliveryContentTranslationController extends ContentTranslationController {
 
@@ -102,7 +102,7 @@ class DeliveryContentTranslationController extends ContentTranslationController 
           $link = isset($links->links[$langcode]['url']) ? $links->links[$langcode] : ['url' => $entity->toUrl()];
           if (!empty($link['url'])) {
             $link['url']->setOption('language', $language);
-            $row_title = $this->l($label, $link['url']);
+            $row_title = Link::fromTextAndUrl($label, $link['url']);
           }
 
           if (empty($link['url'])) {
