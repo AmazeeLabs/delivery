@@ -26,12 +26,14 @@ class DeliveryCartReferencedContent {
     $routes = $menu_link_manager->loadLinksByRoute('entity.node.canonical', ['node' => $node_id]);
 
     if (!empty($routes)) {
+      $currentWorkspaceId = \Drupal::service('workspaces.manager')->getActiveWorkspace()->id();
       foreach ($routes as $menuLink) {
         $plugin = $menuLink->getPluginDefinition();
         if (isset($plugin) && isset($plugin['metadata']) && isset($plugin['metadata']['entity_id'])) {
           $id = $plugin['metadata']['entity_id'];
           $linkEntity = MenuLinkContent::load($id);
-          if ($linkEntity) {
+          $linkWorkspaceId = $linkEntity->get('workspace')->referencedEntities()[0]->id();
+          if ($linkEntity && $currentWorkspaceId === $linkWorkspaceId) {
             \Drupal::service('delivery.cart')->addToCart($linkEntity);
             self::$count++;
             self::addMenuParents($linkEntity);
@@ -51,12 +53,14 @@ class DeliveryCartReferencedContent {
   public static function addMenuParents(EntityInterface $entity) {
     $parents = $entity->get('parent')->getValue();
     if (!empty($parents)) {
+      $currentWorkspaceId = \Drupal::service('workspaces.manager')->getActiveWorkspace()->id();
       foreach ($parents as $parent) {
         $parentId = $parent['value'] ? $parent['value'] : '';
         $parentId = str_replace('menu_link_content:', '', $parentId);
         $entity = \Drupal::service('entity.repository')
           ->loadEntityByUuid('menu_link_content', $parentId);
-        if ($entity) {
+        $linkWorkspaceId = $entity->get('workspace')->referencedEntities()[0]->id();
+        if ($entity && $currentWorkspaceId === $linkWorkspaceId) {
           \Drupal::service('delivery.cart')->addToCart($entity);
           self::$count++;
           self::addMenuParents($entity);
