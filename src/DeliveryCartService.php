@@ -54,6 +54,7 @@ class DeliveryCartService {
       'workspace_id' => $this->workspaceManager->getActiveWorkspace()->id(),
     ];
     $this->userPrivateStore->set('delivery_cart', $cart);
+    \Drupal::moduleHandler()->invokeAll('delivery_cart_add_item', [$entity]);
   }
 
   /**
